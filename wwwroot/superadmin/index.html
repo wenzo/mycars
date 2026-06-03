@@ -26,43 +26,14 @@
 </head>
 <body>
 
-<div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-<aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
-            <rect width="40" height="40" rx="8" fill="#6c3483"/>
-            <path d="M8 26 L14 14 L20 22 L26 14 L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="20" cy="12" r="3" fill="#fff"/>
-        </svg>
-        <span class="sidebar-brand-name">SuperAdmin</span>
-    </div>
-    <nav class="sidebar-nav">
-        <a class="nav-item active" href="/superadmin/index.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Iscrizioni
-            <span class="nav-badge" id="pendingBadge"></span>
-        </a>
-        <a class="nav-item" href="#" id="tabOperatori">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            Operatori attivi
-        </a>
-        <div style="margin-top:auto"></div>
-        <form method="post" action="/api/superadmin/logout">
-            <button type="submit" class="nav-item nav-item-logout" style="width:100%;background:none;border:none;cursor:pointer;text-align:left">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Esci
-            </button>
-        </form>
-    </nav>
-</aside>
+<script src="/assets/js/layout-superadmin.js"></script>
 
 <div class="main-wrapper">
     <header class="topbar">
         <button class="topbar-btn" id="hamburgerBtn" aria-label="Apri menu">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
-        <h1 class="topbar-title" id="pageTitle">Richieste di iscrizione</h1>
+        <h1 class="topbar-title" id="pageTitle">Operatori attivi</h1>
         <div class="topbar-spacer"></div>
     </header>
     <main class="content">
@@ -83,16 +54,15 @@
             </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="tabs">
+        <!-- Tabs (visibili solo nella sezione Iscrizioni) -->
+        <div class="tabs" id="tabsBar" style="display:none">
             <button class="tab active" id="tabPending"   data-status="pending">In attesa</button>
             <button class="tab"         id="tabApprovedT" data-status="approved">Approvate</button>
             <button class="tab"         id="tabRejected"  data-status="rejected">Rifiutate</button>
-            <button class="tab"         id="tabAllOp"     data-status="operators">Operatori</button>
         </div>
 
         <!-- Registrations table -->
-        <div class="card" id="regPanel">
+        <div class="card" id="regPanel" style="display:none">
             <div class="card-body" style="padding:0">
                 <table class="table" id="regTable">
                     <thead>
@@ -113,8 +83,51 @@
             </div>
         </div>
 
+        <!-- Utility panel: brands CRUD -->
+        <div id="utilityPanel" style="display:none">
+
+            <div class="card">
+                <div class="card-header" style="justify-content:space-between">
+                    <h2 class="card-title">Marchi veicoli</h2>
+                    <div style="display:flex;gap:10px;align-items:center">
+                        <div class="search-bar" style="width:220px">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="text" id="brandSearch" placeholder="Cerca marchio…">
+                        </div>
+                        <select id="brandTypeFilter" class="form-select" style="height:40px;font-size:13px;width:auto">
+                            <option value="">Tutti i tipi</option>
+                            <option value="autovettura">Autovettura</option>
+                            <option value="motoveicolo">Motoveicolo</option>
+                            <option value="autocarro">Autocarro</option>
+                            <option value="autocaravan">Autocaravan</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" id="addBrandBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Aggiungi
+                        </button>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Marchio</th>
+                                <th>Tipi veicolo</th>
+                                <th style="width:100px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="brandsTableBody">
+                            <tr><td colspan="3" style="text-align:center;color:var(--text-light);padding:32px">Caricamento…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="padding:12px 20px;border-top:1px solid var(--border);font-size:13px;color:var(--text-light)" id="brandsCount"></div>
+            </div>
+
+        </div>
+
         <!-- Operators table -->
-        <div class="card" id="opPanel" style="display:none">
+        <div class="card" id="opPanel">
             <div class="card-body" style="padding:0">
                 <table class="table" id="opTable">
                     <thead>
@@ -129,6 +142,66 @@
 
     </main>
 </div>
+
+<!-- Brand drawer -->
+<div class="drawer-overlay" id="brandDrawerOverlay"></div>
+<aside class="drawer" id="brandDrawer" aria-label="Aggiungi / Modifica marchio">
+    <div class="drawer-header">
+        <span class="drawer-title" id="brandDrawerTitle">Aggiungi marchio</span>
+        <button class="drawer-close" id="brandDrawerClose" aria-label="Chiudi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="drawer-body">
+        <form id="brandForm" style="display:flex;flex-direction:column;gap:20px">
+            <div class="form-group">
+                <label class="form-label" for="bfName">Nome marchio <span style="color:var(--red)">*</span></label>
+                <input class="form-input" type="text" id="bfName" required placeholder="es. Volkswagen">
+            </div>
+            <div>
+                <label class="form-label" style="display:block;margin-bottom:10px">Tipi veicolo <span style="color:var(--red)">*</span></label>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bfType" value="autovettura">
+                        <span class="form-check-label">
+                            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--blue);margin-right:6px;vertical-align:middle"></span>
+                            Autovettura
+                        </span>
+                    </label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bfType" value="motoveicolo">
+                        <span class="form-check-label">
+                            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--amber);margin-right:6px;vertical-align:middle"></span>
+                            Motoveicolo
+                        </span>
+                    </label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bfType" value="autocarro">
+                        <span class="form-check-label">
+                            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--indigo);margin-right:6px;vertical-align:middle"></span>
+                            Autocarro
+                        </span>
+                    </label>
+                    <label class="form-check">
+                        <input class="form-check-input" type="checkbox" name="bfType" value="autocaravan">
+                        <span class="form-check-label">
+                            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green);margin-right:6px;vertical-align:middle"></span>
+                            Autocaravan
+                        </span>
+                    </label>
+                </div>
+            </div>
+            <div id="brandFormError" class="login-error"></div>
+        </form>
+    </div>
+    <div class="drawer-footer" style="justify-content:space-between">
+        <button type="button" class="btn btn-outline" id="brandDrawerDelete" style="color:var(--red);border-color:var(--red);display:none">Elimina</button>
+        <div style="display:flex;gap:10px">
+            <button type="button" class="btn btn-outline" id="brandDrawerCancel">Annulla</button>
+            <button type="submit" form="brandForm" class="btn btn-primary">Salva</button>
+        </div>
+    </div>
+</aside>
 
 <!-- Detail modal -->
 <div class="detail-overlay" id="detailOverlay">
@@ -349,31 +422,207 @@ function statusLabel(s) {
     return { pending:'In attesa', approved:'Approvata', rejected:'Rifiutata' }[s] ?? s;
 }
 
-// ── Tabs ──────────────────────────────────────────────────────────────────────
+// ── Navigazione sidebar ───────────────────────────────────────────────────────
+
+function showSection(section) {
+    ['regPanel', 'opPanel', 'utilityPanel'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    document.querySelectorAll('.nav-item[data-section]').forEach(el => el.classList.remove('active'));
+    const tabsBar = document.getElementById('tabsBar');
+
+    if (section === 'iscrizioni') {
+        tabsBar.style.display = '';
+        document.getElementById('regPanel').style.display = '';
+        document.getElementById('navIscrizioni').classList.add('active');
+        document.getElementById('pageTitle').textContent  = 'Iscrizioni';
+        const firstTab = tabsBar.querySelector('.tab');
+        tabsBar.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        if (firstTab) { firstTab.classList.add('active'); currentStatus = firstTab.dataset.status; }
+        loadRegistrations(currentStatus);
+    } else if (section === 'operatori') {
+        tabsBar.style.display = 'none';
+        document.getElementById('opPanel').style.display = '';
+        document.getElementById('navOperatori').classList.add('active');
+        document.getElementById('pageTitle').textContent = 'Operatori attivi';
+        loadOperators();
+    } else if (section === 'utility') {
+        tabsBar.style.display = 'none';
+        document.getElementById('utilityPanel').style.display = '';
+        document.getElementById('navUtility').classList.add('active');
+        document.getElementById('pageTitle').textContent      = 'Marchi veicoli';
+        loadBrands();
+    }
+}
+
+// ── Tab bar (Iscrizioni) ──────────────────────────────────────────────────────
 
 document.querySelectorAll('.tab').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         btn.classList.add('active');
-        const status = btn.dataset.status;
-        if (status === 'operators') {
-            document.getElementById('regPanel').style.display  = 'none';
-            document.getElementById('opPanel').style.display   = '';
-            document.getElementById('pageTitle').textContent   = 'Operatori attivi';
-            loadOperators();
-        } else {
-            currentStatus = status;
-            document.getElementById('regPanel').style.display  = '';
-            document.getElementById('opPanel').style.display   = 'none';
-            document.getElementById('pageTitle').textContent   = 'Richieste di iscrizione';
-            loadRegistrations(status);
-        }
+        currentStatus = btn.dataset.status;
+        loadRegistrations(currentStatus);
     });
 });
 
+// ── Brands CRUD ───────────────────────────────────────────────────────────────
+
+const VT_CFG = {
+    autovettura: { label: 'Autovettura', color: 'var(--blue)',   bg: 'var(--blue-bg)'   },
+    motoveicolo: { label: 'Motoveicolo', color: 'var(--amber)',  bg: 'var(--amber-bg)'  },
+    autocarro:   { label: 'Autocarro',   color: 'var(--indigo)', bg: 'var(--indigo-bg)' },
+    autocaravan: { label: 'Autocaravan', color: 'var(--green)',  bg: 'var(--green-bg)'  },
+};
+
+let allBrands     = [];
+let currentBrandId = null;
+
+function vtBadge(vt) {
+    const c = VT_CFG[vt] ?? { label: vt, color: 'var(--text-mid)', bg: 'var(--surface2)' };
+    return `<span style="background:${c.bg};color:${c.color};border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600">${c.label}</span>`;
+}
+
+async function loadBrands() {
+    const tbody   = document.getElementById('brandsTableBody');
+    const countEl = document.getElementById('brandsCount');
+    if (!tbody) return;
+    try {
+        allBrands = await apiFetch('/api/superadmin/brands');
+        renderBrandsTable();
+        if (countEl) countEl.textContent = `${allBrands.length} marchi totali`;
+    } catch {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--red);padding:32px">Errore caricamento.</td></tr>';
+    }
+}
+
+function renderBrandsTable() {
+    const tbody      = document.getElementById('brandsTableBody');
+    const search     = (document.getElementById('brandSearch')?.value ?? '').toLowerCase();
+    const typeFilter = document.getElementById('brandTypeFilter')?.value ?? '';
+
+    const filtered = allBrands.filter(b => {
+        const nameOk = !search || b.name.toLowerCase().includes(search);
+        const typeOk = !typeFilter || (b.vehicleTypes ?? []).includes(typeFilter);
+        return nameOk && typeOk;
+    });
+
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-light);padding:32px">Nessun marchio trovato.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = filtered.map(b => `
+        <tr>
+            <td style="font-weight:600">${esc(b.name)}</td>
+            <td style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding-top:10px">
+                ${(b.vehicleTypes ?? []).map(vtBadge).join('') || '<span style="color:var(--text-light);font-size:12px">—</span>'}
+            </td>
+            <td class="td-actions">
+                <button class="btn btn-outline btn-sm" data-brand-edit="${b.id}">Modifica</button>
+            </td>
+        </tr>`).join('');
+    tbody.querySelectorAll('[data-brand-edit]').forEach(btn =>
+        btn.addEventListener('click', () => openBrandDrawer(btn.dataset.brandEdit)));
+}
+
+function openBrandDrawer(brandId = null) {
+    currentBrandId = brandId;
+    const title   = document.getElementById('brandDrawerTitle');
+    const delBtn  = document.getElementById('brandDrawerDelete');
+    const errEl   = document.getElementById('brandFormError');
+    document.getElementById('brandForm')?.reset();
+    if (errEl) errEl.classList.remove('show');
+    if (title)  title.textContent    = brandId ? 'Modifica marchio' : 'Aggiungi marchio';
+    if (delBtn) delBtn.style.display = brandId ? '' : 'none';
+
+    if (brandId) {
+        const brand = allBrands.find(b => b.id === brandId);
+        if (brand) {
+            document.getElementById('bfName').value = brand.name;
+            document.querySelectorAll('input[name="bfType"]').forEach(cb => {
+                cb.checked = (brand.vehicleTypes ?? []).includes(cb.value);
+            });
+        }
+    }
+    document.getElementById('brandDrawerOverlay')?.classList.add('open');
+    document.getElementById('brandDrawer')?.classList.add('open');
+}
+
+function closeBrandDrawer() {
+    document.getElementById('brandDrawerOverlay')?.classList.remove('open');
+    document.getElementById('brandDrawer')?.classList.remove('open');
+    currentBrandId = null;
+}
+
+async function saveBrand(e) {
+    e.preventDefault();
+    const errEl = document.getElementById('brandFormError');
+    errEl.classList.remove('show');
+
+    const name  = document.getElementById('bfName')?.value.trim() ?? '';
+    const types = [...document.querySelectorAll('input[name="bfType"]:checked')].map(cb => cb.value);
+
+    if (!name)         { errEl.textContent = 'Il nome è obbligatorio.';        errEl.classList.add('show'); return; }
+    if (!types.length) { errEl.textContent = 'Seleziona almeno un tipo.';      errEl.classList.add('show'); return; }
+
+    try {
+        const payload = { name, vehicleTypes: types };
+        if (currentBrandId) {
+            await apiFetch(`/api/superadmin/brands/${currentBrandId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            showToast('Marchio aggiornato.', 'success');
+        } else {
+            await apiFetch('/api/superadmin/brands', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            showToast('Marchio creato.', 'success');
+        }
+        closeBrandDrawer();
+        loadBrands();
+    } catch (err) {
+        errEl.textContent = err.message || 'Errore salvataggio.';
+        errEl.classList.add('show');
+    }
+}
+
+async function deleteBrand() {
+    if (!currentBrandId) return;
+    const brand = allBrands.find(b => b.id === currentBrandId);
+    if (!confirm(`Eliminare il marchio "${brand?.name ?? ''}"? L'operazione non è reversibile.`)) return;
+    try {
+        await apiFetch(`/api/superadmin/brands/${currentBrandId}`, { method: 'DELETE' });
+        showToast('Marchio eliminato.', 'success');
+        closeBrandDrawer();
+        loadBrands();
+    } catch (err) {
+        showToast(err.message || 'Errore eliminazione.', 'error');
+    }
+}
+
+// ── Nav sidebar click ─────────────────────────────────────────────────────────
+
+document.querySelectorAll('.nav-item[data-section]').forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); showSection(el.dataset.section); });
+});
+
+document.getElementById('addBrandBtn')        ?.addEventListener('click',  () => openBrandDrawer());
+document.getElementById('brandDrawerClose')   ?.addEventListener('click',  closeBrandDrawer);
+document.getElementById('brandDrawerCancel')  ?.addEventListener('click',  closeBrandDrawer);
+document.getElementById('brandDrawerOverlay') ?.addEventListener('click',  closeBrandDrawer);
+document.getElementById('brandDrawerDelete')  ?.addEventListener('click',  deleteBrand);
+document.getElementById('brandForm')          ?.addEventListener('submit', saveBrand);
+
+let bDebounce;
+document.getElementById('brandSearch')?.addEventListener('input', () => {
+    clearTimeout(bDebounce); bDebounce = setTimeout(renderBrandsTable, 200);
+});
+document.getElementById('brandTypeFilter')?.addEventListener('change', renderBrandsTable);
+
 document.addEventListener('DOMContentLoaded', () => {
     loadStats();
-    loadRegistrations('pending');
+    showSection('operatori');
 });
 </script>
 </body>

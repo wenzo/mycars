@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -8,72 +8,7 @@
 </head>
 <body>
 
-<div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-<aside class="sidebar" id="sidebar" role="navigation" aria-label="Menu principale">
-    <div class="sidebar-brand">
-        <svg width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-            <rect width="40" height="40" rx="8" fill="var(--red)"/>
-            <path d="M8 26 L14 14 L20 22 L26 14 L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="20" cy="12" r="3" fill="#fff"/>
-        </svg>
-        <span class="sidebar-brand-name">MyCars</span>
-        <span class="sidebar-brand-sub">Admin</span>
-    </div>
-    <nav class="sidebar-nav">
-        <a class="nav-item" data-page="index.html" href="/admin/index.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            Dashboard
-        </a>
-        <a class="nav-item" data-page="veicoli.html" href="/admin/veicoli.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2m-4 0H9m4 0v2a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1v-2m4 0H9"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>
-            Veicoli
-        </a>
-        <a class="nav-item" data-page="news.html" href="/admin/news.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-            News &amp; Promozioni
-        </a>
-        <a class="nav-item" data-page="lead.html" href="/admin/lead.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Lead &amp; Richieste
-            <span class="nav-badge" id="leadBadge"></span>
-        </a>
-        <a class="nav-item" data-page="test-drive.html" href="/admin/test-drive.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Test Drive
-            <span class="nav-badge nav-badge-red" id="testDriveBadge"></span>
-        </a>
-        <a class="nav-item" data-page="push.html" href="/admin/push.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            Notifiche Push
-        </a>
-        <div class="nav-divider"></div>
-        <a class="nav-item" data-page="sedi.html" href="/admin/sedi.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            Sedi &amp; Reparti
-        </a>
-        <div class="nav-divider"></div>
-        <a class="nav-item" data-page="impostazioni.html" href="/admin/impostazioni.html">
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Impostazioni
-        </a>
-        <form method="post" action="/api/admin/logout" style="margin-top:auto">
-            <button type="submit" class="nav-item nav-item-logout" style="width:100%;background:none;border:none;cursor:pointer;text-align:left">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Esci
-            </button>
-        </form>
-    </nav>
-    <div class="sidebar-footer">
-        <div class="sidebar-user">
-            <div class="sidebar-user-avatar">A</div>
-            <div class="sidebar-user-info">
-                <span class="sidebar-user-name">admin</span>
-                <span class="sidebar-user-role">Amministratore</span>
-            </div>
-        </div>
-    </div>
-</aside>
+<script src="/assets/js/layout-admin.js"></script>
 
 <div class="main-wrapper">
     <header class="topbar">
@@ -85,83 +20,296 @@
     </header>
     <main class="content">
 
-        <!-- Cambio password -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Accesso admin</h2>
-            </div>
-            <div class="card-body">
-                <form id="changePasswordForm" style="max-width:480px;display:flex;flex-direction:column;gap:16px">
+        <!-- Riga 1: Anagrafica + Dati fiscali -->
+        <div class="two-col" style="align-items:start">
+
+            <!-- Anagrafica -->
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Anagrafica aziendale</h2></div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
                     <div class="form-group">
-                        <label class="form-label" for="currentPassword">Password attuale</label>
-                        <input class="form-input" type="password" id="currentPassword" name="currentPassword" required autocomplete="current-password">
+                        <label class="form-label" for="pBusinessName">Ragione sociale <span style="color:var(--red)">*</span></label>
+                        <input class="form-input" type="text" id="pBusinessName" placeholder="es. Rossi Auto S.r.l.">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="pPhone">Telefono</label>
+                            <input class="form-input" type="tel" id="pPhone" placeholder="es. 02 1234567">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pWhatsapp">WhatsApp</label>
+                            <input class="form-input" type="tel" id="pWhatsapp" placeholder="es. +39 333 1234567">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="newPassword">Nuova password</label>
-                        <input class="form-input" type="password" id="newPassword" name="newPassword" required autocomplete="new-password" minlength="8">
+                        <label class="form-label" for="pEmail">Email</label>
+                        <input class="form-input" type="email" id="pEmail" placeholder="info@esempio.it">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="confirmPassword">Conferma nuova password</label>
-                        <input class="form-input" type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" minlength="8">
+                        <label class="form-label" for="pWebsite">Sito web</label>
+                        <input class="form-input" type="url" id="pWebsite" placeholder="https://www.esempio.it">
                     </div>
-                    <div id="pwdError" class="login-error"></div>
                     <div>
-                        <button type="submit" class="btn btn-primary">Aggiorna password</button>
+                        <button class="btn btn-primary btn-sm" id="saveAnagraficaBtn">Salva anagrafica</button>
                     </div>
-                </form>
+                </div>
             </div>
+
+            <!-- Dati fiscali -->
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Dati fiscali</h2></div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+                    <div class="form-group">
+                        <label class="form-label" for="pVat">Partita IVA</label>
+                        <input class="form-input" type="text" id="pVat" placeholder="es. 12345678901" maxlength="11">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pFiscal">Codice fiscale</label>
+                        <input class="form-input" type="text" id="pFiscal" placeholder="es. RSSMRA80A01H501Z" maxlength="16">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pRea">Numero REA</label>
+                        <input class="form-input" type="text" id="pRea" placeholder="es. MI-1234567">
+                    </div>
+                    <div>
+                        <button class="btn btn-primary btn-sm" id="saveFiscaleBtn">Salva dati fiscali</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Info sistema -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">Informazioni sistema</h2>
+        <!-- Riga 2: Localizzazione + Branding -->
+        <div class="two-col" style="align-items:start;margin-top:0">
+
+            <!-- Sede legale + coordinate -->
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">Sede legale</h2>
+                        <p style="font-size:12px;color:var(--text-light);margin-top:2px">Indirizzo registrato dell'azienda. Per le sedi operative vai a <a href="/admin/sedi.html" style="color:var(--blue)">Sedi &amp; Reparti</a>.</p>
+                    </div>
+                </div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+                    <div class="form-group">
+                        <label class="form-label" for="pAddress">Indirizzo</label>
+                        <input class="form-input" type="text" id="pAddress" placeholder="es. Via Roma 1">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="pZip">CAP</label>
+                            <input class="form-input" type="text" id="pZip" placeholder="es. 20121" maxlength="10">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pCity">Città</label>
+                            <input class="form-input" type="text" id="pCity" placeholder="es. Milano">
+                        </div>
+                        <div class="form-group" style="max-width:90px">
+                            <label class="form-label" for="pProvince">Prov.</label>
+                            <input class="form-input" type="text" id="pProvince" placeholder="MI" maxlength="4" style="text-transform:uppercase">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="form-section-title" style="margin-bottom:8px">Coordinate geografiche</div>
+                        <div class="form-row" style="align-items:flex-end">
+                            <div class="form-group">
+                                <label class="form-label" for="pLat">Latitudine</label>
+                                <input class="form-input" type="number" id="pLat" step="any" placeholder="es. 45.4654219">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="pLng">Longitudine</label>
+                                <input class="form-input" type="number" id="pLng" step="any" placeholder="es. 9.1859243">
+                            </div>
+                            <div style="padding-bottom:1px">
+                                <button type="button" class="btn btn-outline btn-sm" id="geocodeBtn" title="Ottieni coordinate dall'indirizzo">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
+                                    Geocodifica
+                                </button>
+                            </div>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-light);margin-top:4px">Usa <em>Geocodifica</em> per ottenere le coordinate automaticamente dall'indirizzo inserito.</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary btn-sm" id="saveLocalizzazioneBtn">Salva localizzazione</button>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <table style="width:auto;border-collapse:collapse">
-                    <tbody>
-                        <tr>
-                            <td style="padding:6px 24px 6px 0;color:var(--text-light);font-size:13px;white-space:nowrap">Versione app</td>
-                            <td style="padding:6px 0;font-size:13px;font-weight:600">MyCars 1.0</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:6px 24px 6px 0;color:var(--text-light);font-size:13px">Database</td>
-                            <td style="padding:6px 0;font-size:13px;font-weight:600">Supabase (REST)</td>
-                        </tr>
-                        <tr>
-                            <td style="padding:6px 24px 6px 0;color:var(--text-light);font-size:13px">Endpoint hash</td>
-                            <td style="padding:6px 0;font-size:13px">
-                                <a href="/api/admin/hash?password=test" target="_blank" style="color:var(--blue);text-decoration:underline">/api/admin/hash</a>
-                                <span style="color:var(--text-light);font-size:12px"> (solo Development)</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+
+            <!-- Branding -->
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Branding e colori</h2></div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+                    <div class="form-group">
+                        <label class="form-label" for="pColorPrimary">Colore primario</label>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <input type="color" id="pColorPrimary" style="width:44px;height:38px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;padding:2px">
+                            <input class="form-input" type="text" id="pColorPrimaryText" maxlength="7" placeholder="#1E3A5F"
+                                   style="flex:1" oninput="syncColor('pColorPrimary','pColorPrimaryText')">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pColorSecondary">Colore secondario</label>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <input type="color" id="pColorSecondary" style="width:44px;height:38px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;padding:2px">
+                            <input class="form-input" type="text" id="pColorSecondaryText" maxlength="7" placeholder="#2A4D73"
+                                   style="flex:1" oninput="syncColor('pColorSecondary','pColorSecondaryText')">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="pColorAccent">Colore accento</label>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <input type="color" id="pColorAccent" style="width:44px;height:38px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;padding:2px">
+                            <input class="form-input" type="text" id="pColorAccentText" maxlength="7" placeholder="#D62828"
+                                   style="flex:1" oninput="syncColor('pColorAccent','pColorAccentText')">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <div style="flex:1;height:32px;border-radius:var(--r-sm)" id="colorPreviewPrimary"></div>
+                        <div style="flex:1;height:32px;border-radius:var(--r-sm)" id="colorPreviewSecondary"></div>
+                        <div style="flex:1;height:32px;border-radius:var(--r-sm)" id="colorPreviewAccent"></div>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary btn-sm" id="saveBrandingBtn">Salva branding</button>
+                    </div>
+                </div>
             </div>
+
+        </div>
+
+        <!-- Riga 3: Immagini aziendali -->
+        <div class="two-col" style="align-items:start;margin-top:0">
+
+            <!-- Logo -->
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Logo aziendale</h2></div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+                    <div class="img-cover-area" id="logoArea" style="aspect-ratio:3/1;max-height:120px">
+                        <img id="logoImg" src="" alt="" style="display:none;object-fit:contain;background:var(--surface)">
+                        <div class="img-cover-placeholder" id="logoPlaceholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--text-light)" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span style="color:var(--text-light);font-size:13px">Nessun logo</span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button type="button" class="btn btn-outline btn-sm" id="logoUploadBtn">Carica logo</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="logoRemoveBtn" style="display:none;color:var(--red);border-color:var(--red)">Rimuovi</button>
+                    </div>
+                    <p style="font-size:12px;color:var(--text-light)">Formato consigliato: PNG/WebP con sfondo trasparente. Max 2 MB.</p>
+                    <input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display:none">
+                </div>
+            </div>
+
+            <!-- Copertina -->
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Immagine di copertina</h2></div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+                    <div class="img-cover-area" id="coverArea">
+                        <img id="coverImg" src="" alt="" style="display:none">
+                        <div class="img-cover-placeholder" id="coverPlaceholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--text-light)" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span style="color:var(--text-light);font-size:13px">Nessuna copertina</span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button type="button" class="btn btn-outline btn-sm" id="coverUploadBtn">Carica copertina</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="coverRemoveBtn" style="display:none;color:var(--red);border-color:var(--red)">Rimuovi</button>
+                    </div>
+                    <p style="font-size:12px;color:var(--text-light)">Dimensioni consigliate: 1280×400 px. Max 5 MB.</p>
+                    <input type="file" id="coverInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Riga 4: Accesso admin + Info sistema -->
+        <div class="two-col" style="align-items:start;margin-top:0">
+
+            <!-- Cambio password -->
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Accesso admin</h2></div>
+                <div class="card-body">
+                    <form id="changePasswordForm" style="display:flex;flex-direction:column;gap:14px">
+                        <div class="form-group">
+                            <label class="form-label" for="currentPassword">Password attuale</label>
+                            <input class="form-input" type="password" id="currentPassword" autocomplete="current-password">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="newPassword">Nuova password</label>
+                            <input class="form-input" type="password" id="newPassword" autocomplete="new-password" minlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="confirmPassword">Conferma nuova password</label>
+                            <input class="form-input" type="password" id="confirmPassword" autocomplete="new-password" minlength="8">
+                        </div>
+                        <div id="pwdError" class="login-error"></div>
+                        <div>
+                            <button type="submit" class="btn btn-primary btn-sm">Aggiorna password</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info sistema -->
+            <div class="card">
+                <div class="card-header"><h2 class="card-title">Informazioni sistema</h2></div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+                    <table style="width:100%;border-collapse:collapse">
+                        <tbody>
+                            <tr>
+                                <td style="padding:7px 20px 7px 0;color:var(--text-light);font-size:13px;white-space:nowrap">Versione app</td>
+                                <td style="padding:7px 0;font-size:13px;font-weight:600">MyCars 1.0</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 20px 7px 0;color:var(--text-light);font-size:13px">Database</td>
+                                <td style="padding:7px 0;font-size:13px;font-weight:600">Supabase (REST)</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:7px 20px 7px 0;color:var(--text-light);font-size:13px">Endpoint hash</td>
+                                <td style="padding:7px 0;font-size:13px">
+                                    <a href="/api/admin/hash?password=test" target="_blank" style="color:var(--blue);text-decoration:underline">/api/admin/hash</a>
+                                    <span style="color:var(--text-light);font-size:12px;display:block">Solo Development</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
 
     </main>
 </div>
 
 <script src="/assets/js/admin.js"></script>
+<script src="/assets/js/impostazioni.js"></script>
 <script>
-(function () {
-    const form   = document.getElementById('changePasswordForm');
-    const errBox = document.getElementById('pwdError');
-
-    form?.addEventListener('submit', async e => {
-        e.preventDefault();
-        errBox.classList.remove('show');
-        const newPwd  = document.getElementById('newPassword').value;
-        const confPwd = document.getElementById('confirmPassword').value;
-        if (newPwd !== confPwd) {
-            errBox.textContent = 'Le password non coincidono.';
-            errBox.classList.add('show');
-            return;
+function syncColor(colorId, textId) {
+    const val = document.getElementById(textId)?.value;
+    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        const el = document.getElementById(colorId);
+        if (el) el.value = val;
+        updateColorPreviews();
+    }
+}
+function updateColorPreviews() {
+    const pairs = [
+        ['pColorPrimary',   'colorPreviewPrimary',   'pColorPrimaryText'],
+        ['pColorSecondary', 'colorPreviewSecondary',  'pColorSecondaryText'],
+        ['pColorAccent',    'colorPreviewAccent',     'pColorAccentText'],
+    ];
+    pairs.forEach(([colorId, previewId, textId]) => {
+        const val = document.getElementById(colorId)?.value;
+        if (val) {
+            const el = document.getElementById(previewId);
+            if (el) el.style.background = val;
+            const tx = document.getElementById(textId);
+            if (tx && tx.value !== val) tx.value = val;
         }
-        showToast('Funzionalità disponibile prossimamente.', 'error');
     });
-})();
+}
+['pColorPrimary','pColorSecondary','pColorAccent'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateColorPreviews);
+});
 </script>
 </body>
 </html>
