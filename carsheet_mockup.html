@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyCars — Mockup App v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1E3A5F;
+  --navy-dark:#152B47;
+  --navy-mid:#2A4D73;
+  --blue:#2E75B6;
+  --blue-light:#4A8FCC;
+  --red:#D62828;
+  --red-light:#E84040;
+  --green:#00A86B;
+  --green-bg:#E6F7F1;
+  --amber:#FF8C00;
+  --amber-bg:#FFF4E5;
+  --surface:#F4F7FB;
+  --surface2:#EBF1F8;
+  --white:#FFFFFF;
+  --text:#0F1C2E;
+  --text-mid:#4A5A72;
+  --text-light:#8A9BB8;
+  --border:#D4E0EF;
+  --shadow:0 4px 24px rgba(30,58,95,.10);
+  --shadow-sm:0 2px 8px rgba(30,58,95,.08);
+  --r:14px;
+  --r-sm:10px;
+  --r-pill:50px;
+}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:linear-gradient(135deg,#0F1C2E 0%,#1E3A5F 50%,#152B47 100%);
+  min-height:100vh;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:40px 20px;
+  gap:40px;
+  flex-wrap:wrap;
+}
+
+/* ── PHONE FRAME ── */
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}
+.phone-label{
+  font-family:'Outfit',sans-serif;
+  font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:rgba(255,255,255,.45);
+}
+.phone{
+  width:375px;height:812px;
+  background:var(--surface);
+  border-radius:50px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:
+    0 0 0 10px #1a1a1a,
+    0 0 0 11px #2a2a2a,
+    0 32px 80px rgba(0,0,0,.55),
+    0 8px 32px rgba(0,0,0,.3);
+}
+.phone::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:120px;height:34px;
+  background:#1a1a1a;
+  border-radius:0 0 22px 22px;z-index:200;
+}
+.phone::after{
+  content:'';position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  width:120px;height:4px;
+  background:rgba(255,255,255,.18);
+  border-radius:2px;z-index:200;
+}
+
+/* ── SCREEN ── */
+.screen{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s;
+  background:var(--surface);
+}
+.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
+.screen.slide-left{transform:translateX(-100%);opacity:0;pointer-events:none}
+
+/* ── STATUS BAR ── */
+.status-bar{
+  height:50px;padding:16px 24px 0;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+  position:relative;z-index:10;
+}
+.status-bar.light{background:var(--navy)}
+.status-bar.light .status-time,.status-bar.light .status-icons{color:#fff}
+.status-bar.transparent-dark{background:transparent;position:absolute;top:0;left:0;right:0;z-index:30}
+.status-bar.transparent-dark .status-time,.status-bar.transparent-dark .status-icons{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.status-time{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700}
+.status-icons{font-size:13px;display:flex;gap:6px;align-items:center}
+
+/* ══════════════════════ SCREEN 1: LISTA VEICOLI ══════════════════════ */
+#s-lista .screen-header{
+  background:var(--navy);
+  padding:10px 20px 20px;
+  flex-shrink:0;
+}
+.dealer-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;
+}
+.dealer-logo{display:flex;align-items:center;gap:10px}
+.logo-icon{
+  width:38px;height:38px;background:var(--red);border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-icon svg{width:22px;height:22px;fill:#fff}
+.dealer-name{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:#fff}
+.dealer-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:1px}
+.header-actions{display:flex;gap:8px}
+.hbtn{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.hbtn svg{width:18px;height:18px;stroke:#fff;fill:none}
+
+/* Tipo switcher */
+.tipo-switcher{display:flex;gap:7px;margin-bottom:14px}
+.tipo-btn{
+  flex:1;height:38px;border:none;cursor:pointer;
+  border-radius:var(--r-sm);font-family:'Outfit',sans-serif;
+  font-size:10.5px;font-weight:600;letter-spacing:.02em;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.tipo-btn svg{width:15px;height:15px;fill:currentColor}
+.tipo-btn.active{background:var(--red);color:#fff}
+.tipo-btn.inactive{background:rgba(255,255,255,.12);color:rgba(255,255,255,.65)}
+
+/* Searchbar */
+.search-row{display:flex;gap:8px;align-items:center}
+.search-box{
+  flex:1;height:42px;background:rgba(255,255,255,.14);
+  border:1.5px solid rgba(255,255,255,.18);border-radius:var(--r-sm);
+  display:flex;align-items:center;gap:8px;padding:0 12px;cursor:text;
+}
+.search-box svg{width:16px;height:16px;stroke:rgba(255,255,255,.6);fill:none;flex-shrink:0}
+.search-box span{font-size:13.5px;color:rgba(255,255,255,.5)}
+.search-adv-btn{
+  height:42px;padding:0 14px;background:var(--red);
+  border:none;border-radius:var(--r-sm);cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;
+  color:#fff;white-space:nowrap;display:flex;align-items:center;gap:5px;
+}
+.search-adv-btn svg{width:14px;height:14px;stroke:#fff;fill:none}
+
+/* Stats bar */
+.stats-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px 6px;flex-shrink:0;
+}
+.stats-count{font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:var(--text-mid)}
+.stats-count span{color:var(--navy);font-weight:700}
+.layout-toggle{display:flex;gap:4px}
+.ltbtn{
+  width:30px;height:30px;border:none;cursor:pointer;border-radius:8px;
+  background:transparent;display:flex;align-items:center;justify-content:center;
+}
+.ltbtn.active{background:var(--navy)}
+.ltbtn.active svg{stroke:#fff}
+.ltbtn svg{width:16px;height:16px;stroke:var(--text-light);fill:none}
+
+/* Vehicle grid */
+.veicoli-scroll{
+  flex:1;overflow-y:auto;padding:0 12px 80px;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  align-content:start;
+}
+.veicoli-scroll::-webkit-scrollbar{width:0}
+
+.vcard{
+  background:#fff;border-radius:var(--r);
+  overflow:hidden;cursor:pointer;
+  box-shadow:var(--shadow-sm);
+  animation:cardIn .4s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.vcard-img{
+  position:relative;height:110px;overflow:hidden;
+  background:linear-gradient(135deg,var(--surface2),var(--surface));
+}
+.vcard-img img{width:100%;height:100%;object-fit:cover}
+.car-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.car-placeholder svg{width:64px;height:48px;opacity:.18}
+
+/* Badges */
+.vcard-badge{
+  position:absolute;top:7px;left:7px;
+  padding:3px 7px;border-radius:20px;
+  font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.03em;
+}
+.badge-usato{background:rgba(255,255,255,.9);color:var(--text-mid)}
+.badge-nuovo{background:var(--navy);color:#fff}
+.badge-km0{background:#1DB954;color:#fff}
+.badge-venduto{background:#888;color:#fff}
+.badge-nuovo-arrivo{
+  position:absolute;top:7px;right:7px;left:auto;
+  background:linear-gradient(135deg,var(--amber),#FFB300);
+  color:#fff;
+  box-shadow:0 2px 6px rgba(255,140,0,.35);
+}
+
+.vcard-body{padding:9px 10px 11px}
+.vcard-marca{font-size:10px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.vcard-modello{font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:6px}
+.vcard-specs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px}
+.vcard-spec{font-size:10px;color:var(--text-mid);background:var(--surface);padding:2px 6px;border-radius:5px}
+.vcard-spec.pc{background:var(--green-bg);color:#00774A;font-weight:700}
+.vcard-price{font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;color:var(--navy)}
+.vcard-price-sub{font-size:9px;color:var(--text-light);font-weight:400}
+
+/* Bottom nav */
+.bottom-nav{
+  height:72px;background:#fff;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-around;
+  flex-shrink:0;padding-bottom:14px;
+  position:relative;z-index:10;
+}
+.bnav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;padding:4px 10px;border-radius:12px;
+}
+.bnav-item svg{width:22px;height:22px;stroke:var(--text-light);fill:none}
+.bnav-item span{font-size:10px;color:var(--text-light);font-weight:500}
+.bnav-item.active svg{stroke:var(--navy)}
+.bnav-item.active span{color:var(--navy);font-weight:700}
+.bnav-dot{width:4px;height:4px;border-radius:50%;background:var(--navy);margin-top:-2px}
+
+/* ══════════════════════ SCREEN 2: RICERCA AVANZATA ══════════════════════ */
+#s-ricerca{background:var(--surface)}
+.ricerca-header{background:var(--navy);padding:10px 20px 18px;flex-shrink:0}
+.back-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.back-btn{
+  width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.back-btn svg{width:18px;height:18px;stroke:#fff;fill:none}
+.ricerca-title{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:#fff}
+.ricerca-subtitle{font-size:12px;color:rgba(255,255,255,.55)}
+
+.tipo-tabs{display:flex;gap:6px}
+.tipo-tab{
+  height:34px;padding:0 12px;border:none;cursor:pointer;
+  border-radius:var(--r-pill);font-family:'Outfit',sans-serif;
+  font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:4px;
+}
+.tipo-tab.active{background:#fff;color:var(--navy)}
+.tipo-tab.inactive{background:rgba(255,255,255,.14);color:rgba(255,255,255,.7)}
+.tipo-tab svg{width:13px;height:13px;fill:currentColor}
+
+.filter-scroll{flex:1;overflow-y:auto;padding:14px 16px 0;display:flex;flex-direction:column;gap:6px}
+.filter-scroll::-webkit-scrollbar{width:0}
+.filter-section{background:#fff;border-radius:var(--r);padding:4px 0;box-shadow:var(--shadow-sm)}
+.frow{
+  display:flex;align-items:center;padding:13px 16px;
+  border-bottom:1px solid var(--surface);cursor:pointer;gap:12px;
+}
+.frow:last-child{border-bottom:none}
+.frow-label{font-size:14px;font-weight:500;color:var(--text);flex:1}
+.frow-value{font-size:13px;color:var(--text-light);display:flex;align-items:center;gap:6px}
+.frow-value.selected{color:var(--navy);font-weight:600}
+.frow-value svg{width:14px;height:14px;stroke:var(--border);fill:none}
+.frow-icon{
+  width:28px;height:28px;border-radius:8px;background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.frow-icon svg{width:14px;height:14px;stroke:var(--blue);fill:none}
+.frow-icon.green svg{stroke:var(--green)}
+.frow-icon.amber svg{stroke:var(--amber)}
+
+/* Slider */
+.frow-slider{flex-direction:column;align-items:flex-start;gap:10px}
+.frow-slider .frow-top{width:100%;display:flex;align-items:center;gap:12px}
+.slider-track{width:100%;height:4px;background:var(--border);border-radius:2px;position:relative;cursor:pointer}
+.slider-fill{height:100%;background:var(--navy);border-radius:2px;position:absolute;left:0}
+.slider-thumb{
+  width:18px;height:18px;background:#fff;border:2.5px solid var(--navy);
+  border-radius:50%;position:absolute;top:-7px;
+  transform:translateX(-50%);cursor:grab;
+  box-shadow:0 2px 6px rgba(30,58,95,.2);
+}
+.slider-val{font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap;min-width:60px;text-align:right}
+
+/* Toggle */
+.toggle{
+  width:44px;height:26px;background:var(--border);border-radius:13px;
+  position:relative;cursor:pointer;flex-shrink:0;border:none;
+  transition:background .25s;
+}
+.toggle.on{background:var(--navy)}
+.toggle.green-on.on{background:var(--green)}
+.toggle.amber-on.on{background:var(--amber)}
+.toggle::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:20px;height:20px;background:#fff;border-radius:50%;
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.toggle.on::after{transform:translateX(18px)}
+
+/* CTA bar */
+.cta-bar{
+  padding:12px 16px 22px;background:#fff;
+  border-top:1px solid var(--border);flex-shrink:0;
+  display:flex;gap:10px;
+}
+.btn-reset{
+  height:48px;padding:0 18px;border:2px solid var(--border);
+  background:transparent;border-radius:var(--r-sm);cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;
+  color:var(--text-mid);
+}
+.btn-cerca{
+  flex:1;height:48px;background:var(--navy);border:none;
+  border-radius:var(--r-sm);cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;
+  color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-cerca svg{width:18px;height:18px;stroke:#fff;fill:none}
+.result-count{background:rgba(255,255,255,.2);border-radius:20px;padding:2px 8px;font-size:12px}
+
+/* Overlay sheet */
+.overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.45);
+  z-index:50;display:flex;align-items:flex-end;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.overlay.show{opacity:1;pointer-events:all}
+.sheet{
+  background:#fff;border-radius:24px 24px 0 0;
+  width:100%;padding:0 0 20px;
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+.overlay.show .sheet{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 8px}
+.sheet-title{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--text);padding:4px 20px 12px;border-bottom:1px solid var(--surface)}
+.sheet-option{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer}
+.sheet-option span{font-size:14px;color:var(--text);font-weight:500}
+.sheet-option .check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sheet-option.selected .check{background:var(--navy);border-color:var(--navy)}
+.sheet-option.selected .check::after{content:'';width:6px;height:10px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translateY(-1px);display:block}
+.sheet-option.selected span{color:var(--navy);font-weight:700}
+
+/* ══════════════════════ SCREEN 3: DETTAGLIO VEICOLO ══════════════════════ */
+#s-detail{background:var(--surface)}
+
+.detail-img-area{
+  position:relative;
+  height:252px;
+  background:linear-gradient(150deg,#0F1C2E 0%,#1a2744 55%,#243558 100%);
+  flex-shrink:0;
+  overflow:hidden;
+}
+.detail-car-svg{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  opacity:.9;
+}
+.detail-topbar{
+  position:absolute;top:50px;left:0;right:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px;
+  z-index:20;
+}
+.detail-action-btn{
+  width:36px;height:36px;
+  background:rgba(0,0,0,.38);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.detail-action-btn svg{width:18px;height:18px;stroke:#fff;fill:none}
+.detail-topbar-right{display:flex;gap:8px}
+
+.detail-img-badges{
+  position:absolute;
+  bottom:14px;left:14px;right:14px;
+  display:flex;justify-content:space-between;align-items:center;
+  z-index:15;
+}
+.badge-na{
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(135deg,#FF8C00,#FFB300);
+  color:#fff;padding:6px 13px;border-radius:22px;
+  font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:.04em;text-transform:uppercase;
+  box-shadow:0 3px 14px rgba(255,140,0,.45);
+}
+.badge-na svg{width:13px;height:13px;fill:#fff}
+.badge-pc{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--green);
+  color:#fff;padding:5px 11px;border-radius:18px;
+  font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.03em;text-transform:uppercase;
+}
+.badge-pc svg{width:12px;height:12px;stroke:#fff;fill:none}
+
+.detail-scroll{
+  flex:1;overflow-y:auto;padding-bottom:88px;
+}
+.detail-scroll::-webkit-scrollbar{width:0}
+
+.detail-info-card{
+  background:#fff;
+  margin:-22px 16px 0;
+  border-radius:18px;
+  padding:16px 18px 14px;
+  box-shadow:0 6px 28px rgba(30,58,95,.13);
+  position:relative;z-index:5;
+}
+.detail-brand{font-size:11.5px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+.detail-model{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;color:var(--text);line-height:1.1;margin-bottom:3px}
+.detail-version{font-size:13px;color:var(--text-mid);margin-bottom:13px}
+.detail-price-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.detail-price{font-family:'Outfit',sans-serif;font-size:28px;font-weight:800;color:var(--navy)}
+.detail-price-old{font-family:'Outfit',sans-serif;font-size:14px;color:var(--text-light);text-decoration:line-through}
+.detail-discount{
+  background:#FFF0F0;color:var(--red);
+  font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;
+  padding:3px 8px;border-radius:10px;
+}
+
+.detail-specs-row{
+  display:flex;gap:8px;padding:10px 16px;
+  overflow-x:auto;flex-shrink:0;
+}
+.detail-specs-row::-webkit-scrollbar{height:0}
+.dspec{
+  display:flex;align-items:center;gap:5px;
+  background:#fff;border:1.5px solid var(--border);
+  border-radius:22px;padding:6px 12px;
+  white-space:nowrap;flex-shrink:0;
+}
+.dspec svg{width:13px;height:13px;stroke:var(--blue);fill:none;flex-shrink:0}
+.dspec span{font-size:12px;font-weight:600;color:var(--text-mid)}
+
+.detail-section{
+  margin:6px 16px;
+  background:#fff;
+  border-radius:var(--r);
+  padding:14px 16px;
+  box-shadow:var(--shadow-sm);
+}
+.detail-section-title{
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:var(--text);
+  margin-bottom:10px;display:flex;align-items:center;gap:7px;
+}
+.detail-section-title svg{width:15px;height:15px;stroke:var(--blue);fill:none}
+
+.equip-wrap{display:flex;flex-wrap:wrap;gap:7px}
+.equip-chip{
+  display:flex;align-items:center;gap:4px;
+  background:var(--surface2);border-radius:8px;
+  padding:5px 10px;font-size:12px;color:var(--text-mid);font-weight:500;
+}
+.equip-chip svg{width:11px;height:11px;stroke:var(--blue);fill:none;flex-shrink:0}
+.equip-more{
+  background:var(--navy);color:#fff;
+  font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;
+  padding:5px 10px;border-radius:8px;
+}
+
+.detail-desc{font-size:13px;color:var(--text-mid);line-height:1.65}
+
+.detail-branch-card{
+  margin:6px 16px;
+  background:#fff;
+  border-radius:var(--r);
+  padding:12px 16px;
+  box-shadow:var(--shadow-sm);
+  display:flex;align-items:center;gap:12px;
+}
+.branch-icon-wrap{
+  width:38px;height:38px;border-radius:10px;
+  background:#FFF0F0;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.branch-icon-wrap svg{width:18px;height:18px;stroke:var(--red);fill:none}
+.branch-info-text{flex:1}
+.branch-name{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.branch-sub{font-size:12px;color:var(--text-light)}
+.branch-dir-btn{
+  display:flex;align-items:center;gap:4px;
+  background:var(--surface2);border:none;border-radius:8px;
+  padding:6px 10px;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;color:var(--blue);
+}
+.branch-dir-btn svg{width:12px;height:12px;stroke:var(--blue);fill:none}
+
+/* Detail CTA bar */
+.detail-cta-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  background:#fff;
+  border-top:1px solid var(--border);
+  padding:12px 16px 28px;
+  display:flex;gap:10px;
+  z-index:30;
+}
+.btn-contact{
+  height:52px;padding:0 16px;
+  border:2px solid var(--navy);background:transparent;
+  border-radius:var(--r-sm);cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:700;
+  color:var(--navy);display:flex;align-items:center;justify-content:center;gap:7px;
+  white-space:nowrap;flex-shrink:0;
+}
+.btn-contact svg{width:16px;height:16px;stroke:var(--navy);fill:none}
+.btn-testdrive{
+  flex:1;height:52px;
+  background:var(--red);border:none;
+  border-radius:var(--r-sm);cursor:pointer;
+  font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:700;
+  color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 4px 18px rgba(214,40,40,.38);
+  letter-spacing:.01em;
+}
+.btn-testdrive svg{width:18px;height:18px;stroke:#fff;fill:none}
+
+/* ══════════════════════ SCREEN 4: NEWS ══════════════════════ */
+#s-news{background:var(--surface)}
+.news-header{background:var(--navy);padding:10px 20px 16px;flex-shrink:0}
+.news-filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;margin-top:14px}
+.news-filter-row::-webkit-scrollbar{height:0}
+.nfbtn{height:32px;padding:0 13px;border:none;cursor:pointer;border-radius:var(--r-pill);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.nfbtn.active{background:#fff;color:var(--navy)}
+.nfbtn.inactive{background:rgba(255,255,255,.14);color:rgba(255,255,255,.7)}
+.news-scroll{flex:1;overflow-y:auto;padding:14px 16px 80px;display:flex;flex-direction:column;gap:12px}
+.news-scroll::-webkit-scrollbar{width:0}
+.ncard{background:#fff;border-radius:var(--r);overflow:hidden;cursor:pointer;box-shadow:var(--shadow-sm)}
+.ncard-img{height:130px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ncard-img-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.12}
+.ncard-img-inner svg{width:80px;height:80px}
+.ncard-type{position:absolute;top:10px;left:10px;padding:4px 10px;border-radius:20px;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ntype-nuovo-arrivo{background:linear-gradient(135deg,#FF8C00,#FFB300);color:#fff}
+.ntype-promo{background:var(--red);color:#fff}
+.ntype-evento{background:var(--blue);color:#fff}
+.ntype-finanziamento{background:var(--green);color:#fff}
+.ntype-service{background:#6B7280;color:#fff}
+.ntype-generic{background:var(--navy);color:#fff}
+.ncard-body{padding:12px 14px 14px}
+.ncard-title{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:5px}
+.ncard-excerpt{font-size:12.5px;color:var(--text-mid);line-height:1.5;margin-bottom:10px}
+.ncard-footer{display:flex;align-items:center;justify-content:space-between}
+.ncard-date{font-size:11px;color:var(--text-light)}
+.ncard-more{font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:var(--blue);display:flex;align-items:center;gap:4px}
+.ncard-more svg{width:12px;height:12px;stroke:var(--blue);fill:none}
+
+/* ══════════════════════ SCREEN 5: CONTATTI ══════════════════════ */
+#s-contatti{background:var(--surface)}
+.contatti-header{background:var(--navy);padding:10px 20px 20px;flex-shrink:0}
+.contatti-scroll{flex:1;overflow-y:auto;padding:14px 16px 80px;display:flex;flex-direction:column;gap:12px}
+.contatti-scroll::-webkit-scrollbar{width:0}
+.map-placeholder{height:148px;border-radius:var(--r);background:linear-gradient(135deg,#c0d4e8,#9ab5ce);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.map-placeholder::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,255,255,.22) 28px,rgba(255,255,255,.22) 29px),repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,255,255,.22) 28px,rgba(255,255,255,.22) 29px)}
+.map-pin{width:38px;height:38px;background:var(--red);border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 4px 14px rgba(214,40,40,.4);display:flex;align-items:center;justify-content:center;position:relative;z-index:2}
+.map-pin svg{transform:rotate(45deg);width:17px;height:17px;fill:#fff}
+.map-open-btn{position:absolute;bottom:10px;right:10px;z-index:3;background:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:5px;box-shadow:var(--shadow-sm)}
+.map-open-btn svg{width:13px;height:13px;stroke:var(--navy);fill:none}
+.branch-card{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm)}
+.branch-card-header{background:var(--navy);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.branch-card-hinfo .bch-title{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:#fff}
+.branch-card-hinfo .bch-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+.branch-badge{background:rgba(255,255,255,.18);color:#fff;font-family:'Outfit',sans-serif;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px}
+.branch-card-body{padding:14px 16px 6px}
+.cinfo-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:11px}
+.cinfo-icon{width:28px;height:28px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.cinfo-icon svg{width:13px;height:13px;stroke:var(--blue);fill:none}
+.cinfo-icon.red svg{stroke:var(--red)}
+.cinfo-icon.green svg{stroke:var(--green)}
+.cinfo-text{flex:1;font-size:13px;color:var(--text-mid);line-height:1.4}
+.cinfo-text strong{color:var(--text);font-weight:600;display:block;font-size:13.5px}
+.contact-btns{display:flex;gap:8px;padding:4px 16px 14px}
+.cbtn{flex:1;height:42px;border-radius:var(--r-sm);border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
+.cbtn svg{width:15px;height:15px;fill:none}
+.cbtn-call{background:var(--navy);color:#fff}.cbtn-call svg{stroke:#fff}
+.cbtn-wa{background:#25D366;color:#fff}.cbtn-wa svg{stroke:#fff}
+.cbtn-mail{background:var(--surface2);color:var(--text-mid)}.cbtn-mail svg{stroke:var(--text-mid)}
+.dept-divider{border-top:1px solid var(--surface);margin:0 16px}
+.dept-row{padding:10px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;border-bottom:1px solid var(--surface)}
+.dept-row:last-child{border-bottom:none}
+.dept-dot{width:8px;height:8px;border-radius:50%;background:var(--blue-light);flex-shrink:0}
+.dept-name{font-size:13px;font-weight:600;color:var(--text);flex:1}
+.dept-contact{font-size:11px;color:var(--text-light)}
+
+/* ══════════════════════ SCREEN 6: IMPOSTAZIONI ══════════════════════ */
+#s-settings{background:var(--surface)}
+.settings-header{background:var(--surface);border-bottom:1px solid var(--border);padding:58px 20px 14px;flex-shrink:0}
+.settings-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;color:var(--text)}
+.settings-scroll{flex:1;overflow-y:auto;padding:14px 16px 32px;display:flex;flex-direction:column;gap:8px}
+.settings-scroll::-webkit-scrollbar{width:0}
+.settings-section-label{font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.08em;padding:4px 4px 2px}
+.settings-card{background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm)}
+.push-banner{background:linear-gradient(135deg,var(--navy),var(--navy-mid));border-radius:var(--r);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;box-shadow:var(--shadow)}
+.push-banner-icon{width:38px;height:38px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.push-banner-icon svg{width:18px;height:18px;stroke:#fff;fill:none}
+.push-banner-body{flex:1}
+.push-banner-title{font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:4px}
+.push-banner-sub{font-size:11.5px;color:rgba(255,255,255,.65);line-height:1.4;margin-bottom:10px}
+.push-allow-btn{height:32px;padding:0 14px;background:#fff;border:none;border-radius:20px;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;color:var(--navy)}
+.dealer-chip{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--surface)}
+.dealer-chip:last-of-type{border-bottom:none}
+.dealer-chip-logo{width:40px;height:40px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dealer-chip-logo svg{width:20px;height:20px;fill:#fff}
+.dealer-chip-info{flex:1}
+.dealer-chip-name{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.dealer-chip-code{display:inline-flex;align-items:center;gap:4px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:700;color:var(--blue);background:var(--surface2);padding:2px 8px;border-radius:6px}
+.dealer-chip-remove{width:28px;height:28px;border-radius:50%;background:var(--surface);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dealer-chip-remove svg{width:14px;height:14px;stroke:var(--text-light);fill:none}
+.code-input-wrap{padding:12px 16px 14px;display:flex;flex-direction:column;gap:9px}
+.code-input-label{font-size:12px;color:var(--text-mid);font-weight:500}
+.code-input-row{display:flex;gap:8px}
+.code-input{flex:1;height:44px;border:2px solid var(--border);border-radius:var(--r-sm);padding:0 14px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:var(--text);background:#fff;letter-spacing:.1em;text-transform:uppercase;outline:none}
+.code-input:focus{border-color:var(--navy)}
+.qr-btn{width:44px;height:44px;border-radius:var(--r-sm);background:var(--navy);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qr-btn svg{width:20px;height:20px;stroke:#fff;fill:none}
+.code-submit-btn{height:44px;background:var(--red);border:none;border-radius:var(--r-sm);cursor:pointer;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 3px 12px rgba(214,40,40,.28)}
+.code-submit-btn svg{width:16px;height:16px;stroke:#fff;fill:none}
+.srow{display:flex;align-items:center;padding:13px 16px;gap:12px;border-bottom:1px solid var(--surface);cursor:pointer}
+.srow:last-child{border-bottom:none}
+.srow-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.srow-icon svg{width:16px;height:16px;fill:none}
+.srow-icon.navy{background:#E8EEF5}.srow-icon.navy svg{stroke:var(--navy)}
+.srow-icon.green{background:var(--green-bg)}.srow-icon.green svg{stroke:var(--green)}
+.srow-icon.amber{background:var(--amber-bg)}.srow-icon.amber svg{stroke:var(--amber)}
+.srow-icon.red{background:#FFF0F0}.srow-icon.red svg{stroke:var(--red)}
+.srow-icon.gray{background:var(--surface2)}.srow-icon.gray svg{stroke:var(--text-light)}
+.srow-info{flex:1}
+.srow-label{font-size:14px;font-weight:500;color:var(--text)}
+.srow-sub{font-size:11px;color:var(--text-light);margin-top:1px;line-height:1.35}
+.srow-arrow{display:flex;align-items:center}
+.srow-arrow svg{width:14px;height:14px;stroke:var(--border);fill:none}
+.app-version{text-align:center;font-size:12px;color:var(--text-light);padding:10px 0 4px}
+</style>
+</head>
+<body>
+
+<!-- ═══════ PHONE 1: LISTA VEICOLI ═══════ -->
+<div class="phone-wrap">
+  <div class="phone-label">Vetrina Veicoli</div>
+  <div class="phone">
+    <div class="screen" id="s-lista">
+
+      <div class="status-bar light">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="1" width="3" height="11" rx="1"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="15" height="12" viewBox="0 0 15 12" fill="none" stroke="white" stroke-width="1.5"><path d="M7.5 3C9.7 3 11.7 3.9 13.1 5.3M1.9 5.3C3.3 3.9 5.3 3 7.5 3"/><path d="M10.3 7.1C9.4 6.2 8.1 5.7 7.5 5.7M4.7 7.1C5.6 6.2 6.9 5.7 8 5.7"/><circle cx="7.5" cy="10" r="1.2" fill="white"/></svg>
+          🔋
+        </div>
+      </div>
+
+      <div class="screen-header">
+        <div class="dealer-bar">
+          <div class="dealer-logo">
+            <div class="logo-icon">
+              <svg viewBox="0 0 24 24"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+            </div>
+            <div>
+              <div class="dealer-name">Pirro Auto</div>
+              <div class="dealer-sub">Cerignola (FG)</div>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="hbtn">
+              <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+            </button>
+            <button class="hbtn">
+              <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="tipo-switcher">
+          <button class="tipo-btn active" onclick="switchTipo(this)">
+            <svg viewBox="0 0 20 14"><path d="M2 8l1.2-3.6A1.5 1.5 0 014.7 3h10.6a1.5 1.5 0 011.4 1.1L18 8v4.5a.5.5 0 01-.5.5h-.5a.5.5 0 01-.5-.5V12H3.5v.5a.5.5 0 01-.5.5H2.5a.5.5 0 01-.5-.5V8z"/><circle cx="5.5" cy="11" r="1.5"/><circle cx="14.5" cy="11" r="1.5"/></svg>
+            Auto
+          </button>
+          <button class="tipo-btn inactive" onclick="switchTipo(this)">
+            <svg viewBox="0 0 20 16"><ellipse cx="10" cy="9" rx="3.5" ry="5" transform="rotate(-5 10 9)"/><path d="M6.5 9c-2 .5-4.5 2-4.5 5h16c0-3-2.5-4.5-4.5-5"/><circle cx="5" cy="14" r="1.5"/><circle cx="15" cy="14" r="1.5"/></svg>
+            Moto
+          </button>
+          <button class="tipo-btn inactive" onclick="switchTipo(this)">
+            <svg viewBox="0 0 22 14"><rect x="1" y="5" width="20" height="8" rx="1.5"/><rect x="12" y="2" width="8" height="6" rx="1"/><circle cx="5" cy="13" r="1.5"/><circle cx="17" cy="13" r="1.5"/></svg>
+            Truck
+          </button>
+          <button class="tipo-btn inactive" onclick="switchTipo(this)">
+            <svg viewBox="0 0 22 14"><rect x="1" y="3" width="20" height="10" rx="2"/><rect x="2" y="5" width="8" height="4" rx="1" fill="rgba(255,255,255,.4)"/><circle cx="5" cy="13" r="1.5"/><circle cx="17" cy="13" r="1.5"/></svg>
+            Caravan
+          </button>
+        </div>
+
+        <div class="search-row">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <span>Cerca marca, modello...</span>
+          </div>
+          <button class="search-adv-btn" onclick="goToRicerca()">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-7.54L22 3z"/></svg>
+            Filtra
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-bar">
+        <div class="stats-count"><span>10</span> veicoli</div>
+        <div class="layout-toggle">
+          <button class="ltbtn active">
+            <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </button>
+          <button class="ltbtn">
+            <svg viewBox="0 0 24 24" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="veicoli-scroll" id="veicoli-grid"></div>
+
+      <div class="bottom-nav">
+        <div class="bnav-item active">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+          <span>Vetrina</span>
+          <div class="bnav-dot"></div>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span>News</span>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Contatti</span>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+          <span>Impostazioni</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PHONE 2: RICERCA AVANZATA ═══════ -->
+<div class="phone-wrap">
+  <div class="phone-label">Ricerca Avanzata</div>
+  <div class="phone">
+    <div class="screen" id="s-ricerca">
+
+      <div class="status-bar light">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="1" width="3" height="11" rx="1"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          🔋
+        </div>
+      </div>
+
+      <div class="ricerca-header">
+        <div class="back-row">
+          <button class="back-btn" onclick="goBack()">
+            <svg viewBox="0 0 24 24" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>
+          <div>
+            <div class="ricerca-title">Ricerca Avanzata</div>
+            <div class="ricerca-subtitle">Filtra il catalogo</div>
+          </div>
+        </div>
+        <div class="tipo-tabs">
+          <button class="tipo-tab active" onclick="switchTab(this)">
+            <svg viewBox="0 0 20 14" fill="currentColor"><path d="M2 8l1.2-3.6A1.5 1.5 0 014.7 3h10.6a1.5 1.5 0 011.4 1.1L18 8v4.5a.5.5 0 01-.5.5h-.5a.5.5 0 01-.5-.5V12H3.5v.5a.5.5 0 01-.5.5H2.5a.5.5 0 01-.5-.5V8z"/><circle cx="5.5" cy="11" r="1.5"/><circle cx="14.5" cy="11" r="1.5"/></svg>
+            Auto
+          </button>
+          <button class="tipo-tab inactive" onclick="switchTab(this)">
+            <svg viewBox="0 0 20 16" fill="currentColor"><ellipse cx="10" cy="9" rx="3.5" ry="5" transform="rotate(-5 10 9)"/></svg>
+            Moto
+          </button>
+          <button class="tipo-tab inactive" onclick="switchTab(this)">
+            <svg viewBox="0 0 22 14" fill="currentColor"><rect x="1" y="5" width="20" height="8" rx="1.5"/></svg>
+            Autocarro
+          </button>
+          <button class="tipo-tab inactive" onclick="switchTab(this)">
+            <svg viewBox="0 0 22 14" fill="currentColor"><rect x="1" y="3" width="20" height="10" rx="2"/></svg>
+            Caravan
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-scroll">
+
+        <!-- Stato / Marca / Modello / Alimentazione / Uso -->
+        <div class="filter-section">
+          <div class="frow" onclick="openSheet('stato')">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+            <span class="frow-label">Stato</span>
+            <div class="frow-value selected" id="val-stato">Qualunque <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="frow" onclick="openSheet('marca')">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 12l2.5 2.5L16 9"/></svg></div>
+            <span class="frow-label">Marca</span>
+            <div class="frow-value" id="val-marca">— <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="frow" onclick="openSheet('modello')">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg></div>
+            <span class="frow-label">Modello</span>
+            <div class="frow-value" id="val-modello">— <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="frow" onclick="openSheet('alimentazione')">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+            <span class="frow-label">Alimentazione</span>
+            <div class="frow-value" id="val-alim">Qualunque <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="frow" onclick="openSheet('uso')">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+            <span class="frow-label">Uso</span>
+            <div class="frow-value" id="val-uso">Qualunque <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+
+        <!-- Sliders -->
+        <div class="filter-section">
+          <div class="frow frow-slider">
+            <div class="frow-top">
+              <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+              <span class="frow-label">Max chilometri</span>
+              <div class="slider-val" id="val-km">200.000</div>
+            </div>
+            <div class="slider-track" style="width:calc(100% - 10px)">
+              <div class="slider-fill" id="fill-km" style="width:100%"></div>
+              <div class="slider-thumb" id="thumb-km" style="left:100%" data-id="km" data-max="200000"></div>
+            </div>
+          </div>
+          <div class="frow frow-slider">
+            <div class="frow-top">
+              <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+              <span class="frow-label">Max anno</span>
+              <div class="slider-val" id="val-anno">2025</div>
+            </div>
+            <div class="slider-track" style="width:calc(100% - 10px)">
+              <div class="slider-fill" id="fill-anno" style="width:100%"></div>
+              <div class="slider-thumb" id="thumb-anno" style="left:100%" data-id="anno" data-min="2005" data-max="2025"></div>
+            </div>
+          </div>
+          <div class="frow frow-slider">
+            <div class="frow-top">
+              <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg></div>
+              <span class="frow-label">Max prezzo</span>
+              <div class="slider-val" id="val-prezzo">€ 50.000</div>
+            </div>
+            <div class="slider-track" style="width:calc(100% - 10px)">
+              <div class="slider-fill" id="fill-prezzo" style="width:42%"></div>
+              <div class="slider-thumb" id="thumb-prezzo" style="left:42%" data-id="prezzo" data-max="120000"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cambio -->
+        <div class="filter-section">
+          <div class="frow" onclick="openSheet('cambio')">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><circle cx="12" cy="7" r="2"/><path d="M7 15V7M17 15v-2M12 9v3"/></svg></div>
+            <span class="frow-label">Cambio</span>
+            <div class="frow-value" id="val-cambio">Qualunque <svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="filter-section">
+          <div class="frow">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M9 14l-4-4 4-4M20 20v-7a4 4 0 00-4-4H5"/></svg></div>
+            <span class="frow-label">IVA deducibile</span>
+            <button class="toggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="frow">
+            <div class="frow-icon green"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+            <span class="frow-label">Pronta consegna</span>
+            <button class="toggle green-on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="frow">
+            <div class="frow-icon amber"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+            <span class="frow-label">Solo nuovi arrivi</span>
+            <button class="toggle amber-on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="frow">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <span class="frow-label">Incidentata</span>
+            <button class="toggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="frow">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+            <span class="frow-label">Importata</span>
+            <button class="toggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="frow">
+            <div class="frow-icon"><svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M17 18a2 2 0 100-4 2 2 0 000 4zM7 18a2 2 0 100-4 2 2 0 000 4z"/><path d="M5 18V9l2-5h10l2 5v9"/><path d="M9 14h6"/></svg></div>
+            <span class="frow-label">Adattata portatori H</span>
+            <button class="toggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+        </div>
+        <div style="height:8px"></div>
+      </div>
+
+      <div class="cta-bar">
+        <button class="btn-reset" onclick="resetFiltri()">Azzera</button>
+        <button class="btn-cerca" onclick="goBack()">
+          <svg viewBox="0 0 24 24" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          Cerca veicoli
+          <span class="result-count">8</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="closeSheet(event)">
+      <div class="sheet" id="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="sheet-title">Seleziona</div>
+        <div id="sheet-options"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PHONE 3: DETTAGLIO VEICOLO ═══════ -->
+<div class="phone-wrap">
+  <div class="phone-label">Dettaglio Veicolo</div>
+  <div class="phone">
+    <div class="screen" id="s-detail">
+
+      <!-- Status bar overlaid on image -->
+      <div class="status-bar transparent-dark">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="1" width="3" height="11" rx="1"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          🔋
+        </div>
+      </div>
+
+      <!-- Hero image -->
+      <div class="detail-img-area">
+        <!-- Gradient overlay for readability -->
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.35) 0%,transparent 40%,transparent 60%,rgba(0,0,0,.4) 100%);z-index:5"></div>
+
+        <!-- Car SVG placeholder -->
+        <div class="detail-car-svg">
+          <svg viewBox="0 0 300 160" width="300" height="160" opacity=".75">
+            <defs>
+              <linearGradient id="cg1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#8B0000"/>
+                <stop offset="100%" stop-color="#C41E3A"/>
+              </linearGradient>
+            </defs>
+            <!-- Body -->
+            <path d="M30 95 L50 55 Q60 40 75 38 L165 36 Q185 36 200 46 L250 68 L270 95 L270 115 Q270 118 267 118 L255 118 Q252 118 252 115 L252 110 L48 110 L48 115 Q48 118 45 118 L33 118 Q30 118 30 115 Z" fill="url(#cg1)"/>
+            <!-- Windows -->
+            <path d="M80 38 L73 75 L160 75 L160 38 Z" fill="rgba(200,230,255,0.45)" rx="2"/>
+            <path d="M163 38 L163 75 L220 75 L248 70 L235 46 Z" fill="rgba(200,230,255,0.35)"/>
+            <!-- Door lines -->
+            <line x1="158" y1="38" x2="158" y2="108" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/>
+            <!-- Wheels -->
+            <circle cx="80" cy="112" r="22" fill="#1a1a1a"/>
+            <circle cx="80" cy="112" r="14" fill="#333"/>
+            <circle cx="80" cy="112" r="6" fill="#888"/>
+            <circle cx="222" cy="112" r="22" fill="#1a1a1a"/>
+            <circle cx="222" cy="112" r="14" fill="#333"/>
+            <circle cx="222" cy="112" r="6" fill="#888"/>
+            <!-- Headlights -->
+            <path d="M251 70 L262 80 L262 90 L250 90 Z" fill="rgba(255,220,100,.55)"/>
+            <path d="M38 85 L30 88 L30 100 L40 100 Z" fill="rgba(255,220,100,.4)"/>
+            <!-- Roof rack -->
+            <rect x="85" y="33" width="120" height="5" rx="2" fill="rgba(80,80,80,.6)"/>
+            <!-- Logo placeholder -->
+            <circle cx="150" cy="36" r="5" fill="rgba(255,255,255,.8)"/>
+          </svg>
+        </div>
+
+        <!-- Topbar buttons -->
+        <div class="detail-topbar">
+          <button class="detail-action-btn">
+            <svg viewBox="0 0 24 24" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>
+          <div class="detail-topbar-right">
+            <button class="detail-action-btn">
+              <svg viewBox="0 0 24 24" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+            </button>
+            <button class="detail-action-btn">
+              <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Badges at bottom of image -->
+        <div class="detail-img-badges">
+          <span class="badge-na">
+            <svg viewBox="0 0 20 20"><path d="M10 1l2.63 5.32 5.87.85-4.25 4.14 1 5.85L10 14.63l-5.25 2.53 1-5.85L1.5 7.17l5.87-.85L10 1z"/></svg>
+            Nuovo Arrivo
+          </span>
+          <span class="badge-pc">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Pronta Consegna
+          </span>
+        </div>
+      </div>
+
+      <!-- Scrollable content -->
+      <div class="detail-scroll">
+
+        <!-- Info card (overlaps image) -->
+        <div class="detail-info-card">
+          <div class="detail-brand">Alfa Romeo</div>
+          <div class="detail-model">Tonale Speciale</div>
+          <div class="detail-version">1.5 T-Hybrid 160 CV · AT6 · MY 2022</div>
+          <div class="detail-price-row">
+            <div class="detail-price">€ 43.000</div>
+            <div class="detail-price-old">€ 47.500</div>
+            <div class="detail-discount">−9%</div>
+          </div>
+        </div>
+
+        <!-- Spec chips -->
+        <div class="detail-specs-row">
+          <div class="dspec">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Diesel</span>
+          </div>
+          <div class="dspec">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span>5.500 km</span>
+          </div>
+          <div class="dspec">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+            <span>2022</span>
+          </div>
+          <div class="dspec">
+            <svg viewBox="0 0 24 24"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+            <span>SUV</span>
+          </div>
+          <div class="dspec">
+            <svg viewBox="0 0 24 24"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><circle cx="12" cy="7" r="2"/><path d="M7 15V7M17 15v-2M12 9v3"/></svg>
+            <span>Automatico</span>
+          </div>
+          <div class="dspec">
+            <svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 100 16 8 8 0 000-16z"/><path d="M12 6v6l3 3"/></svg>
+            <span>160 CV</span>
+          </div>
+        </div>
+
+        <!-- Branch info -->
+        <div class="detail-branch-card">
+          <div class="branch-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="branch-info-text">
+            <div class="branch-name">Cerignola (FG)</div>
+            <div class="branch-sub">Sede principale · Reparto Vendite</div>
+          </div>
+          <button class="branch-dir-btn">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Mappa
+          </button>
+        </div>
+
+        <!-- Dotazioni -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+            Dotazioni
+          </div>
+          <div class="equip-wrap">
+            <div class="equip-chip">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+              Cerchi da 18"
+            </div>
+            <div class="equip-chip">
+              <svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+              Navigatore
+            </div>
+            <div class="equip-chip">
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              Telecamera
+            </div>
+            <div class="equip-chip">
+              <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              Apple CarPlay
+            </div>
+            <div class="equip-chip">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Sensori parcheggio
+            </div>
+            <div class="equip-more">+12 optional</div>
+          </div>
+        </div>
+
+        <!-- Descrizione -->
+        <div class="detail-section">
+          <div class="detail-section-title">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Descrizione
+          </div>
+          <div class="detail-desc">
+            Alfa Romeo Tonale Speciale 1.5 T-Hybrid 160 CV in ottime condizioni, solo 5.500 km. Primo proprietario, tagliandi eseguiti presso officina autorizzata. Colore Rosso Alfa, interni in pelle nera. Disponibile per pronta consegna.
+          </div>
+        </div>
+
+        <div style="height:6px"></div>
+      </div>
+
+      <!-- Fixed CTA bar -->
+      <div class="detail-cta-bar">
+        <button class="btn-contact">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+          Contatta
+        </button>
+        <button class="btn-testdrive">
+          <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Prenota Test Drive
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PHONE 4: NEWS ═══════ -->
+<div class="phone-wrap">
+  <div class="phone-label">News & Promozioni</div>
+  <div class="phone">
+    <div class="screen" id="s-news">
+
+      <div class="status-bar light">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="1" width="3" height="11" rx="1"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          🔋
+        </div>
+      </div>
+
+      <div class="news-header">
+        <div class="dealer-bar">
+          <div class="dealer-logo">
+            <div class="logo-icon">
+              <svg viewBox="0 0 24 24"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+            </div>
+            <div>
+              <div class="dealer-name">Pirro Auto</div>
+              <div class="dealer-sub">News & Comunicazioni</div>
+            </div>
+          </div>
+          <button class="hbtn">
+            <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          </button>
+        </div>
+        <div class="news-filter-row">
+          <button class="nfbtn active" onclick="switchNews(this)">Tutte</button>
+          <button class="nfbtn inactive" onclick="switchNews(this)">✦ Nuovi Arrivi</button>
+          <button class="nfbtn inactive" onclick="switchNews(this)">% Promozioni</button>
+          <button class="nfbtn inactive" onclick="switchNews(this)">🗓 Eventi</button>
+          <button class="nfbtn inactive" onclick="switchNews(this)">💰 Finanziamenti</button>
+          <button class="nfbtn inactive" onclick="switchNews(this)">🔧 Service</button>
+        </div>
+      </div>
+
+      <div class="news-scroll">
+
+        <!-- Card 1: Nuovo Arrivo -->
+        <div class="ncard">
+          <div class="ncard-img" style="background:linear-gradient(135deg,#700000,#B01020)">
+            <div class="ncard-img-inner">
+              <svg viewBox="0 0 64 40" fill="white"><path d="M4 24l5-13a4 4 0 013.8-3h38.4a4 4 0 013.8 3l5 13v10a2 2 0 01-2 2H6a2 2 0 01-2-2v-10z"/><circle cx="14" cy="33" r="5"/><circle cx="50" cy="33" r="5"/></svg>
+            </div>
+            <span class="ncard-type ntype-nuovo-arrivo">✦ Nuovo Arrivo</span>
+          </div>
+          <div class="ncard-body">
+            <div class="ncard-title">Alfa Romeo Tonale: il nostro nuovo arrivo</div>
+            <div class="ncard-excerpt">Scopri il Tonale Speciale 1.5 T-Hybrid appena entrato in stock. Pronta consegna, condizioni vantaggiose.</div>
+            <div class="ncard-footer">
+              <span class="ncard-date">27 mag 2026</span>
+              <span class="ncard-more">Scopri <svg viewBox="0 0 24 24" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Promozione -->
+        <div class="ncard">
+          <div class="ncard-img" style="background:linear-gradient(135deg,#8B1010,var(--red))">
+            <div class="ncard-img-inner">
+              <svg viewBox="0 0 24 24" fill="white"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <span class="ncard-type ntype-promo">% Promozione</span>
+          </div>
+          <div class="ncard-body">
+            <div class="ncard-title">Maggio in Offerta: fino al 15% di sconto</div>
+            <div class="ncard-excerpt">Occasioni selezionate su usato e KM 0. Finanziamento incluso. Approfittane entro fine mese.</div>
+            <div class="ncard-footer">
+              <span class="ncard-date">15 mag 2026</span>
+              <span class="ncard-more">Scopri <svg viewBox="0 0 24 24" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Evento -->
+        <div class="ncard">
+          <div class="ncard-img" style="background:linear-gradient(135deg,#0D3B6E,var(--blue))">
+            <div class="ncard-img-inner">
+              <svg viewBox="0 0 24 24" fill="white"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+            </div>
+            <span class="ncard-type ntype-evento">🗓 Evento</span>
+          </div>
+          <div class="ncard-body">
+            <div class="ncard-title">Motor Show Cerignola — 14 giugno</div>
+            <div class="ncard-excerpt">Vieni a trovarci alla fiera. Test drive gratuiti, prezzi speciali riservati ai visitatori.</div>
+            <div class="ncard-footer">
+              <span class="ncard-date">3 giu 2026</span>
+              <span class="ncard-more">Scopri <svg viewBox="0 0 24 24" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Finanziamento -->
+        <div class="ncard">
+          <div class="ncard-img" style="background:linear-gradient(135deg,#005C35,var(--green))">
+            <div class="ncard-img-inner">
+              <svg viewBox="0 0 24 24" fill="white"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>
+            </div>
+            <span class="ncard-type ntype-finanziamento">💰 Finanziamento</span>
+          </div>
+          <div class="ncard-body">
+            <div class="ncard-title">Tasso al 2,9%: acquista adesso, paghi dopo</div>
+            <div class="ncard-excerpt">Finanziamento agevolato su modelli selezionati. Prima rata dopo 90 giorni, zero spese di istruttoria.</div>
+            <div class="ncard-footer">
+              <span class="ncard-date">1 mag 2026</span>
+              <span class="ncard-more">Scopri <svg viewBox="0 0 24 24" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="bottom-nav">
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+          <span>Vetrina</span>
+        </div>
+        <div class="bnav-item active">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span>News</span>
+          <div class="bnav-dot"></div>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Contatti</span>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+          <span>Impostazioni</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PHONE 5: CONTATTI ═══════ -->
+<div class="phone-wrap">
+  <div class="phone-label">Contatti</div>
+  <div class="phone">
+    <div class="screen" id="s-contatti">
+
+      <div class="status-bar light">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="1" width="3" height="11" rx="1"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          🔋
+        </div>
+      </div>
+
+      <div class="contatti-header">
+        <div class="dealer-bar">
+          <div class="dealer-logo">
+            <div class="logo-icon">
+              <svg viewBox="0 0 24 24"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+            </div>
+            <div>
+              <div class="dealer-name">Pirro Auto</div>
+              <div class="dealer-sub">Cerignola (FG) · P.IVA 03296880713</div>
+            </div>
+          </div>
+          <button class="hbtn">
+            <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="contatti-scroll">
+
+        <!-- Map -->
+        <div class="map-placeholder">
+          <div class="map-pin">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="10" r="4"/></svg>
+          </div>
+          <button class="map-open-btn">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/></svg>
+            Apri in Maps
+          </button>
+        </div>
+
+        <!-- Sede principale -->
+        <div class="branch-card">
+          <div class="branch-card-header">
+            <div class="branch-card-hinfo">
+              <div class="bch-title">Sede Principale</div>
+              <div class="bch-sub">Via Roma 12, Cerignola (FG) 71042</div>
+            </div>
+            <span class="branch-badge">PRINCIPALE</span>
+          </div>
+          <div class="branch-card-body">
+            <div class="cinfo-row">
+              <div class="cinfo-icon red">
+                <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+              </div>
+              <div class="cinfo-text">
+                <strong>+39 0885 421 890</strong>
+                Lun – Sab, 9:00 – 13:00 / 15:30 – 19:30
+              </div>
+            </div>
+            <div class="cinfo-row">
+              <div class="cinfo-icon green">
+                <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+              </div>
+              <div class="cinfo-text">
+                <strong>WhatsApp</strong>
+                +39 340 123 4567 — risposta entro 1 ora
+              </div>
+            </div>
+            <div class="cinfo-row">
+              <div class="cinfo-icon">
+                <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <div class="cinfo-text">
+                <strong>info@pirroauto.it</strong>
+                Risposta entro 24 ore lavorative
+              </div>
+            </div>
+            <div class="cinfo-row">
+              <div class="cinfo-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+              <div class="cinfo-text">
+                <strong>Orari</strong>
+                Lun–Ven 9:00–19:30 · Sab 9:00–13:00 · Dom chiuso
+              </div>
+            </div>
+          </div>
+          <div class="contact-btns">
+            <button class="cbtn cbtn-call">
+              <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 .18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
+              Chiama
+            </button>
+            <button class="cbtn cbtn-wa">
+              <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+              WhatsApp
+            </button>
+            <button class="cbtn cbtn-mail">
+              <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Email
+            </button>
+          </div>
+          <!-- Reparti -->
+          <div class="dept-divider"></div>
+          <div class="dept-row">
+            <div class="dept-dot" style="background:#2E75B6"></div>
+            <span class="dept-name">Vendite</span>
+            <span class="dept-contact">+39 0885 421 891</span>
+          </div>
+          <div class="dept-row">
+            <div class="dept-dot" style="background:#00A86B"></div>
+            <span class="dept-name">PostVendita / Service</span>
+            <span class="dept-contact">+39 0885 421 892</span>
+          </div>
+          <div class="dept-row">
+            <div class="dept-dot" style="background:#FF8C00"></div>
+            <span class="dept-name">Noleggio</span>
+            <span class="dept-contact">+39 0885 421 893</span>
+          </div>
+        </div>
+
+        <!-- Sito web -->
+        <div class="settings-card">
+          <div class="srow">
+            <div class="srow-icon navy">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+            </div>
+            <div class="srow-info">
+              <div class="srow-label">www.fiatpirro.it</div>
+              <div class="srow-sub">Sito ufficiale</div>
+            </div>
+            <div class="srow-arrow"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="bottom-nav">
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+          <span>Vetrina</span>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span>News</span>
+        </div>
+        <div class="bnav-item active">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Contatti</span>
+          <div class="bnav-dot"></div>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+          <span>Impostazioni</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PHONE 6: IMPOSTAZIONI ═══════ -->
+<div class="phone-wrap">
+  <div class="phone-label">Impostazioni</div>
+  <div class="phone">
+    <div class="screen" id="s-settings">
+
+      <div class="status-bar" style="background:var(--surface)">
+        <span class="status-time" style="color:var(--text)">9:41</span>
+        <div class="status-icons" style="color:var(--text)">
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="#0F1C2E"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4" y="2" width="3" height="10" rx="1"/><rect x="8" y="1" width="3" height="11" rx="1"/><rect x="12" y="0" width="3" height="12" rx="1"/></svg>
+          🔋
+        </div>
+      </div>
+
+      <div class="settings-header">
+        <div class="settings-title">Impostazioni</div>
+      </div>
+
+      <div class="settings-scroll">
+
+        <!-- Push notification banner -->
+        <div class="push-banner">
+          <div class="push-banner-icon">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          </div>
+          <div class="push-banner-body">
+            <div class="push-banner-title">Abilita le notifiche push</div>
+            <div class="push-banner-sub">Ricevi aggiornamenti su nuovi veicoli, promozioni e le tue richieste di test drive.</div>
+            <button class="push-allow-btn">Consenti notifiche</button>
+          </div>
+        </div>
+
+        <!-- Concessionaria attiva -->
+        <div class="settings-section-label">Concessionaria attiva</div>
+        <div class="settings-card">
+          <div class="dealer-chip">
+            <div class="dealer-chip-logo">
+              <svg viewBox="0 0 24 24"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+            </div>
+            <div class="dealer-chip-info">
+              <div class="dealer-chip-name">Pirro Auto</div>
+              <span class="dealer-chip-code">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                PIRRO
+              </span>
+            </div>
+            <button class="dealer-chip-remove">
+              <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Aggiungi concessionaria -->
+        <div class="settings-section-label">Aggiungi concessionaria</div>
+        <div class="settings-card">
+          <div class="code-input-wrap">
+            <div class="code-input-label">Inserisci il codice fornito dal tuo venditore, oppure scansiona il QR code</div>
+            <div class="code-input-row">
+              <input class="code-input" type="text" placeholder="es. MARIO24" maxlength="32" />
+              <button class="qr-btn" title="Scansiona QR">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 14v3M14 17h3"/></svg>
+              </button>
+            </div>
+            <button class="code-submit-btn">
+              <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+              Collegati alla concessionaria
+            </button>
+          </div>
+        </div>
+
+        <!-- Notifiche -->
+        <div class="settings-section-label">Notifiche</div>
+        <div class="settings-card">
+          <div class="srow">
+            <div class="srow-icon navy">
+              <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+            </div>
+            <div class="srow-info">
+              <div class="srow-label">Notifiche push</div>
+              <div class="srow-sub">Nuovi veicoli, promozioni e aggiornamenti richieste</div>
+            </div>
+            <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="srow">
+            <div class="srow-icon amber">
+              <svg viewBox="0 0 24 24"><path d="M22 17H2a3 3 0 003-3V9a7 7 0 0114 0v5a3 3 0 003 3zM13.73 21a2 2 0 01-3.46 0"/></svg>
+            </div>
+            <div class="srow-info">
+              <div class="srow-label">Comunicazioni marketing</div>
+              <div class="srow-sub">Offerte esclusive, newsletter e promozioni mirate</div>
+            </div>
+            <button class="toggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+        </div>
+
+        <!-- Privacy -->
+        <div class="settings-section-label">Privacy & Legale</div>
+        <div class="settings-card">
+          <div class="srow">
+            <div class="srow-icon gray">
+              <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="srow-info">
+              <div class="srow-label">Privacy Policy</div>
+            </div>
+            <div class="srow-arrow"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="srow">
+            <div class="srow-icon gray">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="srow-info">
+              <div class="srow-label">Termini di servizio</div>
+            </div>
+            <div class="srow-arrow"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          </div>
+          <div class="srow">
+            <div class="srow-icon red">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </div>
+            <div class="srow-info">
+              <div class="srow-label" style="color:var(--red)">Cancella dati dispositivo</div>
+              <div class="srow-sub">Rimuove preferiti e cronologia locale</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- App -->
+        <div class="settings-section-label">App</div>
+        <div class="settings-card">
+          <div class="srow" style="cursor:default">
+            <div class="srow-icon gray">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div class="srow-info">
+              <div class="srow-label">Versione app</div>
+              <div class="srow-sub">1.0.0 (build 1)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="app-version">MyCars · Multi-tenant dealer app</div>
+
+      </div>
+
+      <div class="bottom-nav">
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 10l1.5-4.5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.5L21 10v6a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z"/><circle cx="6.5" cy="13.5" r="1.5"/><circle cx="17.5" cy="13.5" r="1.5"/></svg>
+          <span>Vetrina</span>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span>News</span>
+        </div>
+        <div class="bnav-item">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Contatti</span>
+        </div>
+        <div class="bnav-item active">
+          <svg viewBox="0 0 24 24" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+          <span>Impostazioni</span>
+          <div class="bnav-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const veicoli=[
+  {marca:"Alfa Romeo",modello:"Tonale Speciale",stato:"usato",alim:"Diesel",km:"5.500",prezzo:"43.000",anno:2022,badge:"usato",color:"#8B0000",nuovoArrivo:true,prontaConsegna:false},
+  {marca:"Jeep",modello:"Renegade Limited",stato:"km0",alim:"Diesel",km:"0",prezzo:"30.800",anno:2023,badge:"km0",color:"#2d4a1e",nuovoArrivo:false,prontaConsegna:true},
+  {marca:"Fiat",modello:"500X Lounge",stato:"usato",alim:"Diesel",km:"158.960",prezzo:"15.900",anno:2018,badge:"usato",color:"#1E3A5F",nuovoArrivo:false,prontaConsegna:false},
+  {marca:"Fiat",modello:"500X Popstar",stato:"usato",alim:"Diesel",km:"120.700",prezzo:"16.900",anno:2018,badge:"usato",color:"#3a1e1e",nuovoArrivo:false,prontaConsegna:false},
+  {marca:"Fiat",modello:"Panda Lounge",stato:"usato",alim:"Benzina",km:"33.360",prezzo:"13.000",anno:2020,badge:"usato",color:"#1e3a2e",nuovoArrivo:false,prontaConsegna:true},
+  {marca:"Lancia",modello:"Ypsilon Hybrid",stato:"usato",alim:"Benzina",km:"38.200",prezzo:"15.900",anno:2021,badge:"usato",color:"#3a2e1e",nuovoArrivo:false,prontaConsegna:false},
+  {marca:"Fiat",modello:"Tipo Cross",stato:"km0",alim:"Benzina",km:"0",prezzo:"22.200",anno:2023,badge:"km0",color:"#1e2a3a",nuovoArrivo:true,prontaConsegna:true},
+  {marca:"Fiat",modello:"Tipo SW",stato:"usato",alim:"Diesel",km:"69.350",prezzo:"16.500",anno:2020,badge:"usato",color:"#2a1e3a",nuovoArrivo:false,prontaConsegna:false},
+];
+
+const badgeClass={usato:"badge-usato","km0":"badge-km0",nuovo:"badge-nuovo",venduto:"badge-venduto"};
+const badgeLabel={usato:"Usato","km0":"KM 0",nuovo:"Nuovo",venduto:"Venduto"};
+
+function renderCars(){
+  const g=document.getElementById('veicoli-grid');
+  g.innerHTML=veicoli.map((v,i)=>`
+    <div class="vcard" style="animation-delay:${i*0.06}s">
+      <div class="vcard-img">
+        <div class="car-placeholder" style="background:linear-gradient(135deg,${v.color}22,${v.color}11)">
+          <svg viewBox="0 0 64 40" fill="${v.color}88"><path d="M4 24l5-13a4 4 0 013.8-3h38.4a4 4 0 013.8 3l5 13v10a2 2 0 01-2 2H6a2 2 0 01-2-2v-10z"/><circle cx="14" cy="33" r="5" fill="${v.color}"/><circle cx="50" cy="33" r="5" fill="${v.color}"/><circle cx="14" cy="33" r="3" fill="#fff"/><circle cx="50" cy="33" r="3" fill="#fff"/><path d="M12 24h10l-2-10H13L10 20" fill="${v.color}cc"/><path d="M26 24h12V14H28" fill="${v.color}cc"/><path d="M42 24h10l-3-10H42v10" fill="${v.color}cc"/></svg>
+        </div>
+        <span class="vcard-badge ${badgeClass[v.badge]}">${badgeLabel[v.badge]}</span>
+        ${v.nuovoArrivo?`<span class="vcard-badge badge-nuovo-arrivo">✦ Arrivo</span>`:''}
+      </div>
+      <div class="vcard-body">
+        <div class="vcard-marca">${v.marca}</div>
+        <div class="vcard-modello">${v.modello}</div>
+        <div class="vcard-specs">
+          <span class="vcard-spec">${v.alim}</span>
+          <span class="vcard-spec">${v.km} km</span>
+          <span class="vcard-spec">${v.anno}</span>
+          ${v.prontaConsegna?`<span class="vcard-spec pc">⚡ P.C.</span>`:''}
+        </div>
+        <div class="vcard-price">€ ${v.prezzo}<span class="vcard-price-sub"> IVA inc.</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+renderCars();
+
+function switchNews(btn){
+  document.querySelectorAll('#s-news .nfbtn').forEach(b=>{
+    b.className='nfbtn '+(b===btn?'active':'inactive');
+  });
+}
+
+function switchTipo(btn){
+  document.querySelectorAll('#s-lista .tipo-btn').forEach(b=>{
+    b.className='tipo-btn '+(b===btn?'active':'inactive');
+  });
+}
+function switchTab(btn){
+  document.querySelectorAll('#s-ricerca .tipo-tab').forEach(b=>{
+    b.className='tipo-tab '+(b===btn?'active':'inactive');
+  });
+}
+
+function goToRicerca(){
+  document.getElementById('s-lista').classList.add('slide-left');
+}
+function goBack(){
+  document.getElementById('s-lista').classList.remove('slide-left');
+}
+
+const sheetOptions={
+  stato:['Qualunque','Usato','Nuovo','KM 0','Conto vendita','Auto d\'epoca'],
+  marca:['—','Alfa Romeo','Fiat','Jeep','Lancia','Audi','BMW','Mercedes'],
+  modello:['—','500X','Tonale','Renegade','Tipo','Panda','Ypsilon'],
+  alimentazione:['Qualunque','Benzina','Diesel','Ibrida','Elettrica','GPL','Metano'],
+  uso:['Qualunque','Privato','Aziendale'],
+  cambio:['Qualunque','Manuale','Automatico'],
+};
+const sheetTitles={stato:'Stato veicolo',marca:'Marca',modello:'Modello',alimentazione:'Alimentazione',uso:'Uso',cambio:'Cambio'};
+let currentSheet=null,currentSel={};
+
+function openSheet(type){
+  currentSheet=type;
+  document.getElementById('sheet-title').textContent=sheetTitles[type];
+  const opts=sheetOptions[type];
+  const sel=currentSel[type]||opts[0];
+  document.getElementById('sheet-options').innerHTML=opts.map(o=>`
+    <div class="sheet-option ${o===sel?'selected':''}" onclick="selectOption('${o}')">
+      <span>${o}</span><div class="check"></div>
+    </div>
+  `).join('');
+  document.getElementById('overlay').classList.add('show');
+}
+function selectOption(val){
+  currentSel[currentSheet]=val;
+  const el=document.getElementById('val-'+currentSheet);
+  if(el) el.innerHTML=val+' <svg viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;stroke:var(--border)"><path d="M9 18l6-6-6-6"/></svg>';
+  if(val!=='—'&&val!=='Qualunque') el&&el.classList.add('selected');
+  else el&&el.classList.remove('selected');
+  closeSheet();
+}
+function closeSheet(e){
+  if(e&&e.target!==document.getElementById('overlay'))return;
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function resetFiltri(){
+  ['stato','marca','modello','alimentazione','uso','cambio'].forEach(k=>{
+    currentSel[k]=null;
+    const el=document.getElementById('val-'+k);
+    const def=k==='marca'||k==='modello'?'—':'Qualunque';
+    if(el){el.innerHTML=def+' <svg viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;stroke:var(--border)"><path d="M9 18l6-6-6-6"/></svg>';el.classList.remove('selected');}
+  });
+  document.querySelectorAll('.toggle.on').forEach(t=>t.classList.remove('on'));
+  setSlider('km',1,200000,'km');
+  setSlider('anno',1,25,null);
+  setSlider('prezzo',0.42,50000,'prezzo');
+}
+
+function setSlider(id,pct,val,type){
+  const fill=document.getElementById('fill-'+id);
+  const thumb=document.getElementById('thumb-'+id);
+  const label=document.getElementById('val-'+id);
+  if(fill)fill.style.width=(pct*100)+'%';
+  if(thumb)thumb.style.left=(pct*100)+'%';
+  if(label){
+    if(type==='km') label.textContent=new Intl.NumberFormat('it-IT').format(val);
+    else if(type==='prezzo') label.textContent='€ '+new Intl.NumberFormat('it-IT').format(val);
+    else label.textContent=val;
+  }
+}
+
+function initSlider(thumbId,fillId,labelId,minVal,maxVal,initPct,format){
+  const thumb=document.getElementById(thumbId);
+  const fill=document.getElementById(fillId);
+  const label=document.getElementById(labelId);
+  if(!thumb)return;
+  let dragging=false,pct=initPct;
+  function update(clientX){
+    const track=thumb.parentElement;
+    const rect=track.getBoundingClientRect();
+    pct=Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
+    const val=Math.round(minVal+(maxVal-minVal)*pct);
+    fill.style.width=(pct*100)+'%';
+    thumb.style.left=(pct*100)+'%';
+    if(format==='km') label.textContent=new Intl.NumberFormat('it-IT').format(val);
+    else if(format==='eur') label.textContent='€ '+new Intl.NumberFormat('it-IT').format(val);
+    else label.textContent=val;
+  }
+  thumb.addEventListener('mousedown',e=>{dragging=true;e.preventDefault()});
+  thumb.addEventListener('touchstart',e=>{dragging=true;e.preventDefault()},{passive:false});
+  document.addEventListener('mousemove',e=>{if(dragging)update(e.clientX)});
+  document.addEventListener('touchmove',e=>{if(dragging)update(e.touches[0].clientX)},{passive:false});
+  document.addEventListener('mouseup',()=>dragging=false);
+  document.addEventListener('touchend',()=>dragging=false);
+}
+
+initSlider('thumb-km','fill-km','val-km',0,200000,1,'km');
+initSlider('thumb-anno','fill-anno','val-anno',2005,2025,1,null);
+initSlider('thumb-prezzo','fill-prezzo','val-prezzo',0,120000,0.42,'eur');
+</script>
+</body>
+</html>

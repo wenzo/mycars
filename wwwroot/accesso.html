@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyCars — Accesso</title>
+    <link rel="stylesheet" href="/assets/css/admin.css">
+    <style>
+        /* ── Layout base ── */
+        body.login-page {
+            flex-direction: column;
+            gap: 0;
+            padding: 24px 16px;
+        }
+
+        /* ── Branding in cima ── */
+        .access-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 36px;
+            animation: fadeUp .35s ease both;
+        }
+        .access-brand-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: rgba(255,255,255,.95);
+            letter-spacing: -.02em;
+        }
+
+        /* ── Scelta ruolo ── */
+        #stepChoose {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 560px;
+        }
+        .choose-eyebrow {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.45);
+            margin-bottom: 12px;
+            animation: fadeUp .35s .05s ease both;
+        }
+        .choose-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: rgba(255,255,255,.95);
+            text-align: center;
+            margin-bottom: 32px;
+            animation: fadeUp .35s .1s ease both;
+        }
+        .tiles-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            width: 100%;
+            animation: fadeUp .35s .15s ease both;
+        }
+
+        /* ── Tile card ── */
+        .tile {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            padding: 32px 20px 28px;
+            border: none;
+            border-radius: 18px;
+            cursor: pointer;
+            color: #fff;
+            transition: transform .18s cubic-bezier(.4,0,.2,1),
+                        box-shadow .18s cubic-bezier(.4,0,.2,1);
+            overflow: hidden;
+            text-align: center;
+        }
+        .tile::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0);
+            transition: background .18s;
+        }
+        .tile:hover { transform: translateY(-3px); }
+        .tile:hover::before { background: rgba(255,255,255,.06); }
+        .tile:active { transform: translateY(-1px); }
+
+        .tile-operator {
+            background: linear-gradient(145deg, #1e4080 0%, #1a3a6f 100%);
+            box-shadow: 0 6px 32px rgba(30,58,128,.45), inset 0 1px 0 rgba(255,255,255,.12);
+        }
+        .tile-superadmin {
+            background: linear-gradient(145deg, #5b2089 0%, #4a1870 100%);
+            box-shadow: 0 6px 32px rgba(88,28,135,.45), inset 0 1px 0 rgba(255,255,255,.12);
+        }
+
+        .tile-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            flex-shrink: 0;
+        }
+        .tile-icon svg { width: 30px; height: 30px; }
+
+        .tile-badge {
+            position: absolute;
+            top: 14px; right: 14px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            background: rgba(255,255,255,.18);
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .tile-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: -.01em;
+        }
+        .tile-desc {
+            font-size: 12px;
+            line-height: 1.4;
+            opacity: .7;
+        }
+        .tile-arrow {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.15);
+            display: flex; align-items: center; justify-content: center;
+            margin-top: 4px;
+        }
+        .tile-arrow svg { width: 14px; height: 14px; margin-left: 1px; }
+
+        /* ── Step login ── */
+        #stepLogin {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 420px;
+        }
+        #stepLogin.visible { display: flex; }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            align-self: flex-start;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,.6);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 6px 2px;
+            margin-bottom: 20px;
+            transition: color .15s;
+            animation: fadeUp .25s ease both;
+        }
+        .back-btn:hover { color: rgba(255,255,255,.95); }
+        .back-btn svg { width: 16px; height: 16px; }
+
+        /* Accenti colorati per il login card in base al ruolo */
+        .login-card.accent-operator { border-top: 3px solid #3b82f6; }
+        .login-card.accent-superadmin { border-top: 3px solid #9333ea; }
+
+        /* Forziamo l'animazione sul card */
+        .login-card { animation: fadeUp .25s ease both; }
+
+        /* ── Animazioni ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-out {
+            animation: fadeDown .2s ease forwards;
+        }
+        @keyframes fadeDown {
+            to { opacity: 0; transform: translateY(8px); }
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 480px) {
+            .tiles-grid { grid-template-columns: 1fr; gap: 12px; }
+            .tile { padding: 24px 16px 20px; flex-direction: row; text-align: left; gap: 16px; }
+            .tile-icon { flex-shrink: 0; }
+            .tile-info { flex: 1; }
+            .tile-badge { top: 10px; right: 10px; }
+            .tile-arrow { display: none; }
+            .choose-title { font-size: 22px; }
+        }
+    </style>
+</head>
+<body class="login-page">
+
+<!-- ── Branding ── -->
+<div class="access-brand">
+    <svg width="36" height="36" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect width="40" height="40" rx="9" fill="var(--red)"/>
+        <path d="M8 26 L14 14 L20 22 L26 14 L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="20" cy="12" r="3" fill="#fff"/>
+    </svg>
+    <span class="access-brand-name">MyCars</span>
+</div>
+
+<!-- ── Step 1: Scelta ruolo ── -->
+<div id="stepChoose">
+    <p class="choose-eyebrow">Portale di gestione</p>
+    <h1 class="choose-title">Come vuoi accedere?</h1>
+
+    <div class="tiles-grid">
+
+        <!-- Tile Operatore -->
+        <button class="tile tile-operator" id="tileOperator" aria-label="Accesso Operatore">
+            <span class="tile-badge">Concessionaria</span>
+            <div class="tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+            </div>
+            <div class="tile-info">
+                <div class="tile-name">Operatore</div>
+                <div class="tile-desc">Accedi al pannello della tua concessionaria</div>
+            </div>
+            <div class="tile-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+        </button>
+
+        <!-- Tile SuperAdmin -->
+        <button class="tile tile-superadmin" id="tileSuperAdmin" aria-label="Accesso SuperAdmin">
+            <span class="tile-badge">Sistema</span>
+            <div class="tile-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <div class="tile-info">
+                <div class="tile-name">SuperAdmin</div>
+                <div class="tile-desc">Gestione operatori e configurazione globale</div>
+            </div>
+            <div class="tile-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+        </button>
+
+    </div>
+</div>
+
+<!-- ── Step 2: Login form ── -->
+<div id="stepLogin">
+    <button class="back-btn" id="btnBack" aria-label="Torna alla scelta accesso">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+        Indietro
+    </button>
+
+    <div class="login-card" id="loginCard">
+        <div class="login-logo">
+            <div class="brand-icon" style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;" id="cardLogoWrap">
+                <svg width="26" height="26" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                    <path d="M8 26 L14 14 L20 22 L26 14 L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <circle cx="20" cy="12" r="3" fill="#fff"/>
+                </svg>
+            </div>
+        </div>
+        <h2 class="login-title" id="cardTitle">Accesso</h2>
+        <p class="login-subtitle" id="cardSub">Inserisci le tue credenziali</p>
+
+        <form class="login-form" id="loginForm" novalidate>
+
+            <!-- Campo email (solo operatore) -->
+            <div class="form-group" id="fieldEmail">
+                <label class="form-label" for="inputEmail">Email</label>
+                <input class="form-input" type="email" id="inputEmail" name="email"
+                       autocomplete="email" placeholder="nome@concessionaria.it">
+            </div>
+
+            <!-- Campo username (solo superadmin) -->
+            <div class="form-group" id="fieldUsername" style="display:none">
+                <label class="form-label" for="inputUsername">Username</label>
+                <input class="form-input" type="text" id="inputUsername" name="username"
+                       autocomplete="username" placeholder="superadmin">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="inputPassword">Password</label>
+                <input class="form-input" type="password" id="inputPassword" name="password"
+                       autocomplete="current-password" placeholder="••••••••">
+            </div>
+
+            <div class="login-error" id="loginError" role="alert"></div>
+
+            <button type="submit" class="login-submit" id="submitBtn">
+                <span id="submitLabel">Accedi</span>
+                <span id="submitSpinner" style="display:none">Accesso in corso…</span>
+            </button>
+
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    const stepChoose = document.getElementById('stepChoose');
+    const stepLogin  = document.getElementById('stepLogin');
+    const btnBack    = document.getElementById('btnBack');
+    const loginCard  = document.getElementById('loginCard');
+    const loginForm  = document.getElementById('loginForm');
+    const cardTitle  = document.getElementById('cardTitle');
+    const cardSub    = document.getElementById('cardSub');
+    const cardLogo   = document.getElementById('cardLogoWrap');
+    const fieldEmail    = document.getElementById('fieldEmail');
+    const fieldUsername = document.getElementById('fieldUsername');
+    const inputEmail    = document.getElementById('inputEmail');
+    const inputUsername = document.getElementById('inputUsername');
+    const inputPassword = document.getElementById('inputPassword');
+    const loginError    = document.getElementById('loginError');
+    const submitBtn     = document.getElementById('submitBtn');
+    const submitLabel   = document.getElementById('submitLabel');
+    const submitSpinner = document.getElementById('submitSpinner');
+
+    let currentRole = null; // 'operator' | 'superadmin'
+
+    // ── Config per ruolo ──────────────────────────────────────────────────────
+
+    const ROLES = {
+        operator: {
+            title:       'MyCars Admin',
+            sub:         'Accedi al pannello della tua concessionaria',
+            logoColor:   '#1e3a5f',
+            accentClass: 'accent-operator',
+            endpoint:    '/api/admin/login',
+            redirect:    '/admin/index.html',
+            fieldEmail:  true,
+            autofocus:   'email',
+        },
+        superadmin: {
+            title:       'SuperAdmin',
+            sub:         'Accesso riservato — gestione sistema',
+            logoColor:   '#6c3483',
+            accentClass: 'accent-superadmin',
+            endpoint:    '/api/superadmin/login',
+            redirect:    '/superadmin/index.html',
+            fieldEmail:  false,
+            autofocus:   'username',
+        },
+    };
+
+    // ── Transizioni ───────────────────────────────────────────────────────────
+
+    function goToLogin(role) {
+        currentRole = role;
+        const cfg = ROLES[role];
+
+        // Aggiorna contenuto card
+        cardTitle.textContent   = cfg.title;
+        cardSub.textContent     = cfg.sub;
+        cardLogo.style.background = cfg.logoColor;
+
+        loginCard.classList.remove('accent-operator', 'accent-superadmin');
+        loginCard.classList.add(cfg.accentClass);
+
+        fieldEmail.style.display    = cfg.fieldEmail ? '' : 'none';
+        fieldUsername.style.display = cfg.fieldEmail ? 'none' : '';
+        inputEmail.required    = cfg.fieldEmail;
+        inputUsername.required = !cfg.fieldEmail;
+
+        clearError();
+        loginForm.reset();
+
+        // Anima fuori → poi mostra step login
+        stepChoose.classList.add('fade-out');
+        setTimeout(() => {
+            stepChoose.style.display = 'none';
+            stepChoose.classList.remove('fade-out');
+            stepLogin.classList.add('visible');
+
+            // Rimetti animazione sul card (reset e re-trigger)
+            loginCard.style.animation = 'none';
+            requestAnimationFrame(() => {
+                loginCard.style.animation = '';
+                loginCard.style.animation = 'fadeUp .25s ease both';
+            });
+
+            // Focus sul campo principale
+            if (cfg.autofocus === 'email') inputEmail.focus();
+            else inputUsername.focus();
+        }, 180);
+    }
+
+    function goToChoose() {
+        stepLogin.classList.remove('visible');
+        stepChoose.style.display = '';
+        stepChoose.style.animation = 'none';
+        requestAnimationFrame(() => {
+            stepChoose.style.animation = 'fadeUp .25s ease both';
+        });
+        clearError();
+        loginForm.reset();
+        currentRole = null;
+    }
+
+    // ── Submit ────────────────────────────────────────────────────────────────
+
+    loginForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        if (!currentRole) return;
+
+        clearError();
+        setLoading(true);
+
+        const cfg = ROLES[currentRole];
+        const params = new URLSearchParams();
+        if (cfg.fieldEmail) {
+            params.set('email',    inputEmail.value.trim());
+        } else {
+            params.set('username', inputUsername.value.trim());
+        }
+        params.set('password', inputPassword.value);
+
+        try {
+            const res = await fetch(cfg.endpoint, {
+                method:      'POST',
+                headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body:        params.toString(),
+                credentials: 'same-origin',
+            });
+
+            if (res.redirected || res.ok) {
+                location.href = cfg.redirect;
+                return;
+            }
+
+            const data = await res.json().catch(() => null);
+            showError(data?.message ?? 'Credenziali non valide. Riprova.');
+        } catch {
+            showError('Errore di rete. Controlla la connessione.');
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function setLoading(on) {
+        submitBtn.disabled    = on;
+        submitLabel.style.display  = on ? 'none' : '';
+        submitSpinner.style.display = on ? '' : 'none';
+    }
+
+    function showError(msg) {
+        loginError.textContent = msg;
+        loginError.classList.add('show');
+    }
+
+    function clearError() {
+        loginError.classList.remove('show');
+        loginError.textContent = '';
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────────
+
+    document.getElementById('tileOperator')  .addEventListener('click', () => goToLogin('operator'));
+    document.getElementById('tileSuperAdmin').addEventListener('click', () => goToLogin('superadmin'));
+    btnBack.addEventListener('click', goToChoose);
+
+    // Tasto Escape → torna indietro
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && currentRole) goToChoose();
+    });
+
+})();
+</script>
+</body>
+</html>

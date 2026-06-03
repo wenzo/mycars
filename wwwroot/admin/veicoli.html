@@ -1,0 +1,396 @@
+﻿<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyCars Admin — Veicoli</title>
+    <link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body>
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Menu principale">
+    <div class="sidebar-brand">
+        <svg width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <rect width="40" height="40" rx="8" fill="var(--red)"/>
+            <path d="M8 26 L14 14 L20 22 L26 14 L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="20" cy="12" r="3" fill="#fff"/>
+        </svg>
+        <span class="sidebar-brand-name">MyCars</span>
+        <span class="sidebar-brand-sub">Admin</span>
+    </div>
+    <nav class="sidebar-nav">
+        <a class="nav-item" data-page="index.html" href="/admin/index.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Dashboard
+        </a>
+        <a class="nav-item" data-page="veicoli.html" href="/admin/veicoli.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2m-4 0H9m4 0v2a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1v-2m4 0H9"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>
+            Veicoli
+        </a>
+        <a class="nav-item" data-page="news.html" href="/admin/news.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+            News &amp; Promozioni
+        </a>
+        <a class="nav-item" data-page="lead.html" href="/admin/lead.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Lead &amp; Richieste
+            <span class="nav-badge" id="leadBadge"></span>
+        </a>
+        <a class="nav-item" data-page="test-drive.html" href="/admin/test-drive.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Test Drive
+            <span class="nav-badge nav-badge-red" id="testDriveBadge"></span>
+        </a>
+        <a class="nav-item" data-page="push.html" href="/admin/push.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Notifiche Push
+        </a>
+        <div class="nav-divider"></div>
+        <a class="nav-item" data-page="sedi.html" href="/admin/sedi.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Sedi &amp; Reparti
+        </a>
+        <div class="nav-divider"></div>
+        <a class="nav-item" data-page="impostazioni.html" href="/admin/impostazioni.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Impostazioni
+        </a>
+        <form method="post" action="/api/admin/logout" style="margin-top:auto">
+            <button type="submit" class="nav-item nav-item-logout" style="width:100%;background:none;border:none;cursor:pointer;text-align:left">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Esci
+            </button>
+        </form>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar">A</div>
+            <div class="sidebar-user-info">
+                <span class="sidebar-user-name">admin</span>
+                <span class="sidebar-user-role">Amministratore</span>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<div class="main-wrapper">
+    <header class="topbar">
+        <button class="topbar-btn" id="hamburgerBtn" aria-label="Apri menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h1 class="topbar-title">Veicoli</h1>
+        <div class="topbar-spacer"></div>
+        <button class="btn btn-primary btn-sm" id="addVehicleBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Aggiungi veicolo
+        </button>
+    </header>
+    <main class="content">
+
+        <div class="card">
+            <div class="filter-bar">
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input id="vehicleSearch" type="text" placeholder="Cerca per modello, codice…">
+                </div>
+                <select class="form-select" id="conditionFilter" style="height:40px;width:auto">
+                    <option value="">Tutte le condizioni</option>
+                    <option value="nuovo">Nuovo</option>
+                    <option value="usato">Usato</option>
+                    <option value="km0">Km 0</option>
+                </select>
+                <select class="form-select" id="publishedFilter" style="height:40px;width:auto">
+                    <option value="">Tutti gli stati</option>
+                    <option value="true">Pubblicati</option>
+                    <option value="false">Non pubblicati</option>
+                </select>
+                <select class="form-select" id="nuovoArrivoFilter" style="height:40px;width:auto">
+                    <option value="">Tutti</option>
+                    <option value="true">Nuovo arrivo</option>
+                </select>
+                <select class="form-select" id="prontaConsegnaFilter" style="height:40px;width:auto">
+                    <option value="">Tutti</option>
+                    <option value="true">Pronta consegna</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cod.</th>
+                            <th>Modello / Versione</th>
+                            <th>Cond.</th>
+                            <th>Prezzo</th>
+                            <th>Stato</th>
+                            <th>Badge</th>
+                            <th>Inserito</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="vehiclesTableBody">
+                        <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:2.5rem">Caricamento…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <span class="pagination-info" id="vehiclesPaginationInfo"></span>
+                <button class="page-btn" id="vehiclesPrev" disabled>&#8249;</button>
+                <button class="page-btn" id="vehiclesNext" disabled>&#8250;</button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ── Brands datalist ────────────────────────────────────────────────────────── -->
+<datalist id="brandsList"></datalist>
+
+<!-- ── Vehicle Drawer ─────────────────────────────────────────────────────────── -->
+<div class="drawer-overlay" id="vehicleDrawerOverlay"></div>
+<aside class="drawer" id="vehicleDrawer" aria-label="Aggiungi / Modifica veicolo">
+    <div class="drawer-header">
+        <span class="drawer-title" id="vehicleDrawerTitle">Aggiungi veicolo</span>
+        <button class="drawer-close" id="vehicleDrawerClose" aria-label="Chiudi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="drawer-body">
+        <form id="vehicleForm" style="display:flex;flex-direction:column;gap:20px">
+
+            <div>
+                <div class="form-section-title">Dati principali</div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+
+                    <div class="form-group">
+                        <label class="form-label" for="vBranch">Sede <span style="color:var(--red)">*</span></label>
+                        <select class="form-select" id="vBranch" required>
+                            <option value="">— Seleziona sede —</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="vType">Tipo</label>
+                            <select class="form-select" id="vType" name="vehicleType">
+                                <option value="autovettura">Autovettura</option>
+                                <option value="motoveicolo">Motoveicolo</option>
+                                <option value="autocarro">Autocarro</option>
+                                <option value="autocaravan">Autocaravan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vCondition">Condizione</label>
+                            <select class="form-select" id="vCondition" name="condition">
+                                <option value="usato">Usato</option>
+                                <option value="nuovo">Nuovo</option>
+                                <option value="km_0">Km 0</option>
+                                <option value="conto_vendita">Conto vendita</option>
+                                <option value="epoca">Epoca</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="vInternalCode">Codice interno <span style="color:var(--red)">*</span></label>
+                            <input class="form-input" type="text" id="vInternalCode" required placeholder="es. MC-2024-001">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vTarga">Targa</label>
+                            <input class="form-input" type="text" id="vTarga" placeholder="es. AB123CD" style="text-transform:uppercase">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="vBrand">Marca <span style="color:var(--red)">*</span></label>
+                            <input class="form-input" type="text" id="vBrand" list="brandsList" required placeholder="es. Volkswagen" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vModel">Modello <span style="color:var(--red)">*</span></label>
+                            <input class="form-input" type="text" id="vModel" required placeholder="es. Golf">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="vVersion">Versione</label>
+                        <input class="form-input" type="text" id="vVersion" placeholder="es. 1.5 TSI 130cv Life">
+                    </div>
+
+                </div>
+            </div>
+
+            <div>
+                <div class="form-section-title">Dettagli tecnici</div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="vRegYear">Anno imm.</label>
+                            <input class="form-input" type="number" id="vRegYear" min="1900" max="2100" placeholder="es. 2022">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vFuel">Alimentazione</label>
+                            <select class="form-select" id="vFuel">
+                                <option value="">—</option>
+                                <option value="benzina">Benzina</option>
+                                <option value="diesel">Diesel</option>
+                                <option value="elettrica">Elettrica</option>
+                                <option value="ibrida">Ibrida</option>
+                                <option value="gpl">GPL</option>
+                                <option value="metano">Metano</option>
+                                <option value="idrogeno">Idrogeno</option>
+                                <option value="altro">Altro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="vTransmission">Cambio</label>
+                            <select class="form-select" id="vTransmission">
+                                <option value="">—</option>
+                                <option value="manuale">Manuale</option>
+                                <option value="automatico">Automatico</option>
+                                <option value="semiautomatico">Semiautomatico</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vHp">Potenza (CV)</label>
+                            <input class="form-input" type="number" id="vHp" min="0" placeholder="es. 150">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="vMileage">Chilometraggio (km)</label>
+                            <input class="form-input" type="number" id="vMileage" min="0" value="0" placeholder="es. 45000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vColor">Colore</label>
+                            <input class="form-input" type="text" id="vColor" placeholder="es. Bianco">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="form-section-title">Prezzo e visibilità</div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="vPrice">Prezzo (€)</label>
+                            <input class="form-input" type="number" id="vPrice" min="0" step="100" placeholder="es. 18900">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vPrevPrice">Prezzo prec. (€)</label>
+                            <input class="form-input" type="number" id="vPrevPrice" min="0" step="100">
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vPublished" checked>
+                            <span class="form-check-label">Pubblica sul sito</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vProntaConsegna">
+                            <span class="form-check-label">Pronta consegna</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vNuovoArrivo">
+                            <span class="form-check-label">Nuovo arrivo</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vNegotiable">
+                            <span class="form-check-label">Prezzo trattabile</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="form-section-title">Descrizione</div>
+                <div class="form-group">
+                    <textarea class="form-textarea" id="vDescription" placeholder="Descrivi il veicolo, optionals, storia…"></textarea>
+                </div>
+            </div>
+
+        </form>
+    </div>
+    <div class="drawer-footer" style="justify-content:space-between">
+        <button type="button" class="btn btn-outline" id="vehicleDrawerDelete" style="color:var(--red);border-color:var(--red);display:none">Elimina</button>
+        <div style="display:flex;gap:10px">
+            <button type="button" class="btn btn-outline" id="vehicleDrawerCancel">Annulla</button>
+            <button type="submit" form="vehicleForm" class="btn btn-primary" id="vehicleDrawerSave">Salva veicolo</button>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Push Notify Modal ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="pushModalOverlay"></div>
+<div class="modal" id="pushModal" role="dialog" aria-modal="true" aria-labelledby="pushModalLabel">
+    <div class="modal-header">
+        <span class="modal-title" id="pushModalLabel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Notifica push — Veicolo
+        </span>
+        <button class="drawer-close" id="pushModalClose" aria-label="Chiudi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="modal-body">
+        <p style="color:var(--text-mid);font-size:14px;margin:0">
+            Invia una notifica push ai dispositivi iscritti alle comunicazioni sui veicoli.
+        </p>
+
+        <div class="form-group">
+            <label class="form-label" for="pnTitle">Titolo notifica</label>
+            <input class="form-input" type="text" id="pnTitle" maxlength="100" placeholder="es. Nuovo arrivo: Golf 1.5 TSI">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="pnBody">Testo notifica</label>
+            <textarea class="form-textarea" id="pnBody" rows="3" maxlength="200" placeholder="Breve testo visualizzato nella notifica…" style="resize:none"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Quando inviare</label>
+            <div class="pn-toggle" style="margin-top:4px">
+                <label>
+                    <input type="radio" name="pnWhen" value="now" id="pnNow" checked>
+                    <span>Invia ora</span>
+                </label>
+                <label>
+                    <input type="radio" name="pnWhen" value="scheduled" id="pnScheduled">
+                    <span>Pianifica</span>
+                </label>
+            </div>
+        </div>
+
+        <div id="pnScheduleFields" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group">
+                    <label class="form-label" for="pnDate">Data</label>
+                    <input class="form-input" type="date" id="pnDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="pnTime">Ora</label>
+                    <input class="form-input" type="time" id="pnTime" value="09:00">
+                </div>
+            </div>
+        </div>
+
+        <div id="pnResult" style="display:none;padding:10px 14px;border-radius:var(--r-sm);font-size:13px"></div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-outline" id="pushModalSkip">Salta</button>
+        <button class="btn btn-primary" id="pushModalSend">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;margin-right:4px" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Invia notifica
+        </button>
+    </div>
+</div>
+
+<script src="/assets/js/admin.js"></script>
+<script src="/assets/js/veicoli.js"></script>
+</body>
+</html>

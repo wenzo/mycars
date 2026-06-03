@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyCars — Richiesta di iscrizione</title>
+    <link rel="stylesheet" href="/assets/css/admin.css">
+    <style>
+        body { display:flex; align-items:flex-start; justify-content:center;
+               min-height:100vh; padding:40px 16px;
+               background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 60%,#1e3a5f 100%); }
+        .reg-card { background:#fff; border-radius:12px; width:100%; max-width:640px;
+                    padding:40px; box-shadow:0 8px 40px rgba(0,0,0,.25); }
+        .reg-logo  { display:flex; align-items:center; gap:12px; margin-bottom:28px; }
+        .reg-title { font-size:22px; font-weight:700; color:var(--navy-dark); margin:0 0 4px; }
+        .reg-sub   { font-size:14px; color:var(--text-mid); margin:0 0 32px; }
+        .form-row  { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        @media(max-width:540px){ .form-row { grid-template-columns:1fr; } }
+        .success-box { background:#d1fae5; border:1px solid #6ee7b7; border-radius:8px;
+                       padding:20px 24px; text-align:center; display:none; }
+        .success-box h3 { color:#065f46; margin:0 0 8px; }
+        .success-box p  { color:#047857; margin:0; font-size:14px; }
+    </style>
+</head>
+<body>
+<div class="reg-card">
+    <div class="reg-logo">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="var(--red)"/>
+            <path d="M8 26 L14 14 L20 22 L26 14 L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="20" cy="12" r="3" fill="#fff"/>
+        </svg>
+        <span style="font-size:20px;font-weight:700;color:var(--navy-dark)">MyCars</span>
+    </div>
+
+    <h1 class="reg-title">Iscriviti a MyCars</h1>
+    <p class="reg-sub">Compila il modulo per richiedere l'accesso alla piattaforma. Il nostro team verificherà i dati e ti invierà le credenziali di accesso via email.</p>
+
+    <div class="success-box" id="successBox">
+        <h3>Richiesta inviata!</h3>
+        <p>Grazie per aver compilato il modulo. Ti contatteremo all'indirizzo email indicato non appena avremo verificato i dati.</p>
+    </div>
+
+    <form id="regForm" style="display:flex;flex-direction:column;gap:16px">
+
+        <div class="form-section-title">Dati aziendali</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="businessName">Ragione sociale *</label>
+                <input class="form-input" type="text" id="businessName" required maxlength="200"
+                       placeholder="es. Rossi Auto S.r.l.">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="vatNumber">Partita IVA</label>
+                <input class="form-input" type="text" id="vatNumber" maxlength="20"
+                       placeholder="IT12345678901">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="address">Indirizzo</label>
+                <input class="form-input" type="text" id="address" maxlength="200"
+                       placeholder="Via Roma 1">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="city">Città</label>
+                <input class="form-input" type="text" id="city" maxlength="100"
+                       placeholder="Milano">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="province">Provincia</label>
+                <input class="form-input" type="text" id="province" maxlength="2"
+                       placeholder="MI" style="text-transform:uppercase">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="website">Sito web</label>
+                <input class="form-input" type="url" id="website"
+                       placeholder="https://www.esempio.it">
+            </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top:8px">Referente</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="contactPerson">Nome e cognome *</label>
+                <input class="form-input" type="text" id="contactPerson" required maxlength="200"
+                       placeholder="Mario Rossi">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="phone">Telefono</label>
+                <input class="form-input" type="tel" id="phone" maxlength="30"
+                       placeholder="+39 02 1234567">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="email">Email *</label>
+            <input class="form-input" type="email" id="email" required maxlength="200"
+                   placeholder="mario.rossi@esempio.it">
+            <span style="font-size:12px;color:var(--text-light);margin-top:3px;display:block">
+                Sarà usata come username per accedere al pannello.
+            </span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="notes">Note aggiuntive</label>
+            <textarea class="form-textarea" id="notes" maxlength="1000" style="min-height:80px"
+                      placeholder="Informazioni aggiuntive per il nostro team (opzionale)"></textarea>
+        </div>
+
+        <div class="login-error" id="regError" role="alert"></div>
+
+        <button type="submit" class="login-submit" id="submitBtn">
+            <span id="submitLabel">Invia richiesta</span>
+            <span id="submitSpinner" hidden>Invio in corso…</span>
+        </button>
+
+        <p style="font-size:12px;color:var(--text-light);text-align:center;margin:0">
+            Hai già un account? <a href="/admin/login.html" style="color:var(--red)">Accedi</a>
+        </p>
+    </form>
+</div>
+
+<script>
+(function () {
+    const form    = document.getElementById('regForm');
+    const errorEl = document.getElementById('regError');
+    const success = document.getElementById('successBox');
+    const btn     = document.getElementById('submitBtn');
+    const label   = document.getElementById('submitLabel');
+    const spinner = document.getElementById('submitSpinner');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorEl.classList.remove('show');
+        setLoading(true);
+
+        const body = {
+            businessName:  document.getElementById('businessName').value.trim(),
+            vatNumber:     document.getElementById('vatNumber').value.trim()  || null,
+            email:         document.getElementById('email').value.trim(),
+            phone:         document.getElementById('phone').value.trim()      || null,
+            contactPerson: document.getElementById('contactPerson').value.trim(),
+            address:       document.getElementById('address').value.trim()    || null,
+            city:          document.getElementById('city').value.trim()       || null,
+            province:      document.getElementById('province').value.trim().toUpperCase() || null,
+            website:       document.getElementById('website').value.trim()    || null,
+            notes:         document.getElementById('notes').value.trim()      || null,
+        };
+
+        try {
+            const res = await fetch('/api/register', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(body),
+            });
+
+            if (res.ok) {
+                form.style.display = 'none';
+                success.style.display = 'block';
+            } else {
+                const data = await res.json().catch(() => null);
+                showError(data?.message ?? 'Si è verificato un errore. Riprova.');
+            }
+        } catch {
+            showError('Errore di rete. Controlla la connessione.');
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    function setLoading(on) {
+        btn.disabled    = on;
+        label.hidden    = on;
+        spinner.hidden  = !on;
+    }
+
+    function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.classList.add('show');
+    }
+})();
+</script>
+</body>
+</html>

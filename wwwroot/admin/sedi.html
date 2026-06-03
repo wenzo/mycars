@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyCars Admin — Sedi &amp; Reparti</title>
+    <link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body>
+
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Menu principale">
+    <div class="sidebar-brand">
+        <svg width="28" height="28" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <rect width="40" height="40" rx="8" fill="var(--red)"/>
+            <path d="M8 26 L14 14 L20 22 L26 14 L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="20" cy="12" r="3" fill="#fff"/>
+        </svg>
+        <span class="sidebar-brand-name">MyCars</span>
+        <span class="sidebar-brand-sub">Admin</span>
+    </div>
+    <nav class="sidebar-nav">
+        <a class="nav-item" data-page="index.html" href="/admin/index.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Dashboard
+        </a>
+        <a class="nav-item" data-page="veicoli.html" href="/admin/veicoli.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2m-4 0H9m4 0v2a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1v-2m4 0H9"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>
+            Veicoli
+        </a>
+        <a class="nav-item" data-page="news.html" href="/admin/news.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+            News &amp; Promozioni
+        </a>
+        <a class="nav-item" data-page="lead.html" href="/admin/lead.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Lead &amp; Richieste
+            <span class="nav-badge" id="leadBadge"></span>
+        </a>
+        <a class="nav-item" data-page="test-drive.html" href="/admin/test-drive.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Test Drive
+            <span class="nav-badge nav-badge-red" id="testDriveBadge"></span>
+        </a>
+        <a class="nav-item" data-page="push.html" href="/admin/push.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            Notifiche Push
+        </a>
+        <div class="nav-divider"></div>
+        <a class="nav-item active" data-page="sedi.html" href="/admin/sedi.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Sedi &amp; Reparti
+        </a>
+        <div class="nav-divider"></div>
+        <a class="nav-item" data-page="impostazioni.html" href="/admin/impostazioni.html">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Impostazioni
+        </a>
+        <form method="post" action="/api/admin/logout" style="margin-top:auto">
+            <button type="submit" class="nav-item nav-item-logout" style="width:100%;background:none;border:none;cursor:pointer;text-align:left">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Esci
+            </button>
+        </form>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="sidebar-user">
+            <div class="sidebar-user-avatar">A</div>
+            <div class="sidebar-user-info">
+                <span class="sidebar-user-name">admin</span>
+                <span class="sidebar-user-role">Amministratore</span>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<div class="main-wrapper">
+    <header class="topbar">
+        <button class="topbar-btn" id="hamburgerBtn" aria-label="Apri menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h1 class="topbar-title">Sedi &amp; Reparti</h1>
+        <div class="topbar-spacer"></div>
+        <button class="btn btn-primary btn-sm" id="addBranchBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Aggiungi sede
+        </button>
+    </header>
+    <main class="content">
+
+        <!-- ── Sedi ── -->
+        <div class="card">
+            <div class="filter-bar">
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input id="branchSearch" type="text" placeholder="Cerca per nome, città…">
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome sede</th>
+                            <th>Indirizzo</th>
+                            <th>Città</th>
+                            <th>Prov.</th>
+                            <th>Telefono</th>
+                            <th>Attiva</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="branchesTableBody">
+                        <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2.5rem">Caricamento…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Reparti ── -->
+        <div class="card" style="margin-top:24px">
+            <div class="filter-bar">
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input id="deptSearch" type="text" placeholder="Cerca reparto…">
+                </div>
+                <div class="topbar-spacer"></div>
+                <button class="btn btn-outline btn-sm" id="addDeptBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Aggiungi reparto
+                </button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome reparto</th>
+                            <th>Sede</th>
+                            <th>Descrizione</th>
+                            <th>Attivo</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="deptTableBody">
+                        <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2.5rem">Caricamento…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ── Branch Drawer ──────────────────────────────────────────────────────────── -->
+<div class="drawer-overlay" id="branchDrawerOverlay"></div>
+<aside class="drawer" id="branchDrawer" aria-label="Aggiungi / Modifica sede">
+    <div class="drawer-header">
+        <span class="drawer-title" id="branchDrawerTitle">Aggiungi sede</span>
+        <button class="drawer-close" id="branchDrawerClose" aria-label="Chiudi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="drawer-body">
+        <form id="branchForm" style="display:flex;flex-direction:column;gap:20px">
+
+            <div class="form-group">
+                <label class="form-label" for="bName">Nome sede <span style="color:var(--red)">*</span></label>
+                <input class="form-control" type="text" id="bName" placeholder="es. Sede centrale Milano" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="bLegalName">Ragione sociale</label>
+                <input class="form-control" type="text" id="bLegalName" placeholder="es. MyCars S.r.l.">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="bAddress">Indirizzo</label>
+                <input class="form-control" type="text" id="bAddress" placeholder="Via Roma 1">
+            </div>
+
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 120px 80px;gap:12px">
+                <div class="form-group">
+                    <label class="form-label" for="bCity">Città</label>
+                    <input class="form-control" type="text" id="bCity" placeholder="Milano">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bZip">CAP</label>
+                    <input class="form-control" type="text" id="bZip" placeholder="20100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bProvince">Prov.</label>
+                    <input class="form-control" type="text" id="bProvince" placeholder="MI" maxlength="2">
+                </div>
+            </div>
+
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div class="form-group">
+                    <label class="form-label" for="bPhone">Telefono</label>
+                    <input class="form-control" type="tel" id="bPhone" placeholder="+39 02 1234567">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="bEmail">Email</label>
+                    <input class="form-control" type="email" id="bEmail" placeholder="sede@esempio.it">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="bWhatsapp">WhatsApp</label>
+                <input class="form-control" type="tel" id="bWhatsapp" placeholder="+39 333 1234567">
+            </div>
+
+            <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                <div class="form-group">
+                    <label class="form-label" for="bSortOrder">Ordine visualizzazione</label>
+                    <input class="form-control" type="number" id="bSortOrder" value="0" min="0">
+                </div>
+            </div>
+
+            <label class="form-check" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" id="bActive" checked style="width:18px;height:18px;accent-color:var(--red)">
+                <span class="form-label" style="margin:0">Sede attiva</span>
+            </label>
+
+        </form>
+    </div>
+    <div class="drawer-footer" style="justify-content:space-between">
+        <button type="button" class="btn btn-outline" id="branchDrawerDelete" style="color:var(--red);border-color:var(--red);display:none">Elimina</button>
+        <div style="display:flex;gap:10px">
+            <button type="button" class="btn btn-outline" id="branchDrawerCancel">Annulla</button>
+            <button type="submit" form="branchForm" class="btn btn-primary">Salva sede</button>
+        </div>
+    </div>
+</aside>
+
+<!-- ── Department Drawer ──────────────────────────────────────────────────────── -->
+<div class="drawer-overlay" id="deptDrawerOverlay"></div>
+<aside class="drawer" id="deptDrawer" aria-label="Aggiungi / Modifica reparto">
+    <div class="drawer-header">
+        <span class="drawer-title" id="deptDrawerTitle">Aggiungi reparto</span>
+        <button class="drawer-close" id="deptDrawerClose" aria-label="Chiudi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="drawer-body">
+        <form id="deptForm" style="display:flex;flex-direction:column;gap:20px">
+
+            <div class="form-group">
+                <label class="form-label" for="dName">Nome reparto <span style="color:var(--red)">*</span></label>
+                <input class="form-control" type="text" id="dName" placeholder="es. Vendita Usato" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="dBranch">Sede</label>
+                <select class="form-select" id="dBranch" style="height:40px">
+                    <option value="">— Nessuna sede —</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="dDescription">Descrizione</label>
+                <textarea class="form-control" id="dDescription" rows="3" placeholder="Descrizione opzionale del reparto" style="resize:vertical"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="dSortOrder">Ordine visualizzazione</label>
+                <input class="form-control" type="number" id="dSortOrder" value="0" min="0" style="max-width:160px">
+            </div>
+
+            <label class="form-check" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" id="dActive" checked style="width:18px;height:18px;accent-color:var(--red)">
+                <span class="form-label" style="margin:0">Reparto attivo</span>
+            </label>
+
+        </form>
+    </div>
+    <div class="drawer-footer" style="justify-content:space-between">
+        <button type="button" class="btn btn-outline" id="deptDrawerDelete" style="color:var(--red);border-color:var(--red);display:none">Elimina</button>
+        <div style="display:flex;gap:10px">
+            <button type="button" class="btn btn-outline" id="deptDrawerCancel">Annulla</button>
+            <button type="submit" form="deptForm" class="btn btn-primary">Salva reparto</button>
+        </div>
+    </div>
+</aside>
+
+<script src="/assets/js/admin.js"></script>
+<script src="/assets/js/sedi.js"></script>
+</body>
+</html>

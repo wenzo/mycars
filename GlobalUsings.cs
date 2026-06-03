@@ -1,0 +1,16 @@
+global using System.Data;
+global using System.Security.Claims;
+global using System.Text.Json;
+global using System.Text.Json.Serialization;
+global using Microsoft.AspNetCore.Authentication;
+global using Microsoft.AspNetCore.Authentication.Cookies;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.Extensions.Options;
+global using MyCars.Configuration;
+global using MyCars.Domain.Models;
+global using MyCars.Domain.Repositories;
+global using MyCars.Infrastructure.Database;
+global using MyCars.Infrastructure.Email;
+global using MyCars.Infrastructure.Http;
+global using MyCars.Infrastructure.Storage;

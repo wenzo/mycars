@@ -1,0 +1,23 @@
+namespace MyCars.Domain.Repositories;
+
+public interface IVehicleRepository
+{
+    Task<PagedResult<VehicleCard>> GetPublicCardsAsync(Guid operatorId, PageRequest page, VehicleFilter? filter = null);
+    Task<VehicleCard?>             GetCardByIdAsync(Guid id, Guid operatorId);
+
+    // Admin
+    Task<PagedResult<Vehicle>>     GetByOperatorAsync(Guid operatorId, PageRequest page);
+    Task<Vehicle?>                 GetByIdAsync(Guid id, Guid operatorId);
+    Task<int>                      CountActiveAsync(Guid? operatorId = null);
+    Task<int>                      CountNuoviArriviAsync(Guid? operatorId = null);
+    Task<int>                      CountProntaConsegnaAsync(Guid? operatorId = null);
+    Task<IReadOnlyList<Vehicle>>   GetRecentAsync(int count, Guid? operatorId = null);
+    Task<PagedResult<Vehicle>>     GetAllAsync(Guid operatorId, PageRequest page, string? condition = null, bool? isPublished = null, bool? isNuovoArrivo = null, bool? prontaConsegna = null);
+    Task<Vehicle?>                 FindByTargaAsync(string targa, Guid operatorId);
+
+    // CRUD
+    Task<IReadOnlyList<BrandInfo>> GetBrandsAsync();
+    Task<Vehicle>                  CreateAsync(Vehicle vehicle, string brandName);
+    Task<Vehicle?>                 UpdateAsync(Vehicle vehicle, string brandName);
+    Task<bool>                     DeleteAsync(Guid id, Guid operatorId);
+}

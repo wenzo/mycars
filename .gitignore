@@ -1,0 +1,35 @@
+# Build output
+bin/
+obj/
+
+# Configurazioni locali con segreti — usare appsettings.Development.example.json come template
+appsettings.Development.json
+appsettings.Production.json
+appsettings.*.local.json
+secrets.json
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+*.DotSettings.user
+
+# .NET secrets (mai in git)
+secrets.json
+appsettings.*.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Uploaded files (storage locale)
+wwwroot/uploads/
