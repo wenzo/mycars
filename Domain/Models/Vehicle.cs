@@ -53,4 +53,5 @@ public sealed class Vehicle
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
+    public string? CoverImageUrl   { get; set; }
 }

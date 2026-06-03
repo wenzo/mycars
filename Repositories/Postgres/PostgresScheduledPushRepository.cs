@@ -36,6 +36,30 @@ public sealed class PostgresScheduledPushRepository : IScheduledPushRepository
         return (await conn.QueryAsync<ScheduledPushNotification>(sql)).AsList();
     }
 
+    public async Task<IReadOnlyList<ScheduledPushNotification>> GetByOperatorAsync(Guid operatorId, int limit = 50)
+    {
+        const string sql = """
+            SELECT id, operator_id, news_id, title, body, image_url, topic,
+                   scheduled_at, sent_at, error, created_at
+            FROM public.scheduled_push_notifications
+            WHERE operator_id = @operatorId
+            ORDER BY scheduled_at DESC
+            LIMIT @limit
+            """;
+        using var conn = _factory.CreateConnection();
+        return (await conn.QueryAsync<ScheduledPushNotification>(sql, new { operatorId, limit })).AsList();
+    }
+
+    public async Task<bool> DeleteAsync(Guid id, Guid operatorId)
+    {
+        const string sql = """
+            DELETE FROM public.scheduled_push_notifications
+            WHERE id = @id AND operator_id = @operatorId AND sent_at IS NULL
+            """;
+        using var conn = _factory.CreateConnection();
+        return await conn.ExecuteAsync(sql, new { id, operatorId }) > 0;
+    }
+
     public async Task MarkSentAsync(Guid id)
     {
         const string sql = "UPDATE public.scheduled_push_notifications SET sent_at = now() WHERE id = @id";

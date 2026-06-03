@@ -36,6 +36,21 @@ public sealed class SupabaseRestScheduledPushRepository : IScheduledPushReposito
             limit: 100);
     }
 
+    public Task<IReadOnlyList<ScheduledPushNotification>> GetByOperatorAsync(Guid operatorId, int limit = 50)
+        => _db.SelectAsync<ScheduledPushNotification>(
+            "scheduled_push_notifications",
+            $"operator_id=eq.{operatorId}",
+            select: "id,operator_id,news_id,title,body,image_url,topic,scheduled_at,sent_at,error,created_at",
+            order:  "scheduled_at.desc",
+            limit:  limit);
+
+    public async Task<bool> DeleteAsync(Guid id, Guid operatorId)
+    {
+        await _db.DeleteAsync("scheduled_push_notifications",
+            $"id=eq.{id}&operator_id=eq.{operatorId}&sent_at=is.null");
+        return true;
+    }
+
     public async Task MarkSentAsync(Guid id) =>
         await _db.UpdateAsync<ScheduledPushNotification>(
             "scheduled_push_notifications", $"id=eq.{id}",

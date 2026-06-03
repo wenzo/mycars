@@ -100,7 +100,7 @@ public sealed class AdminController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return Redirect("/admin/login.html");
+        return Redirect("/accesso.html");
     }
 
     // ── Stats (dashboard) ─────────────────────────────────────────────────────
@@ -148,10 +148,17 @@ public sealed class AdminController : ControllerBase
         profile.BusinessName    = req.BusinessName?.Trim() ?? profile.BusinessName;
         profile.VatNumber       = req.VatNumber?.Trim();
         profile.FiscalCode      = req.FiscalCode?.Trim();
+        profile.ReaNumber       = req.ReaNumber?.Trim();
         profile.Phone           = req.Phone?.Trim();
         profile.Email           = req.Email?.Trim()?.ToLowerInvariant();
         profile.WebsiteUrl      = req.WebsiteUrl?.Trim();
         profile.WhatsappNumber  = req.WhatsappNumber?.Trim();
+        profile.Address         = req.Address?.Trim();
+        profile.City            = req.City?.Trim();
+        profile.Province        = req.Province?.Trim();
+        profile.ZipCode         = req.ZipCode?.Trim();
+        profile.Latitude        = req.Latitude;
+        profile.Longitude       = req.Longitude;
         profile.PrimaryColor    = req.PrimaryColor?.Trim();
         profile.SecondaryColor  = req.SecondaryColor?.Trim();
         profile.AccentColor     = req.AccentColor?.Trim();
@@ -373,6 +380,103 @@ public sealed class AdminController : ControllerBase
         return Ok(new { deleted = true });
     }
 
+    // ── Vehicles: cover image ─────────────────────────────────────────────────
+
+    [HttpPost("vehicles/{id:guid}/cover")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UploadVehicleCover(Guid id, IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "File obbligatorio." });
+        if (file.Length > 5 * 1024 * 1024)
+            return BadRequest(new { message = "Il file non può superare 5 MB." });
+
+        var opId    = GetOperatorId();
+        var vehicle = await _vehicles.GetByIdAsync(id, opId);
+        if (vehicle is null) return NotFound();
+
+        try
+        {
+            var url = await _storage.SaveAsync(file, $"vehicles/{opId}/{id}", "cover");
+            if (!string.IsNullOrEmpty(vehicle.CoverImageUrl)) _storage.Delete(vehicle.CoverImageUrl);
+            await _vehicles.UpdateCoverAsync(id, opId, url);
+            return Ok(new { url });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("vehicles/{id:guid}/cover")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteVehicleCover(Guid id)
+    {
+        var opId    = GetOperatorId();
+        var vehicle = await _vehicles.GetByIdAsync(id, opId);
+        if (vehicle is null) return NotFound();
+
+        if (!string.IsNullOrEmpty(vehicle.CoverImageUrl)) _storage.Delete(vehicle.CoverImageUrl);
+        await _vehicles.UpdateCoverAsync(id, opId, null);
+        return Ok(new { deleted = true });
+    }
+
+    // ── Vehicles: gallery images ──────────────────────────────────────────────
+
+    [HttpGet("vehicles/{id:guid}/images")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetVehicleImages(Guid id)
+    {
+        var images = await _vehicles.GetImagesAsync(id, GetOperatorId());
+        return Ok(images);
+    }
+
+    [HttpPost("vehicles/{id:guid}/images")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UploadVehicleImage(Guid id, IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "File obbligatorio." });
+        if (file.Length > 5 * 1024 * 1024)
+            return BadRequest(new { message = "Il file non può superare 5 MB." });
+
+        var opId    = GetOperatorId();
+        var vehicle = await _vehicles.GetByIdAsync(id, opId);
+        if (vehicle is null) return NotFound();
+
+        try
+        {
+            var fileName = Guid.NewGuid().ToString("N")[..16];
+            var url      = await _storage.SaveAsync(file, $"vehicles/{opId}/{id}/gallery", fileName);
+            var image    = await _vehicles.AddImageAsync(new VehicleImage
+            {
+                VehicleId  = id,
+                OperatorId = opId,
+                Url        = url,
+                SortOrder  = 0,
+            });
+            return Ok(image);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("vehicles/{id:guid}/images/{imageId:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteVehicleImage(Guid id, Guid imageId)
+    {
+        var opId   = GetOperatorId();
+        var images = await _vehicles.GetImagesAsync(id, opId);
+        var img    = images.FirstOrDefault(i => i.Id == imageId);
+        if (img is null) return NotFound();
+
+        _storage.Delete(img.Url);
+        await _vehicles.DeleteImageAsync(imageId, id, opId);
+        return Ok(new { deleted = true });
+    }
+
     private static Vehicle BuildVehicle(VehicleUpsertRequest req, Guid operatorId) => new()
     {
         OperatorId       = operatorId,
@@ -547,11 +651,14 @@ public sealed class AdminController : ControllerBase
             ZipCode        = req.ZipCode,
             City           = req.City,
             Province       = req.Province,
-            Phone          = req.Phone,
-            Email          = req.Email,
-            WhatsappNumber = req.WhatsappNumber,
-            IsActive       = req.IsActive,
-            SortOrder      = req.SortOrder,
+            Latitude         = req.Latitude,
+            Longitude        = req.Longitude,
+            IsLegalAddress   = req.IsLegalAddress,
+            Phone            = req.Phone,
+            Email            = req.Email,
+            WhatsappNumber   = req.WhatsappNumber,
+            IsActive         = req.IsActive,
+            SortOrder        = req.SortOrder,
         };
         var created = await _branches.CreateAsync(branch);
         return Ok(created);
@@ -574,7 +681,10 @@ public sealed class AdminController : ControllerBase
         existing.ZipCode        = req.ZipCode;
         existing.City           = req.City;
         existing.Province       = req.Province;
-        existing.Phone          = req.Phone;
+        existing.Latitude         = req.Latitude;
+        existing.Longitude        = req.Longitude;
+        existing.IsLegalAddress   = req.IsLegalAddress;
+        existing.Phone            = req.Phone;
         existing.Email          = req.Email;
         existing.WhatsappNumber = req.WhatsappNumber;
         existing.IsActive       = req.IsActive;
@@ -657,6 +767,31 @@ public sealed class AdminController : ControllerBase
         var ok = await _departments.DeleteAsync(id, GetOperatorId());
         if (!ok) return NotFound();
         return Ok(new { deleted = true });
+    }
+
+    // ── News: upload immagini per l'editor ────────────────────────────────────
+
+    [HttpPost("news/image")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UploadNewsImage(IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "File obbligatorio." });
+        if (file.Length > 5 * 1024 * 1024)
+            return BadRequest(new { message = "Il file non può superare 5 MB." });
+
+        var opId = GetOperatorId();
+        try
+        {
+            var fileName = Guid.NewGuid().ToString("N")[..16];
+            var url      = await _storage.SaveAsync(file, $"news/{opId}", fileName);
+            // TinyMCE si aspetta { location: "..." } come risposta
+            return Ok(new { location = url });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     // ── News: singola + CRUD ──────────────────────────────────────────────────
@@ -796,9 +931,24 @@ public sealed class AdminController : ControllerBase
             return BadRequest(new { message = "title e body sono obbligatori." });
 
         if (!_webPush.IsEnabled)
-            return StatusCode(503, new { message = "VAPID non configurato. Genera le chiavi con: dotnet run -- generate-vapid-keys" });
+            return StatusCode(503, new { message = "VAPID non configurato." });
 
         var operatorId = GetOperatorId();
+
+        // Pianificazione futura
+        if (req.SendAt.HasValue && req.SendAt.Value > DateTimeOffset.UtcNow.AddMinutes(1))
+        {
+            await _scheduledPush.CreateAsync(new ScheduledPushNotification
+            {
+                OperatorId  = operatorId,
+                Topic       = "general",
+                Title       = req.Title.Trim(),
+                Body        = req.Body.Trim(),
+                ImageUrl    = req.ImageUrl,
+                ScheduledAt = req.SendAt.Value,
+            });
+            return Ok(new { scheduled = true, sendAt = req.SendAt });
+        }
 
         IReadOnlyList<PushSubscription> subs;
         if (req.Target == "vehicle" && req.VehicleId.HasValue)
@@ -809,10 +959,30 @@ public sealed class AdminController : ControllerBase
             subs = await _push.GetAllAsync(operatorId);
 
         if (subs.Count == 0)
-            return Ok(new { sent = 0, total = 0, message = "Nessun dispositivo registrato per questo operatore." });
+            return Ok(new { sent = 0, total = 0, scheduled = false, message = "Nessun dispositivo registrato per questo operatore." });
 
         var sent = await _webPush.SendAsync(subs, req.Title, req.Body, req.ImageUrl);
-        return Ok(new { sent, total = subs.Count });
+        return Ok(new { sent, total = subs.Count, scheduled = false });
+    }
+
+    // ── Push: lista notifiche (storia + pianificate) ──────────────────────────
+
+    [HttpGet("push/notifications")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetPushNotifications([FromQuery] int limit = 50)
+    {
+        var items = await _scheduledPush.GetByOperatorAsync(
+            GetOperatorId(), Math.Clamp(limit, 1, 200));
+        return Ok(items);
+    }
+
+    [HttpDelete("push/notifications/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeletePushNotification(Guid id)
+    {
+        var ok = await _scheduledPush.DeleteAsync(id, GetOperatorId());
+        if (!ok) return NotFound(new { message = "Notifica non trovata o già inviata." });
+        return Ok(new { deleted = true });
     }
 
     // ── Dev utility: genera hash BCrypt ───────────────────────────────────────
@@ -847,10 +1017,17 @@ public sealed class UpdateProfileRequest
     public string? BusinessName   { get; set; }
     public string? VatNumber      { get; set; }
     public string? FiscalCode     { get; set; }
+    public string? ReaNumber      { get; set; }
     public string? Phone          { get; set; }
     public string? Email          { get; set; }
     public string? WebsiteUrl     { get; set; }
     public string? WhatsappNumber { get; set; }
+    public string? Address        { get; set; }
+    public string? City           { get; set; }
+    public string? Province       { get; set; }
+    public string? ZipCode        { get; set; }
+    public double? Latitude       { get; set; }
+    public double? Longitude      { get; set; }
     public string? PrimaryColor   { get; set; }
     public string? SecondaryColor { get; set; }
     public string? AccentColor    { get; set; }
@@ -866,12 +1043,13 @@ public sealed class CreateAppCodeRequest
 
 public sealed class SendPushRequest
 {
-    public string  Title     { get; set; } = "";
-    public string  Body      { get; set; } = "";
-    public string? ImageUrl  { get; set; }
-    public string  Target    { get; set; } = "all"; // "all" | "vehicle" | "email"
-    public Guid?   VehicleId { get; set; }
-    public string? UserEmail { get; set; }
+    public string          Title     { get; set; } = "";
+    public string          Body      { get; set; } = "";
+    public string?         ImageUrl  { get; set; }
+    public string          Target    { get; set; } = "all"; // "all" | "vehicle" | "email"
+    public Guid?           VehicleId { get; set; }
+    public string?         UserEmail { get; set; }
+    public DateTimeOffset? SendAt    { get; set; }
 }
 
 public sealed class PushNotifyRequest
@@ -915,6 +1093,9 @@ public sealed class BranchUpsertRequest
     public string? ZipCode         { get; set; }
     public string? City            { get; set; }
     public string? Province        { get; set; }
+    public double? Latitude        { get; set; }
+    public double? Longitude       { get; set; }
+    public bool    IsLegalAddress  { get; set; }
     public string? Phone           { get; set; }
     public string? Email           { get; set; }
     public string? WhatsappNumber  { get; set; }

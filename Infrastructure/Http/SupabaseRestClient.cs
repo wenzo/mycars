@@ -47,9 +47,12 @@ public sealed class SupabaseRestClient : ISupabaseRestClient
         return list.Count > 0 ? list[0] : default;
     }
 
-    public async Task<T?> InsertAsync<T>(string table, object payload)
+    public async Task<T?> InsertAsync<T>(string table, object payload, string? select = null)
     {
-        using var req = new HttpRequestMessage(HttpMethod.Post, table)
+        var url = string.IsNullOrEmpty(select)
+            ? table
+            : $"{table}?select={Uri.EscapeDataString(select)}";
+        using var req = new HttpRequestMessage(HttpMethod.Post, url)
         {
             Content = Serialize(payload),
         };
@@ -63,9 +66,13 @@ public sealed class SupabaseRestClient : ISupabaseRestClient
         return list is { Count: > 0 } ? list[0] : default;
     }
 
-    public async Task<T?> UpdateAsync<T>(string table, string filter, object payload)
+    public async Task<T?> UpdateAsync<T>(string table, string filter, object payload, string? select = null)
     {
-        var url = string.IsNullOrEmpty(filter) ? table : $"{table}?{filter}";
+        var qs = new List<string>(2);
+        if (!string.IsNullOrEmpty(filter)) qs.Add(filter.TrimStart('?'));
+        if (!string.IsNullOrEmpty(select)) qs.Add($"select={Uri.EscapeDataString(select)}");
+        var url = qs.Count > 0 ? $"{table}?{string.Join("&", qs)}" : table;
+
         using var req = new HttpRequestMessage(HttpMethod.Patch, url)
         {
             Content = Serialize(payload),

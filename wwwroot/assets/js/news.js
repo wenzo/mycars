@@ -143,13 +143,35 @@ function initTinyMCE() {
         selector: '#newsBody',
         base_url: 'https://cdn.jsdelivr.net/npm/tinymce@6',
         suffix: '.min',
-        height: 280,
+        height: 340,
         menubar: false,
         promotion: false,
         branding: false,
-        plugins: 'lists link code',
-        toolbar: 'bold italic underline | bullist numlist | link | code | removeformat',
-        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; }',
+        plugins: 'lists link image code',
+        toolbar: 'bold italic underline | bullist numlist | link image | code | removeformat',
+        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; } img { max-width: 100%; height: auto; }',
+
+        // Upload immagini al server
+        automatic_uploads: true,
+        file_picker_types: 'image',
+        images_upload_handler: async (blobInfo) => {
+            const formData = new FormData();
+            formData.append('file', blobInfo.blob(), blobInfo.filename());
+
+            const res = await fetch('/api/admin/news/image', {
+                method:      'POST',
+                body:        formData,
+                credentials: 'include',
+            });
+
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.message || `Errore upload immagine (${res.status})`);
+            }
+
+            const data = await res.json();
+            return data.location; // TinyMCE usa il valore restituito come src dell'img
+        },
     });
 }
 

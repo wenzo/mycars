@@ -13,13 +13,8 @@ async function loadStats() {
 
         const vapidEl = document.getElementById('statVapid');
         if (vapidEl) {
-            vapidEl.textContent  = stats.vapid_enabled ? 'Attivo' : 'Non configurato';
-            vapidEl.style.color  = stats.vapid_enabled ? 'var(--green)' : 'var(--amber)';
-        }
-
-        const keyEl = document.getElementById('vapidPublicKeyDisplay');
-        if (keyEl && stats.vapid_public_key) {
-            keyEl.textContent = stats.vapid_public_key;
+            vapidEl.textContent = stats.vapid_enabled ? 'Attivo' : 'Non configurato';
+            vapidEl.style.color = stats.vapid_enabled ? 'var(--green)' : 'var(--amber)';
         }
     } catch {
         // silently fail
@@ -65,6 +60,16 @@ function updatePreview() {
     document.getElementById('previewBody').textContent  = body;
 }
 
+// ── Pianificazione toggle ─────────────────────────────────────────────────────
+
+function toggleScheduleFields() {
+    const isScheduled = document.getElementById('pushScheduled')?.checked;
+    const fields = document.getElementById('pushScheduleFields');
+    if (fields) fields.style.display = isScheduled ? '' : 'none';
+    const btn = document.getElementById('pushSendBtn');
+    if (btn) btn.textContent = isScheduled ? 'Pianifica notifica' : 'Invia notifica';
+}
+
 // ── Target radio toggle ───────────────────────────────────────────────────────
 
 function toggleTargetPicker() {
@@ -92,38 +97,124 @@ async function sendPush(e) {
     const vehicleId = target === 'vehicle' ? (selectedVehicleId ?? null) : null;
     const userEmail = target === 'email'   ? (document.getElementById('pushUserEmail')?.value.trim() || '') : null;
 
+    // Pianificazione
+    const isScheduled = document.getElementById('pushScheduled')?.checked;
+    const dateVal     = document.getElementById('pushDate')?.value;
+    const timeVal     = document.getElementById('pushTime')?.value || '09:00';
+    let sendAt = null;
+    if (isScheduled) {
+        if (!dateVal) {
+            errBox.textContent = 'Scegli la data di invio.';
+            errBox.classList.add('show');
+            return;
+        }
+        sendAt = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+        if (new Date(sendAt) <= new Date()) {
+            errBox.textContent = 'La data pianificata deve essere futura.';
+            errBox.classList.add('show');
+            return;
+        }
+    }
+
     if (target === 'vehicle' && !vehicleId) {
         errBox.textContent = 'Cerca e seleziona un veicolo per targa prima di inviare.';
         errBox.classList.add('show');
         return;
     }
     if (target === 'email' && !userEmail) {
-        errBox.textContent = 'Inserisci l\'email dell\'utente destinatario.';
+        errBox.textContent = "Inserisci l'email dell'utente destinatario.";
         errBox.classList.add('show');
         return;
     }
 
-    btn.disabled = true;
-    btn.textContent = 'Invio…';
+    const origLabel = btn.textContent;
+    btn.disabled    = true;
+    btn.textContent = isScheduled ? 'Pianificazione…' : 'Invio…';
 
     try {
         const data = await apiFetch('/api/admin/push/send', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ title, body, imageUrl, target, vehicleId, userEmail }),
+            body:    JSON.stringify({ title, body, imageUrl, target, vehicleId, userEmail, sendAt }),
         });
 
         result.style.display = 'block';
-        document.getElementById('resultText').textContent =
-            data.message ?? `Notifica inviata a ${data.sent} / ${data.total} dispositivi.`;
-        showToast(`Inviata a ${data.sent} dispositivi`, 'success');
+        if (data.scheduled) {
+            const dt = new Date(data.sendAt).toLocaleString('it-IT');
+            document.getElementById('resultText').textContent = `✓ Notifica pianificata per ${dt}.`;
+            showToast('Notifica pianificata.', 'success');
+        } else {
+            document.getElementById('resultText').textContent =
+                data.message ?? `Notifica inviata a ${data.sent} / ${data.total} dispositivi.`;
+            showToast(`Inviata a ${data.sent} dispositivi.`, 'success');
+        }
+        loadNotifications();
 
-    } catch {
-        errBox.textContent = 'Errore durante l\'invio. VAPID configurato?';
+    } catch (err) {
+        errBox.textContent = err.message || 'Errore durante l\'invio.';
         errBox.classList.add('show');
     } finally {
         btn.disabled    = false;
-        btn.textContent = 'Invia notifica';
+        btn.textContent = origLabel;
+    }
+}
+
+// ── Storico notifiche ─────────────────────────────────────────────────────────
+
+const TOPIC_LABEL = { general: 'Generale', news: 'News', vehicles: 'Veicoli' };
+
+async function loadNotifications() {
+    const tbody = document.getElementById('notifTableBody');
+    if (!tbody) return;
+    try {
+        const items = await apiFetch('/api/admin/push/notifications?limit=50');
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem">Nessuna notifica</td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(n => {
+            const dt     = new Date(n.scheduledAt).toLocaleString('it-IT');
+            const topic  = TOPIC_LABEL[n.topic] ?? n.topic;
+            let statusBadge;
+            if (n.error) {
+                statusBadge = `<span class="badge badge-lost" title="${escHtml(n.error)}">Errore</span>`;
+            } else if (n.sentAt) {
+                statusBadge = '<span class="badge badge-published">Inviata</span>';
+            } else {
+                statusBadge = '<span class="badge badge-new">Pianificata</span>';
+            }
+            const canDelete = !n.sentAt && !n.error;
+            return `<tr>
+                <td class="td-main">${escHtml(n.title)}</td>
+                <td>${escHtml(topic)}</td>
+                <td style="white-space:nowrap;font-size:13px">${dt}</td>
+                <td>${statusBadge}</td>
+                <td class="td-actions">
+                    ${canDelete
+                        ? `<button class="btn btn-outline btn-sm" data-del="${n.id}" style="color:var(--red);border-color:var(--red)">Annulla</button>`
+                        : ''}
+                </td>
+            </tr>`;
+        }).join('');
+        tbody.querySelectorAll('[data-del]').forEach(btn =>
+            btn.addEventListener('click', () => cancelNotification(btn.dataset.del)));
+    } catch {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem">Errore caricamento</td></tr>';
+    }
+}
+
+function escHtml(str) {
+    return (str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function cancelNotification(id) {
+    if (!confirm('Annullare questa notifica pianificata?')) return;
+    try {
+        await apiFetch(`/api/admin/push/notifications/${id}`, { method: 'DELETE' });
+        showToast('Notifica annullata.');
+        loadNotifications();
+    } catch (err) {
+        showToast(err.message || 'Errore annullamento.', 'error');
     }
 }
 
@@ -131,6 +222,7 @@ async function sendPush(e) {
 
 document.addEventListener('DOMContentLoaded', () => {
     loadStats();
+    loadNotifications();
 
     document.getElementById('pushTitle')?.addEventListener('input', updatePreview);
     document.getElementById('pushBody')?.addEventListener('input',  updatePreview);
@@ -138,12 +230,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[name="target"]')
         .forEach(r => r.addEventListener('change', toggleTargetPicker));
 
+    document.querySelectorAll('input[name="pushWhen"]')
+        .forEach(r => r.addEventListener('change', toggleScheduleFields));
+
     document.getElementById('searchTargaBtn')
         ?.addEventListener('click', searchByTarga);
 
     document.getElementById('pushTarga')?.addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); searchByTarga(); }
     });
+
+    document.getElementById('refreshNotifBtn')?.addEventListener('click', loadNotifications);
 
     document.getElementById('pushForm')?.addEventListener('submit', sendPush);
 });

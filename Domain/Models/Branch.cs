@@ -12,9 +12,12 @@ public sealed class Branch
     public string? City            { get; set; }
     public string? Province        { get; set; }
     public string  CountryCode     { get; set; } = "IT";
+    public double? Latitude        { get; set; }
+    public double? Longitude       { get; set; }
     public string? Phone           { get; set; }
     public string? Email           { get; set; }
     public string? WhatsappNumber  { get; set; }
+    public bool    IsLegalAddress   { get; set; }
     public bool    IsActive        { get; set; }
     public int     SortOrder       { get; set; }
     public DateTimeOffset CreatedAt { get; set; }

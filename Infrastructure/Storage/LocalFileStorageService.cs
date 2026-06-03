@@ -3,7 +3,7 @@ namespace MyCars.Infrastructure.Storage;
 public sealed class LocalFileStorageService : IFileStorageService
 {
     private static readonly string[] AllowedExtensions =
-        [".jpg", ".jpeg", ".png", ".webp", ".svg"];
+        [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"];
 
     private readonly IWebHostEnvironment _env;
 

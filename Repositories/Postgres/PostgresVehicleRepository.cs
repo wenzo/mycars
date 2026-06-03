@@ -131,6 +131,82 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
         return (await conn.QueryAsync<BrandInfo>(sql)).AsList();
     }
 
+    public async Task<IReadOnlyList<BrandInfo>> GetBrandsWithTypesAsync()
+    {
+        const string brandsSql = "SELECT id, name, slug FROM public.brands ORDER BY name";
+        const string typesSql  = "SELECT brand_id, vehicle_type::text AS vehicle_type FROM public.brand_vehicle_types";
+        using var conn = _factory.CreateConnection();
+        var brands = (await conn.QueryAsync<BrandInfo>(brandsSql)).AsList();
+        var types  = (await conn.QueryAsync<(Guid BrandId, string VehicleType)>(typesSql)).AsList();
+        var map    = types.GroupBy(x => x.BrandId)
+            .ToDictionary(g => g.Key, g => g.Select(x => x.VehicleType).ToArray());
+        foreach (var b in brands)
+            b.VehicleTypes = map.TryGetValue(b.Id, out var t) ? t : [];
+        return brands;
+    }
+
+    public async Task<BrandInfo> CreateBrandAsync(string name, string[] vehicleTypes)
+    {
+        var slug = Slugify(name);
+        const string sql = """
+            INSERT INTO public.brands (name, slug)
+            VALUES (@name, @slug)
+            ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+            RETURNING id, name, slug
+            """;
+        using var conn  = _factory.CreateConnection();
+        var brand       = await conn.QueryFirstAsync<BrandInfo>(sql, new { name = name.Trim(), slug });
+        foreach (var vt in vehicleTypes)
+            await conn.ExecuteAsync("""
+                INSERT INTO public.brand_vehicle_types (brand_id, vehicle_type)
+                VALUES (@id, @vt::public.vehicle_type)
+                ON CONFLICT DO NOTHING
+                """, new { id = brand.Id, vt });
+        brand.VehicleTypes = vehicleTypes;
+        return brand;
+    }
+
+    public async Task<BrandInfo?> UpdateBrandAsync(Guid id, string name, string[] vehicleTypes)
+    {
+        var slug  = Slugify(name);
+        const string sql = """
+            UPDATE public.brands SET name = @name, slug = @slug
+            WHERE id = @id
+            RETURNING id, name, slug
+            """;
+        using var conn = _factory.CreateConnection();
+        var brand      = await conn.QueryFirstOrDefaultAsync<BrandInfo>(sql, new { id, name = name.Trim(), slug });
+        if (brand is null) return null;
+        await conn.ExecuteAsync("DELETE FROM public.brand_vehicle_types WHERE brand_id = @id", new { id });
+        foreach (var vt in vehicleTypes)
+            await conn.ExecuteAsync("""
+                INSERT INTO public.brand_vehicle_types (brand_id, vehicle_type)
+                VALUES (@id, @vt::public.vehicle_type)
+                ON CONFLICT DO NOTHING
+                """, new { id, vt });
+        brand.VehicleTypes = vehicleTypes;
+        return brand;
+    }
+
+    public async Task<bool> DeleteBrandAsync(Guid id)
+    {
+        using var conn = _factory.CreateConnection();
+        await conn.ExecuteAsync("DELETE FROM public.brand_vehicle_types WHERE brand_id = @id", new { id });
+        return await conn.ExecuteAsync("DELETE FROM public.brands WHERE id = @id", new { id }) > 0;
+    }
+
+    private static string Slugify(string name)
+    {
+        var s = name.ToLowerInvariant().Trim()
+            .Replace("ä", "a").Replace("á", "a").Replace("à", "a").Replace("â", "a")
+            .Replace("ë", "e").Replace("é", "e").Replace("è", "e").Replace("ê", "e")
+            .Replace("ï", "i").Replace("í", "i").Replace("ì", "i").Replace("î", "i")
+            .Replace("ö", "o").Replace("ó", "o").Replace("ò", "o").Replace("ô", "o")
+            .Replace("ü", "u").Replace("ú", "u").Replace("ù", "u").Replace("û", "u")
+            .Replace("ñ", "n").Replace("ç", "c").Replace("ß", "ss");
+        return System.Text.RegularExpressions.Regex.Replace(s, @"[^a-z0-9]+", "-").Trim('-');
+    }
+
     public async Task<Vehicle> CreateAsync(Vehicle vehicle, string brandName)
     {
         using var conn = _factory.CreateConnection();
@@ -343,6 +419,54 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
         using var conn = _factory.CreateConnection();
         return (await conn.QueryAsync<Vehicle>(sql,
             operatorId.HasValue ? new { id = operatorId, count } : (object)new { count })).AsList();
+    }
+
+    // ── Images ────────────────────────────────────────────────────────────────
+
+    public async Task UpdateCoverAsync(Guid vehicleId, Guid operatorId, string? coverUrl)
+    {
+        const string sql = """
+            UPDATE public.vehicles
+            SET cover_image_url = @coverUrl, updated_at = now()
+            WHERE id = @vehicleId AND operator_id = @operatorId AND deleted_at IS NULL
+            """;
+        using var conn = _factory.CreateConnection();
+        await conn.ExecuteAsync(sql, new { coverUrl, vehicleId, operatorId });
+    }
+
+    public async Task<IReadOnlyList<VehicleImage>> GetImagesAsync(Guid vehicleId, Guid operatorId)
+    {
+        const string sql = """
+            SELECT id, vehicle_id, operator_id, url, sort_order, created_at
+            FROM public.vehicle_images
+            WHERE vehicle_id = @vehicleId AND operator_id = @operatorId
+            ORDER BY sort_order, created_at
+            """;
+        using var conn = _factory.CreateConnection();
+        return (await conn.QueryAsync<VehicleImage>(sql, new { vehicleId, operatorId })).AsList();
+    }
+
+    public async Task<VehicleImage> AddImageAsync(VehicleImage image)
+    {
+        image.Id        = Guid.NewGuid();
+        image.CreatedAt = DateTimeOffset.UtcNow;
+        const string sql = """
+            INSERT INTO public.vehicle_images (id, vehicle_id, operator_id, url, sort_order, created_at)
+            VALUES (@Id, @VehicleId, @OperatorId, @Url, @SortOrder, @CreatedAt)
+            RETURNING id, vehicle_id, operator_id, url, sort_order, created_at
+            """;
+        using var conn = _factory.CreateConnection();
+        return await conn.QueryFirstAsync<VehicleImage>(sql, image);
+    }
+
+    public async Task<bool> DeleteImageAsync(Guid imageId, Guid vehicleId, Guid operatorId)
+    {
+        const string sql = """
+            DELETE FROM public.vehicle_images
+            WHERE id = @imageId AND vehicle_id = @vehicleId AND operator_id = @operatorId
+            """;
+        using var conn = _factory.CreateConnection();
+        return await conn.ExecuteAsync(sql, new { imageId, vehicleId, operatorId }) > 0;
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

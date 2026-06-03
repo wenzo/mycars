@@ -59,7 +59,8 @@ async function loadVehicles(page = 0) {
             tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:2.5rem">Nessun veicolo trovato</td></tr>`;
         } else {
             tbody.innerHTML = filtered.map(v => {
-                const label  = [v.model, v.version].filter(Boolean).join(' ');
+                const brand  = brandMap[v.brandId] || '';
+                const label  = [brand, v.model, v.version].filter(Boolean).join(' ');
                 const price  = v.price != null ? `€ ${Number(v.price).toLocaleString('it-IT')}` : '—';
                 const date   = new Date(v.createdAt).toLocaleDateString('it-IT');
                 const stato  = v.isPublished
@@ -107,9 +108,14 @@ async function loadVehicles(page = 0) {
     }
 }
 
+// ── Brand map (id → name) ─────────────────────────────────────────────────────
+
+let brandMap = {};
+
 // ── Stato drawer ──────────────────────────────────────────────────────────────
 
-let currentVehicleId = null;
+let currentVehicleId   = null;
+let currentCoverUrl    = null;
 
 // ── Drawer open / close ───────────────────────────────────────────────────────
 
@@ -126,6 +132,11 @@ async function openDrawer(vehicleId = null) {
 
     if (title)  title.textContent    = vehicleId ? 'Modifica veicolo' : 'Aggiungi veicolo';
     if (delBtn) delBtn.style.display = vehicleId ? '' : 'none';
+
+    // Reset sezione immagini
+    document.getElementById('vImagesSection').style.display = vehicleId ? '' : 'none';
+    setCover(null);
+    renderGallery([]);
 
     if (vehicleId) {
         try {
@@ -153,9 +164,15 @@ async function openDrawer(vehicleId = null) {
             chk('vProntaConsegna', v.prontaConsegna);
             chk('vNuovoArrivo',    v.isNuovoArrivo);
             chk('vNegotiable',     v.negotiable);
+            setCover(v.coverImageUrl ?? null);
         } catch (err) {
             showToast(err.message || 'Errore caricamento veicolo.', 'error');
         }
+
+        // Carica galleria in background
+        apiFetch(`/api/admin/vehicles/${vehicleId}/images`)
+            .then(imgs => renderGallery(imgs))
+            .catch(() => {});
     }
 
     document.getElementById('vehicleDrawerOverlay')?.classList.add('open');
@@ -166,6 +183,107 @@ function closeDrawer() {
     document.getElementById('vehicleDrawerOverlay')?.classList.remove('open');
     document.getElementById('vehicleDrawer')?.classList.remove('open');
     currentVehicleId = null;
+    currentCoverUrl  = null;
+}
+
+// ── Immagini: copertina ───────────────────────────────────────────────────────
+
+function setCover(url) {
+    currentCoverUrl = url || null;
+    const img        = document.getElementById('vCoverImg');
+    const placeholder= document.getElementById('vCoverPlaceholder');
+    const removeBtn  = document.getElementById('vCoverRemoveBtn');
+    if (url) {
+        img.src              = url;
+        img.style.display    = '';
+        placeholder.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = '';
+    } else {
+        img.src              = '';
+        img.style.display    = 'none';
+        placeholder.style.display = '';
+        if (removeBtn) removeBtn.style.display = 'none';
+    }
+}
+
+async function uploadCover(file) {
+    if (!currentVehicleId) return;
+    const form = new FormData();
+    form.append('file', file);
+    try {
+        const res = await apiFetch(`/api/admin/vehicles/${currentVehicleId}/cover`, { method: 'POST', body: form });
+        setCover(res.url);
+        showToast('Copertina aggiornata.');
+        loadVehicles();
+    } catch (err) {
+        showToast(err.message || 'Errore upload copertina.', 'error');
+    }
+}
+
+async function removeCover() {
+    if (!currentVehicleId) return;
+    if (!confirm('Rimuovere la foto di copertina?')) return;
+    try {
+        await apiFetch(`/api/admin/vehicles/${currentVehicleId}/cover`, { method: 'DELETE' });
+        setCover(null);
+        showToast('Copertina rimossa.');
+        loadVehicles();
+    } catch (err) {
+        showToast(err.message || 'Errore rimozione copertina.', 'error');
+    }
+}
+
+// ── Immagini: galleria ────────────────────────────────────────────────────────
+
+function renderGallery(images) {
+    const grid = document.getElementById('vGalleryGrid');
+    if (!grid) return;
+    if (!images || !images.length) {
+        grid.innerHTML = '<span style="color:var(--text-light);font-size:13px">Nessuna foto in galleria.</span>';
+        return;
+    }
+    grid.innerHTML = images.map(img => `
+        <div class="img-gallery-item">
+            <img src="${escHtml(img.url)}" alt="">
+            <button class="img-gallery-del" data-image-id="${img.id}" aria-label="Elimina foto" title="Elimina">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>`).join('');
+    grid.querySelectorAll('.img-gallery-del').forEach(btn =>
+        btn.addEventListener('click', () => deleteGalleryImage(btn.dataset.imageId)));
+}
+
+async function uploadGalleryImages(files) {
+    if (!currentVehicleId || !files.length) return;
+    const uploaded = [];
+    for (const file of files) {
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const img = await apiFetch(`/api/admin/vehicles/${currentVehicleId}/images`, { method: 'POST', body: form });
+            uploaded.push(img);
+        } catch (err) {
+            showToast(err.message || 'Errore upload foto.', 'error');
+        }
+    }
+    if (uploaded.length) {
+        showToast(`${uploaded.length} foto aggiunta/e.`);
+        const imgs = await apiFetch(`/api/admin/vehicles/${currentVehicleId}/images`).catch(() => []);
+        renderGallery(imgs);
+    }
+}
+
+async function deleteGalleryImage(imageId) {
+    if (!currentVehicleId) return;
+    if (!confirm('Eliminare questa foto dalla galleria?')) return;
+    try {
+        await apiFetch(`/api/admin/vehicles/${currentVehicleId}/images/${imageId}`, { method: 'DELETE' });
+        const imgs = await apiFetch(`/api/admin/vehicles/${currentVehicleId}/images`).catch(() => []);
+        renderGallery(imgs);
+        showToast('Foto eliminata.');
+    } catch (err) {
+        showToast(err.message || 'Errore eliminazione.', 'error');
+    }
 }
 
 // ── Salvataggio ───────────────────────────────────────────────────────────────
@@ -261,10 +379,10 @@ async function loadBranches() {
 
 async function loadBrandsDatalist() {
     try {
-        const brands  = await apiFetch('/api/admin/brands');
+        const brands = await apiFetch('/api/admin/brands');
+        brands.forEach(b => { brandMap[b.id] = b.name; });
         const dl = document.getElementById('brandsList');
-        if (!dl) return;
-        dl.innerHTML = brands.map(b => `<option value="${escHtml(b.name)}">`).join('');
+        if (dl) dl.innerHTML = brands.map(b => `<option value="${escHtml(b.name)}">`).join('');
     } catch { /* silenzioso */ }
 }
 
@@ -369,6 +487,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('vehicleDrawerOverlay')?.addEventListener('click', closeDrawer);
     document.getElementById('vehicleDrawerDelete')?.addEventListener('click',  deleteVehicle);
     document.getElementById('vehicleForm')?.addEventListener('submit', saveVehicle);
+
+    // Copertina
+    const coverInput = document.getElementById('vCoverInput');
+    document.getElementById('vCoverUploadBtn')?.addEventListener('click', () => coverInput?.click());
+    document.getElementById('vCoverArea')?.addEventListener('click', () => { if (!currentCoverUrl) coverInput?.click(); });
+    coverInput?.addEventListener('change', e => {
+        const f = e.target.files?.[0];
+        if (f) { uploadCover(f); e.target.value = ''; }
+    });
+    document.getElementById('vCoverRemoveBtn')?.addEventListener('click', removeCover);
+
+    // Galleria
+    const galleryInput = document.getElementById('vGalleryInput');
+    document.getElementById('vGalleryAddBtn')?.addEventListener('click', () => galleryInput?.click());
+    galleryInput?.addEventListener('change', e => {
+        const files = Array.from(e.target.files || []);
+        if (files.length) { uploadGalleryImages(files); e.target.value = ''; }
+    });
 
     // Push modal
     document.getElementById('pushModalClose')?.addEventListener('click', closePushModal);

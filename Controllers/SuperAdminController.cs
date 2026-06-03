@@ -8,12 +8,13 @@ namespace MyCars.Controllers;
 [Route("api/superadmin")]
 public sealed class SuperAdminController : ControllerBase
 {
-    private readonly SuperAdminOptions              _opts;
+    private readonly SuperAdminOptions               _opts;
     private readonly IOperatorRegistrationRepository _registrations;
-    private readonly IOperatorRepository            _operators;
-    private readonly IOperatorUserRepository        _users;
-    private readonly IEmailService                  _email;
-    private readonly ILogger<SuperAdminController>  _log;
+    private readonly IOperatorRepository             _operators;
+    private readonly IOperatorUserRepository         _users;
+    private readonly IEmailService                   _email;
+    private readonly IVehicleRepository              _vehicles;
+    private readonly ILogger<SuperAdminController>   _log;
 
     public SuperAdminController(
         IOptions<SuperAdminOptions>       opts,
@@ -21,6 +22,7 @@ public sealed class SuperAdminController : ControllerBase
         IOperatorRepository               operators,
         IOperatorUserRepository           users,
         IEmailService                     email,
+        IVehicleRepository                vehicles,
         ILogger<SuperAdminController>     log)
     {
         _opts          = opts.Value;
@@ -28,6 +30,7 @@ public sealed class SuperAdminController : ControllerBase
         _operators     = operators;
         _users         = users;
         _email         = email;
+        _vehicles      = vehicles;
         _log           = log;
     }
 
@@ -70,7 +73,7 @@ public sealed class SuperAdminController : ControllerBase
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return Redirect("/superadmin/login.html");
+        return Redirect("/accesso.html");
     }
 
     // ── Registrations list ────────────────────────────────────────────────────
@@ -180,6 +183,53 @@ public sealed class SuperAdminController : ControllerBase
         return Ok(new { isActive = req.IsActive });
     }
 
+    // ── Brand management ──────────────────────────────────────────────────────
+
+    [HttpGet("brands")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> GetBrands()
+        => Ok(await _vehicles.GetBrandsWithTypesAsync());
+
+    [HttpPost("brands")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> CreateBrand([FromBody] BrandUpsertRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.Name))
+            return BadRequest(new { message = "Il nome è obbligatorio." });
+        try
+        {
+            var brand = await _vehicles.CreateBrandAsync(req.Name.Trim(), req.VehicleTypes ?? []);
+            return Ok(brand);
+        }
+        catch (Exception ex) when (
+            ex.Message.Contains("unique", StringComparison.OrdinalIgnoreCase) ||
+            ex.Message.Contains("duplicate", StringComparison.OrdinalIgnoreCase) ||
+            ex.Message.Contains("23505"))
+        {
+            return Conflict(new { message = "Esiste già un marchio con questo nome." });
+        }
+    }
+
+    [HttpPut("brands/{id:guid}")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> UpdateBrand(Guid id, [FromBody] BrandUpsertRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.Name))
+            return BadRequest(new { message = "Il nome è obbligatorio." });
+        var brand = await _vehicles.UpdateBrandAsync(id, req.Name.Trim(), req.VehicleTypes ?? []);
+        if (brand is null) return NotFound();
+        return Ok(brand);
+    }
+
+    [HttpDelete("brands/{id:guid}")]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> DeleteBrand(Guid id)
+    {
+        var ok = await _vehicles.DeleteBrandAsync(id);
+        if (!ok) return NotFound();
+        return Ok(new { deleted = true });
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static string GenerateSlug(string name)
@@ -248,4 +298,10 @@ public sealed class ReviewRequest
 public sealed class SetActiveRequest
 {
     public bool IsActive { get; set; }
+}
+
+public sealed class BrandUpsertRequest
+{
+    public string    Name         { get; set; } = "";
+    public string[]? VehicleTypes { get; set; }
 }

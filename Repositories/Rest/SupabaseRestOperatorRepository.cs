@@ -5,8 +5,16 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
     private readonly ISupabaseRestClient _db;
     public SupabaseRestOperatorRepository(ISupabaseRestClient db) => _db = db;
 
+    private const string AdminCols =
+        "id,business_name,slug,public_code," +
+        "vat_number,fiscal_code,rea_number," +
+        "website_url,phone,email,whatsapp_number," +
+        "address,city,province,zip_code,latitude,longitude," +
+        "primary_color,secondary_color,accent_color," +
+        "logo_url,cover_image_url,is_active,created_at,updated_at";
+
     public Task<OperatorProfile?> GetByIdAsync(Guid id)
-        => _db.SelectOneAsync<OperatorProfile>("public_operator_profiles", $"id=eq.{id}");
+        => _db.SelectOneAsync<OperatorProfile>("operators", $"id=eq.{id}", select: AdminCols);
 
     public Task<OperatorProfile?> GetBySlugAsync(string slug)
         => _db.SelectOneAsync<OperatorProfile>("public_operator_profiles", $"slug=eq.{slug}");
@@ -47,17 +55,24 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
             business_name   = profile.BusinessName,
             vat_number      = profile.VatNumber,
             fiscal_code     = profile.FiscalCode,
+            rea_number      = profile.ReaNumber,
             phone           = profile.Phone,
             email           = profile.Email,
             website_url     = profile.WebsiteUrl,
             whatsapp_number = profile.WhatsappNumber,
+            address         = profile.Address,
+            city            = profile.City,
+            province        = profile.Province,
+            zip_code        = profile.ZipCode,
+            latitude        = profile.Latitude,
+            longitude       = profile.Longitude,
             primary_color   = profile.PrimaryColor,
             secondary_color = profile.SecondaryColor,
             accent_color    = profile.AccentColor,
             logo_url        = profile.LogoUrl,
             cover_image_url = profile.CoverImageUrl,
             updated_at      = profile.UpdatedAt,
-        });
+        }, select: AdminCols);
     }
 
     // ── App Codes ─────────────────────────────────────────────────────────────

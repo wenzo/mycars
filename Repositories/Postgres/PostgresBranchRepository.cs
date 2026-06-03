@@ -9,7 +9,7 @@ public sealed class PostgresBranchRepository : IBranchRepository
 
     private const string SelectCols = """
         id, operator_id, name, slug, legal_name, address, zip_code, city, province,
-        country_code, phone, email, whatsapp_number, is_active, sort_order, created_at, updated_at
+        country_code, latitude, longitude, phone, email, whatsapp_number, is_legal_address, is_active, sort_order, created_at, updated_at
         """;
 
     public async Task<IReadOnlyList<Branch>> GetByOperatorAsync(Guid operatorId)
@@ -31,11 +31,11 @@ public sealed class PostgresBranchRepository : IBranchRepository
         const string sql = """
             INSERT INTO public.branches
                 (operator_id, name, slug, legal_name, address, zip_code, city, province,
-                 country_code, phone, email, whatsapp_number, is_active, sort_order)
+                 country_code, latitude, longitude, phone, email, whatsapp_number, is_legal_address, is_active, sort_order)
             VALUES
                 (@OperatorId, @Name, @Slug, @LegalName, @Address, @ZipCode, @City, @Province,
-                 @CountryCode, @Phone, @Email, @WhatsappNumber, @IsActive, @SortOrder)
-            RETURNING id, operator_id, name, slug, city, province, is_active, sort_order, created_at, updated_at
+                 @CountryCode, @Latitude, @Longitude, @Phone, @Email, @WhatsappNumber, @IsLegalAddress, @IsActive, @SortOrder)
+            RETURNING id, operator_id, name, slug, city, province, latitude, longitude, is_legal_address, is_active, sort_order, created_at, updated_at
             """;
         using var conn = _factory.CreateConnection();
         return await conn.QueryFirstAsync<Branch>(sql, branch);
@@ -47,10 +47,11 @@ public sealed class PostgresBranchRepository : IBranchRepository
             UPDATE public.branches
             SET name = @Name, legal_name = @LegalName, address = @Address,
                 zip_code = @ZipCode, city = @City, province = @Province,
+                latitude = @Latitude, longitude = @Longitude,
                 phone = @Phone, email = @Email, whatsapp_number = @WhatsappNumber,
-                is_active = @IsActive, sort_order = @SortOrder, updated_at = now()
+                is_legal_address = @IsLegalAddress, is_active = @IsActive, sort_order = @SortOrder, updated_at = now()
             WHERE id = @Id AND operator_id = @OperatorId
-            RETURNING id, operator_id, name, slug, city, province, is_active, sort_order, created_at, updated_at
+            RETURNING id, operator_id, name, slug, city, province, latitude, longitude, is_legal_address, is_active, sort_order, created_at, updated_at
             """;
         using var conn = _factory.CreateConnection();
         return await conn.QueryFirstOrDefaultAsync<Branch>(sql, branch);

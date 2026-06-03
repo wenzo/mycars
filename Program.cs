@@ -133,6 +133,7 @@ builder.Services.AddHostedService<PushSchedulerService>();
 // ── File storage ─────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<IFileStorageService, LocalFileStorageService>();
 
+
 // ── Email ─────────────────────────────────────────────────────────────────────
 var smtpCfg = builder.Configuration.GetSection("Smtp").Get<SmtpOptions>() ?? new();
 if (!string.IsNullOrWhiteSpace(smtpCfg.Host) && !string.IsNullOrWhiteSpace(smtpCfg.FromEmail))

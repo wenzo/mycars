@@ -5,7 +5,7 @@ public sealed class SupabaseRestBranchRepository : IBranchRepository
     private readonly ISupabaseRestClient _db;
     public SupabaseRestBranchRepository(ISupabaseRestClient db) => _db = db;
 
-    private const string Cols = "id,operator_id,name,slug,legal_name,address,zip_code,city,province,country_code,phone,email,whatsapp_number,is_active,sort_order,created_at,updated_at";
+    private const string Cols = "id,operator_id,name,slug,legal_name,address,zip_code,city,province,country_code,latitude,longitude,phone,email,whatsapp_number,is_legal_address,is_active,sort_order,created_at,updated_at";
 
     public Task<IReadOnlyList<Branch>> GetByOperatorAsync(Guid operatorId)
         => _db.SelectAsync<Branch>("branches", $"operator_id=eq.{operatorId}",
@@ -27,9 +27,12 @@ public sealed class SupabaseRestBranchRepository : IBranchRepository
             city             = branch.City,
             province         = branch.Province,
             country_code     = branch.CountryCode,
+            latitude         = branch.Latitude,
+            longitude        = branch.Longitude,
             phone            = branch.Phone,
             email            = branch.Email,
             whatsapp_number  = branch.WhatsappNumber,
+            is_legal_address = branch.IsLegalAddress,
             is_active        = branch.IsActive,
             sort_order       = branch.SortOrder,
         });
@@ -48,8 +51,11 @@ public sealed class SupabaseRestBranchRepository : IBranchRepository
             phone           = branch.Phone,
             email           = branch.Email,
             whatsapp_number = branch.WhatsappNumber,
-            is_active       = branch.IsActive,
-            sort_order      = branch.SortOrder,
+            latitude         = branch.Latitude,
+            longitude        = branch.Longitude,
+            is_legal_address = branch.IsLegalAddress,
+            is_active        = branch.IsActive,
+            sort_order       = branch.SortOrder,
             updated_at      = DateTimeOffset.UtcNow,
         });
 

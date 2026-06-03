@@ -915,4 +915,59 @@ body.login-page {
 }
 .pn-toggle input[type="radio"] { display: none; }
 .pn-toggle input[type="radio"]:checked + span { color: var(--navy); }
+
+/* ── Vehicle image upload ── */
+.img-cover-area {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 2px dashed var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color var(--transition);
+}
+.img-cover-area:hover { border-color: var(--navy-mid); }
+.img-cover-area img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.img-cover-placeholder {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+}
+.img-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+  min-height: 40px;
+}
+.img-gallery-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.img-gallery-item img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.img-gallery-del {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 22px; height: 22px;
+  background: rgba(0,0,0,.55);
+  border: none; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.img-gallery-item:hover .img-gallery-del { opacity: 1; }
+.img-gallery-del svg { width: 12px; height: 12px; stroke: #fff; }
 .pn-toggle label:has(input:checked) { background: var(--navy-light, #eef2f9); color: var(--navy); }

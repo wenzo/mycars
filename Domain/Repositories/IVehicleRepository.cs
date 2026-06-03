@@ -17,7 +17,17 @@ public interface IVehicleRepository
 
     // CRUD
     Task<IReadOnlyList<BrandInfo>> GetBrandsAsync();
+    Task<IReadOnlyList<BrandInfo>> GetBrandsWithTypesAsync();
+    Task<BrandInfo>                CreateBrandAsync(string name, string[] vehicleTypes);
+    Task<BrandInfo?>               UpdateBrandAsync(Guid id, string name, string[] vehicleTypes);
+    Task<bool>                     DeleteBrandAsync(Guid id);
     Task<Vehicle>                  CreateAsync(Vehicle vehicle, string brandName);
     Task<Vehicle?>                 UpdateAsync(Vehicle vehicle, string brandName);
     Task<bool>                     DeleteAsync(Guid id, Guid operatorId);
+
+    // Images
+    Task                              UpdateCoverAsync(Guid vehicleId, Guid operatorId, string? coverUrl);
+    Task<IReadOnlyList<VehicleImage>> GetImagesAsync(Guid vehicleId, Guid operatorId);
+    Task<VehicleImage>                AddImageAsync(VehicleImage image);
+    Task<bool>                        DeleteImageAsync(Guid imageId, Guid vehicleId, Guid operatorId);
 }

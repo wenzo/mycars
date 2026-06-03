@@ -15,9 +15,9 @@ public interface ISupabaseRestClient
         string  filter,
         string? select = null);
 
-    Task<T?> InsertAsync<T>(string table, object payload);
+    Task<T?> InsertAsync<T>(string table, object payload, string? select = null);
 
-    Task<T?> UpdateAsync<T>(string table, string filter, object payload);
+    Task<T?> UpdateAsync<T>(string table, string filter, object payload, string? select = null);
 
     Task DeleteAsync(string table, string filter);
 
