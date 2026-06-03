@@ -192,6 +192,54 @@
             to { opacity: 0; transform: translateY(8px); }
         }
 
+        /* ── Richiedi accesso ── */
+        .tile-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            margin-top: 20px;
+            animation: fadeUp .35s .2s ease both;
+        }
+        .tile-divider::before, .tile-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,.15);
+        }
+        .tile-divider span {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.35);
+            white-space: nowrap;
+        }
+        .tile-request {
+            background: rgba(255,255,255,.07);
+            border: 1.5px solid rgba(255,255,255,.18);
+            box-shadow: none;
+            flex-direction: row;
+            text-align: left;
+            padding: 18px 24px;
+            gap: 16px;
+            text-decoration: none;
+            animation: fadeUp .35s .25s ease both;
+        }
+        .tile-request:hover {
+            background: rgba(255,255,255,.13);
+            border-color: rgba(255,255,255,.32);
+            transform: translateY(-2px);
+        }
+        .tile-request .tile-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(16,185,129,.22);
+            flex-shrink: 0;
+        }
+        .tile-request .tile-name { font-size: 15px; }
+        .tile-request .tile-desc { font-size: 11px; }
+
         /* ── Mobile ── */
         @media (max-width: 480px) {
             .tiles-grid { grid-template-columns: 1fr; gap: 12px; }
@@ -259,6 +307,26 @@
         </button>
 
     </div>
+
+    <div class="tile-divider"><span>Prima volta?</span></div>
+
+    <a href="/registrazione.html" class="tile tile-request" style="width:100%">
+        <div class="tile-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <line x1="19" y1="8" x2="19" y2="14"/>
+                <line x1="22" y1="11" x2="16" y2="11"/>
+            </svg>
+        </div>
+        <div class="tile-info">
+            <div class="tile-name">Richiedi accesso</div>
+            <div class="tile-desc">Nuova concessionaria? Invia la tua richiesta di iscrizione</div>
+        </div>
+        <div class="tile-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+    </a>
 </div>
 
 <!-- ── Step 2: Login form ── -->

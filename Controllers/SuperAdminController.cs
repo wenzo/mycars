@@ -159,6 +159,18 @@ public sealed class SuperAdminController : ControllerBase
 
         await _registrations.UpdateStatusAsync(id, "rejected", req.Notes);
 
+        try
+        {
+            await _email.SendAsync(
+                reg.Email,
+                "Aggiornamento sulla tua richiesta — MyCars",
+                BuildRejectionEmail(reg.BusinessName, reg.ContactPerson, req.Notes));
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Impossibile inviare email di rifiuto a {Email}", reg.Email);
+        }
+
         _log.LogInformation("Registrazione rifiutata: {Id} ({BusinessName})", id, reg.BusinessName);
         return NoContent();
     }
@@ -258,6 +270,38 @@ public sealed class SuperAdminController : ControllerBase
         return new string(Enumerable.Range(0, length)
             .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
             .ToArray());
+    }
+
+    private static string BuildRejectionEmail(
+        string businessName, string contactPerson, string? notes)
+    {
+        var notesBlock = string.IsNullOrWhiteSpace(notes) ? "" : $"""
+            <div style="background:#fff7f7;border-left:3px solid #c0392b;padding:12px 16px;border-radius:0 6px 6px 0;margin:16px 0">
+              <p style="margin:0;font-size:14px;color:#374151">
+                <strong>Motivazione:</strong> {System.Net.WebUtility.HtmlEncode(notes)}
+              </p>
+            </div>
+            """;
+
+        return $"""
+            <!DOCTYPE html>
+            <html lang="it">
+            <body style="font-family:sans-serif;background:#f4f4f4;padding:32px">
+              <div style="max-width:560px;margin:auto;background:#fff;border-radius:8px;padding:32px">
+                <h2 style="color:#1a2b4a;margin-top:0">Aggiornamento sulla tua richiesta</h2>
+                <p>Gentile {System.Net.WebUtility.HtmlEncode(contactPerson)},</p>
+                <p>Abbiamo esaminato la richiesta di iscrizione per
+                   <strong>{System.Net.WebUtility.HtmlEncode(businessName)}</strong>
+                   e, purtroppo, non possiamo procedere con l'approvazione in questo momento.</p>
+                {notesBlock}
+                <p style="color:#888;font-size:13px;margin-top:24px">
+                  Per ulteriori informazioni o per inviare una nuova richiesta puoi contattarci
+                  rispondendo a questa email.
+                </p>
+              </div>
+            </body>
+            </html>
+            """;
     }
 
     private static string BuildWelcomeEmail(
