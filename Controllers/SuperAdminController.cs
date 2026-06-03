@@ -135,10 +135,17 @@ public sealed class SuperAdminController : ControllerBase
 
         // invia email con credenziali
         var loginUrl = $"{Request.Scheme}://{Request.Host}/admin/login.html";
-        await _email.SendAsync(
-            reg.Email,
-            "Accesso a MyCars Admin — Benvenuto!",
-            BuildWelcomeEmail(reg.BusinessName, reg.ContactPerson, reg.Email, plainPassword, loginUrl));
+        try
+        {
+            await _email.SendAsync(
+                reg.Email,
+                "Accesso a MyCars Admin — Benvenuto!",
+                BuildWelcomeEmail(reg.BusinessName, reg.ContactPerson, reg.Email, plainPassword, loginUrl));
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Impossibile inviare email di benvenuto a {Email}", reg.Email);
+        }
 
         _log.LogInformation(
             "Operatore approvato: {BusinessName} ({OperatorId}) utente={UserId}",
