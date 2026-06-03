@@ -20,9 +20,23 @@
                        padding:20px 24px; text-align:center; display:none; }
         .success-box h3 { color:#065f46; margin:0 0 8px; }
         .success-box p  { color:#047857; margin:0; font-size:14px; }
+        .back-btn {
+            position:fixed; top:20px; left:20px;
+            display:flex; align-items:center; gap:6px;
+            color:rgba(255,255,255,.55); text-decoration:none;
+            font-size:14px; transition:color .15s; z-index:10;
+        }
+        .back-btn:hover { color:rgba(255,255,255,.95); }
+        .back-btn svg { width:16px; height:16px; flex-shrink:0; }
     </style>
 </head>
 <body>
+
+<a href="/accesso.html" class="back-btn" aria-label="Torna alla pagina di accesso">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+    Indietro
+</a>
+
 <div class="reg-card">
     <div class="reg-logo">
         <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
