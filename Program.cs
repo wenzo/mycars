@@ -1,4 +1,5 @@
 using Dapper;
+using Microsoft.OpenApi;
 using MyCars.Configuration;
 using MyCars.Infrastructure.Database;
 using MyCars.Infrastructure.Push;
@@ -88,7 +89,15 @@ if (allowedOrigins.Length > 0)
 
 // ── Swagger / OpenAPI ─────────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title       = "MyCars API",
+        Version     = "v1",
+        Description = "API per il pannello amministrativo e l'app mobile MyCars.",
+    });
+});
 
 // ── Database (dual-mode) ──────────────────────────────────────────────────────
 var dbProvider = builder.Configuration["Database:Provider"] ?? "Rest";
@@ -155,13 +164,24 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI();
 }
 else
 {
     app.UseExceptionHandler("/error");
     app.UseHsts();
+}
+
+var swaggerEnabled = app.Environment.IsDevelopment()
+    || app.Configuration.GetValue<bool>("Swagger:Enabled");
+
+if (swaggerEnabled)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyCars API v1");
+        c.RoutePrefix = "swagger";
+    });
 }
 
 app.UseHttpsRedirection();

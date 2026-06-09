@@ -34,3 +34,15 @@ logs/
 
 # Uploaded files (storage locale)
 wwwroot/uploads/
+
+# Publish profiles (contengono percorsi locali specifici per macchina)
+Properties/PublishProfiles/
+
+# Mobile app — dipendenze e build artifacts
+mobile/node_modules/
+mobile/dist/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/build/
+mobile/.env.local
+mobile/.env.production

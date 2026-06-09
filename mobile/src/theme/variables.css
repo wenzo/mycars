@@ -1,0 +1,112 @@
+/* ── Design tokens — mappati dal mockup ───────────────────────────────────── */
+:root {
+  /* Palette fissa */
+  --mc-navy:         #1E3A5F;
+  --mc-navy-dark:    #152B47;
+  --mc-navy-mid:     #2A4D73;
+  --mc-blue:         #2E75B6;
+  --mc-blue-light:   #4A8FCC;
+  --mc-red:          #D62828;
+  --mc-red-light:    #E84040;
+  --mc-green:        #00A86B;
+  --mc-green-bg:     #E6F7F1;
+  --mc-amber:        #FF8C00;
+  --mc-amber-bg:     #FFF4E5;
+
+  /* Superfici */
+  --mc-surface:      #F4F7FB;
+  --mc-surface2:     #EBF1F8;
+  --mc-white:        #FFFFFF;
+  --mc-border:       #D4E0EF;
+
+  /* Testo */
+  --mc-text:         #0F1C2E;
+  --mc-text-mid:     #4A5A72;
+  --mc-text-light:   #8A9BB8;
+
+  /* Ombre */
+  --mc-shadow:    0 4px 24px rgba(30,58,95,.10);
+  --mc-shadow-sm: 0 2px 8px  rgba(30,58,95,.08);
+
+  /* Raggi */
+  --mc-r:       14px;
+  --mc-r-sm:    10px;
+  --mc-r-pill:  50px;
+
+  /* Colori dinamici dealer — sovrascritti a runtime da useOperatorStore */
+  --dealer-primary:   var(--mc-navy);
+  --dealer-secondary: var(--mc-red);
+  --dealer-accent:    var(--mc-blue);
+
+  /* Font */
+  --mc-font-heading: 'Outfit', sans-serif;
+  --mc-font-body:    'DM Sans', sans-serif;
+}
+
+/* ── Override variabili Ionic con i token MyCars ─────────────────────────── */
+:root {
+  --ion-background-color:     var(--mc-surface);
+  --ion-text-color:           var(--mc-text);
+  --ion-border-color:         var(--mc-border);
+  --ion-font-family:          var(--mc-font-body);
+
+  --ion-color-primary:        var(--dealer-primary);
+  --ion-color-primary-shade:  var(--mc-navy-dark);
+  --ion-color-primary-tint:   var(--mc-navy-mid);
+
+  --ion-color-secondary:      var(--dealer-secondary);
+  --ion-color-secondary-shade:#B82020;
+  --ion-color-secondary-tint: var(--mc-red-light);
+
+  --ion-color-tertiary:       var(--dealer-accent);
+
+  --ion-color-success:        var(--mc-green);
+  --ion-color-warning:        var(--mc-amber);
+  --ion-color-danger:         var(--mc-red);
+
+  --ion-item-background:      var(--mc-white);
+  --ion-card-background:      var(--mc-white);
+
+  --ion-tab-bar-background:   var(--mc-white);
+  --ion-tab-bar-border-color: var(--mc-border);
+  --ion-tab-bar-color:        var(--mc-text-light);
+  --ion-tab-bar-color-selected: var(--dealer-primary);
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+body {
+  font-family: var(--mc-font-body);
+  color: var(--mc-text);
+  background: var(--mc-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5,
+.font-heading {
+  font-family: var(--mc-font-heading);
+}
+
+/* ── Scrollbar invisibile su iOS/Android ─────────────────────────────────── */
+::-webkit-scrollbar { display: none; }
+
+/* ── Utility badges condivisi ────────────────────────────────────────────── */
+.badge-usato       { background: rgba(255,255,255,.9); color: var(--mc-text-mid); }
+.badge-nuovo       { background: var(--mc-navy); color: #fff; }
+.badge-km0         { background: #1DB954; color: #fff; }
+.badge-venduto     { background: #888; color: #fff; }
+.badge-nuovo-arrivo {
+  background: linear-gradient(135deg, var(--mc-amber), #FFB300);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(255,140,0,.35);
+}
+.badge-pronta-consegna {
+  background: var(--mc-green);
+  color: #fff;
+}
+
+.ntype-nuovo-arrivo   { background: linear-gradient(135deg,#FF8C00,#FFB300); color:#fff; }
+.ntype-promo          { background: var(--mc-red);   color:#fff; }
+.ntype-evento         { background: var(--mc-blue);  color:#fff; }
+.ntype-finanziamento  { background: var(--mc-green); color:#fff; }
+.ntype-service        { background: #6B7280;         color:#fff; }
+.ntype-generic        { background: var(--mc-navy);  color:#fff; }

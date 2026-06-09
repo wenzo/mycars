@@ -1,0 +1,178 @@
+/* ── Google Fonts ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+/* ── Reset box-sizing ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Header dealer (condiviso tra le tab) ────────────────────────────────── */
+.dealer-header {
+  background: var(--dealer-primary);
+  padding: 10px 20px 16px;
+}
+.dealer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.dealer-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dealer-logo-icon {
+  width: 38px; height: 38px;
+  background: var(--dealer-secondary);
+  border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.dealer-logo-icon img { width: 100%; height: 100%; object-fit: cover; }
+.dealer-name {
+  font-family: var(--mc-font-heading);
+  font-size: 18px; font-weight: 700; color: #fff;
+}
+.dealer-sub { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 1px; }
+.header-icon-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,.12); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.header-icon-btn ion-icon { color: #fff; font-size: 18px; }
+
+/* ── Card veicolo ────────────────────────────────────────────────────────── */
+.vcard {
+  background: var(--mc-white);
+  border-radius: var(--mc-r);
+  overflow: hidden;
+  box-shadow: var(--mc-shadow-sm);
+}
+.vcard-img {
+  position: relative; height: 110px; overflow: hidden;
+  background: linear-gradient(135deg, var(--mc-surface2), var(--mc-surface));
+}
+.vcard-img img { width: 100%; height: 100%; object-fit: cover; }
+.vcard-badge {
+  position: absolute; top: 7px; left: 7px;
+  padding: 3px 7px; border-radius: 20px;
+  font-family: var(--mc-font-heading);
+  font-size: 10px; font-weight: 700; letter-spacing: .03em;
+}
+.vcard-badge-right { left: auto; right: 7px; }
+.vcard-body { padding: 9px 10px 11px; }
+.vcard-brand {
+  font-size: 10px; font-weight: 600; color: var(--mc-text-light);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px;
+}
+.vcard-model {
+  font-family: var(--mc-font-heading);
+  font-size: 13.5px; font-weight: 700; color: var(--mc-text);
+  line-height: 1.2; margin-bottom: 6px;
+}
+.vcard-specs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 7px; }
+.vcard-spec {
+  font-size: 10px; color: var(--mc-text-mid);
+  background: var(--mc-surface); padding: 2px 6px; border-radius: 5px;
+}
+.vcard-spec-pc { background: var(--mc-green-bg); color: #00774A; font-weight: 700; }
+.vcard-price {
+  font-family: var(--mc-font-heading);
+  font-size: 15px; font-weight: 800; color: var(--dealer-primary);
+}
+.vcard-price-label { font-size: 9px; color: var(--mc-text-light); font-weight: 400; }
+
+/* ── Card news ───────────────────────────────────────────────────────────── */
+.ncard {
+  background: var(--mc-white);
+  border-radius: var(--mc-r);
+  overflow: hidden;
+  box-shadow: var(--mc-shadow-sm);
+}
+.ncard-img { height: 130px; position: relative; overflow: hidden; }
+.ncard-type {
+  position: absolute; top: 10px; left: 10px;
+  padding: 4px 10px; border-radius: 20px;
+  font-family: var(--mc-font-heading);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.ncard-body { padding: 12px 14px 14px; }
+.ncard-title {
+  font-family: var(--mc-font-heading);
+  font-size: 15px; font-weight: 700; color: var(--mc-text);
+  line-height: 1.3; margin-bottom: 5px;
+}
+.ncard-excerpt { font-size: 12.5px; color: var(--mc-text-mid); line-height: 1.5; margin-bottom: 10px; }
+.ncard-footer { display: flex; align-items: center; justify-content: space-between; }
+.ncard-date { font-size: 11px; color: var(--mc-text-light); }
+.ncard-more {
+  font-family: var(--mc-font-heading);
+  font-size: 12px; font-weight: 700; color: var(--mc-blue);
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* ── Bottom tab bar ──────────────────────────────────────────────────────── */
+ion-tab-bar {
+  height: 72px;
+  --background: var(--mc-white);
+  border-top: 1px solid var(--mc-border);
+  padding-bottom: env(safe-area-inset-bottom, 14px);
+}
+ion-tab-button {
+  --color:          var(--mc-text-light);
+  --color-selected: var(--dealer-primary);
+  font-family: var(--mc-font-heading);
+  font-size: 10px; font-weight: 600;
+}
+
+/* ── Pulsanti primari ────────────────────────────────────────────────────── */
+.btn-primary {
+  height: 52px; width: 100%;
+  background: var(--dealer-primary); color: #fff; border: none;
+  border-radius: var(--mc-r-sm); cursor: pointer;
+  font-family: var(--mc-font-heading); font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-secondary {
+  height: 52px; padding: 0 16px;
+  background: transparent; color: var(--dealer-primary);
+  border: 2px solid var(--dealer-primary);
+  border-radius: var(--mc-r-sm); cursor: pointer;
+  font-family: var(--mc-font-heading); font-size: 13.5px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.btn-danger {
+  background: var(--dealer-secondary);
+  box-shadow: 0 4px 18px rgba(214,40,40,.35);
+}
+
+/* ── Sezione card generica ───────────────────────────────────────────────── */
+.mc-section {
+  background: var(--mc-white);
+  border-radius: var(--mc-r);
+  padding: 14px 16px;
+  box-shadow: var(--mc-shadow-sm);
+  margin: 6px 16px;
+}
+.mc-section-title {
+  font-family: var(--mc-font-heading);
+  font-size: 14px; font-weight: 700; color: var(--mc-text);
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+}
+
+/* ── Toggle ──────────────────────────────────────────────────────────────── */
+.mc-toggle {
+  width: 44px; height: 26px;
+  background: var(--mc-border); border-radius: 13px;
+  position: relative; cursor: pointer; border: none;
+  transition: background .25s; flex-shrink: 0;
+}
+.mc-toggle.on { background: var(--dealer-primary); }
+.mc-toggle::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; background: #fff; border-radius: 50%;
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.mc-toggle.on::after { transform: translateX(18px); }
