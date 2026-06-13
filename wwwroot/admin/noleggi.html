@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyCars Admin — Noleggi</title>
+    <link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body>
+
+<script src="/assets/js/layout-admin.js"></script>
+
+<div class="main-wrapper">
+    <header class="topbar">
+        <button class="topbar-btn" id="hamburgerBtn" aria-label="Apri menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <h1 class="topbar-title">Noleggi</h1>
+        <div class="topbar-spacer"></div>
+        <button class="btn btn-primary btn-sm" id="addRentalBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuovo noleggio
+        </button>
+    </header>
+    <main class="content">
+
+        <!-- KPI -->
+        <div class="stats-grid" id="rentalStats" style="margin-bottom:1.5rem">
+            <div class="stat-card">
+                <div class="stat-value" id="kpiActive">—</div>
+                <div class="stat-label">In corso</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="kpiBooked">—</div>
+                <div class="stat-label">Prenotati</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="kpiReturning">—</div>
+                <div class="stat-label">Rientri oggi</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="filter-bar">
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input id="rentalSearch" type="text" placeholder="Cerca per cliente, veicolo…">
+                </div>
+                <select class="form-select" id="statusFilter" style="height:40px;width:auto">
+                    <option value="">Tutti gli stati</option>
+                    <option value="booked">Prenotati</option>
+                    <option value="active">In corso</option>
+                    <option value="closed">Conclusi</option>
+                    <option value="cancelled">Annullati</option>
+                </select>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Veicolo</th>
+                            <th>Inizio</th>
+                            <th>Fine prev.</th>
+                            <th>Stato</th>
+                            <th>Importo</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="rentalsTableBody">
+                        <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2.5rem">Caricamento…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <span class="pagination-info" id="rentalsPaginationInfo"></span>
+                <button class="page-btn" id="rentalsPrev" disabled>&#8249;</button>
+                <button class="page-btn" id="rentalsNext" disabled>&#8250;</button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ── Drawer: Nuovo/Modifica noleggio ─────────────────────────────────────── -->
+<div class="drawer-overlay" id="rentalDrawerOverlay"></div>
+<aside class="drawer" id="rentalDrawer" aria-label="Noleggio">
+    <div class="drawer-header">
+        <span class="drawer-title" id="rentalDrawerTitle">Nuovo noleggio</span>
+        <button class="drawer-close" id="rentalDrawerClose" aria-label="Chiudi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+    <div class="drawer-body">
+        <form id="rentalForm" style="display:flex;flex-direction:column;gap:20px">
+            <input type="hidden" id="rId">
+
+            <div>
+                <div class="form-section-title">Veicolo</div>
+                <div class="form-group">
+                    <label class="form-label" for="rVehicle">Veicolo <span style="color:var(--red)">*</span></label>
+                    <select class="form-select" id="rVehicle" required>
+                        <option value="">— Seleziona —</option>
+                    </select>
+                </div>
+                <div id="availabilityMsg" style="margin-top:6px;font-size:13px"></div>
+            </div>
+
+            <div>
+                <div class="form-section-title">Periodo</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div class="form-group">
+                        <label class="form-label" for="rStartDate">Data inizio <span style="color:var(--red)">*</span></label>
+                        <input class="form-control" type="date" id="rStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="rEndDate">Data fine <span style="color:var(--red)">*</span></label>
+                        <input class="form-control" type="date" id="rEndDate" required>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="form-section-title">Cliente</div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div class="form-group">
+                        <label class="form-label" for="rCustomerName">Nome e Cognome <span style="color:var(--red)">*</span></label>
+                        <input class="form-control" type="text" id="rCustomerName" placeholder="Mario Rossi" required>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="form-group">
+                            <label class="form-label" for="rCustomerPhone">Telefono</label>
+                            <input class="form-control" type="tel" id="rCustomerPhone" placeholder="+39 333…">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="rCustomerLicense">N. Patente</label>
+                            <input class="form-control" type="text" id="rCustomerLicense">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="rCustomerCf">Codice Fiscale</label>
+                        <input class="form-control" type="text" id="rCustomerCf" placeholder="RSSMRA80A01H501Z">
+                    </div>
+                </div>
+            </div>
+
+            <div id="economicSection">
+                <div class="form-section-title">Condizioni economiche</div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div class="form-group">
+                            <label class="form-label" for="rAgreedPrice">Importo (€)</label>
+                            <input class="form-control" type="number" id="rAgreedPrice" min="0" step="0.01" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="rDeposit">Deposito (€)</label>
+                            <input class="form-control" type="number" id="rDeposit" min="0" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="rPaymentMethod">Modalità pagamento</label>
+                        <select class="form-select" id="rPaymentMethod">
+                            <option value="">— Seleziona —</option>
+                            <option value="cash">Contanti</option>
+                            <option value="pos">POS / Carta</option>
+                            <option value="transfer">Bonifico</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:16px">
+                        <label style="display:flex;align-items:center;gap:6px;font-size:14px">
+                            <input type="checkbox" id="rDepositReturned"> Deposito restituito
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:14px">
+                            <input type="checkbox" id="rIsPaid"> Pagato
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="rNotes">Note</label>
+                <textarea class="form-control" id="rNotes" rows="3" placeholder="Eventuali note…"></textarea>
+            </div>
+
+            <div style="display:flex;gap:10px">
+                <button type="submit" class="btn btn-primary" id="rentalSaveBtn">Salva noleggio</button>
+                <button type="button" class="btn btn-secondary" id="rentalCancelBtn">Annulla</button>
+            </div>
+        </form>
+    </div>
+</aside>
+
+<!-- ── Modal: Azioni stato ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="actionModalOverlay" style="display:none">
+    <div class="modal" id="actionModal" style="max-width:440px">
+        <div class="modal-header">
+            <span class="modal-title" id="actionModalTitle">Azione</span>
+            <button class="modal-close" id="actionModalClose">&times;</button>
+        </div>
+        <div class="modal-body" id="actionModalBody"></div>
+        <div class="modal-footer" id="actionModalFooter"></div>
+    </div>
+</div>
+
+<script src="/assets/js/admin.js"></script>
+<script src="/assets/js/noleggi.js"></script>
+</body>
+</html>

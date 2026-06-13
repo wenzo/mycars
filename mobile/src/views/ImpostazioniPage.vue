@@ -90,6 +90,9 @@
               </div>
               <button class="mc-toggle" :class="{ on: pushEnabled }" @click="togglePush" />
             </div>
+            <div v-if="pushError" style="padding:0 16px 12px;font-size:12px;color:var(--mc-red)">
+              {{ pushError }}
+            </div>
           </div>
 
           <!-- Privacy -->
@@ -132,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/vue'
 import {
   carOutline, notificationsOutline, qrCodeOutline,
@@ -141,18 +144,28 @@ import {
 } from 'ionicons/icons'
 import { useOperatorStore } from '@/stores/operator'
 
-const op           = ref(useOperatorStore())
+const op           = useOperatorStore()
 const codeInput    = ref('')
 const connecting   = ref(false)
 const connectError = ref('')
 const pushEnabled  = ref(false)
+const pushError    = ref('')
+
+const SW_PATH = '/sw.js'
+
+function urlBase64ToUint8Array(base64: string) {
+  const pad = '='.repeat((4 - base64.length % 4) % 4)
+  const b64 = (base64 + pad).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = atob(b64)
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
+}
 
 async function connect() {
   if (!codeInput.value.trim()) return
   connecting.value   = true
   connectError.value = ''
   try {
-    await op.value.connectByCode(codeInput.value.trim())
+    await op.connectByCode(codeInput.value.trim())
     codeInput.value = ''
   } catch (e: any) {
     connectError.value = e?.message ?? 'Errore di connessione'
@@ -162,14 +175,90 @@ async function connect() {
 }
 
 function confirmDisconnect() {
-  if (confirm('Disconnettere la concessionaria?')) op.value.disconnect()
+  if (confirm('Disconnettere la concessionaria?')) op.disconnect()
 }
 
-function togglePush() { pushEnabled.value = !pushEnabled.value }
-async function requestPush() { pushEnabled.value = true }
+// Controlla se esiste già una subscription attiva e aggiorna il toggle di conseguenza.
+async function checkPushStatus() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
+  try {
+    const reg = await navigator.serviceWorker.getRegistration(SW_PATH)
+    if (!reg) return
+    const sub = await reg.pushManager.getSubscription()
+    pushEnabled.value = sub !== null
+  } catch { /* browser senza supporto o permesso negato */ }
+}
+
+function togglePush() {
+  if (pushEnabled.value) {
+    disablePush()
+  } else {
+    requestPush()
+  }
+}
+
+async function disablePush() {
+  pushError.value = ''
+  try {
+    const reg = await navigator.serviceWorker.getRegistration(SW_PATH)
+    if (reg) {
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) await sub.unsubscribe()
+    }
+    pushEnabled.value = false
+  } catch (e: any) {
+    pushError.value = e?.message ?? 'Errore durante la disattivazione.'
+  }
+}
+
+async function requestPush() {
+  pushError.value = ''
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    pushError.value = 'Le notifiche push non sono supportate da questo browser.'
+    return
+  }
+  try {
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') {
+      pushError.value = 'Permesso notifiche negato. Abilitalo nelle impostazioni del browser.'
+      return
+    }
+    const reg  = await navigator.serviceWorker.register(SW_PATH)
+    const base = op.apiBase
+    const cfgRes = await fetch(`${base}/api/push/config`)
+    if (!cfgRes.ok) throw new Error('Configurazione push non disponibile.')
+    const { vapidPublicKey } = await cfgRes.json()
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly:      true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    })
+    const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
+    const saveRes = await fetch(`${base}/api/push/subscribe`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint:      json.endpoint,
+        p256dh:        json.keys.p256dh,
+        auth:          json.keys.auth,
+        operatorId:    op.profile?.operatorId,
+        deviceType:    'web',
+        topicGeneral:  true,
+        topicVehicles: true,
+        topicNews:     true,
+      }),
+    })
+    if (!saveRes.ok) throw new Error('Errore registrazione subscription sul server.')
+    pushEnabled.value = true
+  } catch (e: any) {
+    pushError.value = e?.message ?? 'Errore durante la registrazione.'
+  }
+}
+
 function openUrl(url: string | null | undefined) {
   if (url) window.open(url, '_blank')
 }
+
+onMounted(checkPushStatus)
 </script>
 
 <style scoped>

@@ -22,12 +22,13 @@
 
         <!-- Badges -->
         <div class="hero-badges">
-          <span v-if="store.detail.isNuovoArrivo" class="badge-nuovo-arrivo">
-            ✦ Nuovo Arrivo
-          </span>
-          <span v-if="store.detail.prontaConsegna" class="badge-pronta-consegna">
-            ⚡ Pronta Consegna
-          </span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span v-if="store.detail.isNuovoArrivo" class="badge-nuovo-arrivo">✦ Nuovo Arrivo</span>
+            <span v-if="store.detail.prontaConsegna" class="badge-pronta-consegna">⚡ Pronta Consegna</span>
+            <span v-if="store.detail.imported" class="hero-attr-badge">🌍 Importata</span>
+            <span v-if="store.detail.handicapAccessible" class="hero-attr-badge">♿ Accessibile</span>
+          </div>
+          <span v-if="store.detail.vatDeductible" class="hero-attr-badge badge-iva">IVA esp.</span>
         </div>
 
         <!-- Galleria dot indicator -->
@@ -51,11 +52,19 @@
           <div class="info-model">{{ store.detail.model }}</div>
           <div v-if="store.detail.version" class="info-version">{{ store.detail.version }}</div>
           <div class="price-row">
-            <div class="price-main">€ {{ fmtPrice(store.detail.price) }}</div>
+            <div v-if="store.detail.forSale || !store.detail.forRental" class="price-main">
+              € {{ fmtPrice(store.detail.price) }}
+              <span class="price-iva-label">{{ store.detail.vatDeductible ? 'IVA esp.' : 'IVA inc.' }}</span>
+            </div>
             <div v-if="store.detail.previousPrice" class="price-old">
               € {{ fmtPrice(store.detail.previousPrice) }}
             </div>
             <div v-if="discount" class="price-discount">−{{ discount }}%</div>
+          </div>
+          <div v-if="store.detail.forRental && store.detail.rentalPrice" class="rental-row">
+            <span class="rental-icon">🔑</span>
+            <span class="rental-label">Noleggio</span>
+            <span class="rental-price">€ {{ fmtPrice(store.detail.rentalPrice) }}/mese</span>
           </div>
         </div>
 
@@ -66,6 +75,7 @@
           <div v-if="store.detail.registrationYear"  class="dspec"><ion-icon :icon="calendarOutline" /><span>{{ store.detail.registrationYear }}</span></div>
           <div v-if="store.detail.transmission"      class="dspec"><ion-icon :icon="gitNetworkOutline" /><span>{{ store.detail.transmission }}</span></div>
           <div v-if="store.detail.horsepowerCv"      class="dspec"><ion-icon :icon="thermometerOutline" /><span>{{ store.detail.horsepowerCv }} CV</span></div>
+          <div v-if="store.detail.powerKw"           class="dspec"><ion-icon :icon="thermometerOutline" /><span>{{ store.detail.powerKw }} kW</span></div>
           <div v-if="store.detail.color"             class="dspec"><ion-icon :icon="colorPaletteOutline" /><span>{{ store.detail.color }}</span></div>
         </div>
 
@@ -112,7 +122,7 @@
     </div>
 
     <!-- Lead modal -->
-    <LeadModal v-if="showLead" :lead-type="leadType" @close="showLead = false" />
+    <LeadModal v-if="showLead" :lead-type="leadType" :initial-message="leadInitialMessage" @close="showLead = false" />
   </ion-page>
 </template>
 
@@ -127,17 +137,21 @@ import {
   locationOutline, documentTextOutline, callOutline,
 } from 'ionicons/icons'
 import { useVehicleStore } from '@/stores/vehicles'
+import { useOperatorStore } from '@/stores/operator'
 import LeadModal from '@/components/LeadModal.vue'
 
 const route    = useRoute()
 const store    = useVehicleStore()
+const op       = useOperatorStore()
 const imgIndex = ref(0)
 const showLead = ref(false)
 const leadType = ref<'info' | 'test_drive' | 'price_update'>('info')
+const leadInitialMessage = ref('')
 
-const currentImg = computed(() =>
-  store.images[imgIndex.value]?.url ?? store.detail?.coverImageUrl ?? null
-)
+const currentImg = computed(() => {
+  const raw = store.images[imgIndex.value]?.url ?? store.detail?.coverImageUrl ?? null
+  return op.resolveUrl(raw)
+})
 const discount = computed(() => {
   const v = store.detail
   if (!v?.price || !v?.previousPrice) return null
@@ -148,6 +162,13 @@ function fmtPrice(v: number | null) { return v ? new Intl.NumberFormat('it-IT').
 function fmtKm(v: number)           { return new Intl.NumberFormat('it-IT').format(v) }
 function openLead(type: 'info' | 'test_drive' | 'price_update') {
   leadType.value = type
+  if (type === 'info' && store.detail) {
+    const { brandName, model, price } = store.detail
+    const priceStr = price ? ` - € ${new Intl.NumberFormat('it-IT').format(price)}` : ''
+    leadInitialMessage.value = `Si richiedono informazioni sul veicolo ${brandName} ${model}${priceStr}`
+  } else {
+    leadInitialMessage.value = ''
+  }
   showLead.value = true
 }
 
@@ -201,14 +222,25 @@ onMounted(() => store.fetchDetail(route.params.id as string))
 .info-brand   { font-size: 11.5px; font-weight: 600; color: var(--mc-text-light); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
 .info-model   { font-family: var(--mc-font-heading); font-size: 22px; font-weight: 800; color: var(--mc-text); line-height: 1.1; margin-bottom: 3px; }
 .info-version { font-size: 13px; color: var(--mc-text-mid); margin-bottom: 13px; }
-.price-row    { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.price-main   { font-family: var(--mc-font-heading); font-size: 28px; font-weight: 800; color: var(--dealer-primary); }
-.price-old    { font-family: var(--mc-font-heading); font-size: 14px; color: var(--mc-text-light); text-decoration: line-through; }
+.price-row      { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.price-main     { font-family: var(--mc-font-heading); font-size: 28px; font-weight: 800; color: var(--dealer-primary); display: flex; align-items: baseline; gap: 6px; }
+.price-iva-label { font-size: 11px; font-weight: 600; color: var(--mc-text-light); }
+.price-old      { font-family: var(--mc-font-heading); font-size: 14px; color: var(--mc-text-light); text-decoration: line-through; }
 .price-discount {
   background: #FFF0F0; color: var(--mc-red);
   font-family: var(--mc-font-heading); font-size: 11px; font-weight: 700;
   padding: 3px 8px; border-radius: 10px;
 }
+.rental-row   { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.rental-icon  { font-size: 14px; }
+.rental-label { font-size: 12px; font-weight: 600; color: var(--mc-text-mid); }
+.rental-price { font-family: var(--mc-font-heading); font-size: 16px; font-weight: 700; color: var(--mc-blue); }
+.hero-attr-badge {
+  background: rgba(0,0,0,.45); backdrop-filter: blur(8px);
+  color: #fff; font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.2);
+}
+.badge-iva { background: rgba(34,139,34,.6); }
 
 .specs-row {
   display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto; flex-shrink: 0;

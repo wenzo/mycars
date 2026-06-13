@@ -22,4 +22,12 @@ public interface ISupabaseRestClient
     Task DeleteAsync(string table, string filter);
 
     Task<long> CountAsync(string table, string? filter = null);
+
+    Task<(IReadOnlyList<T> Items, long TotalCount)> SelectWithCountAsync<T>(
+        string table,
+        string? filter = null,
+        string? select = null,
+        string? order  = null,
+        int?    limit  = null,
+        int?    offset = null);
 }

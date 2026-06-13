@@ -19,12 +19,23 @@ public sealed class VehicleCard
     public string? UsageType        { get; set; }
     public string? Fuel             { get; set; }
     public string? Transmission     { get; set; }
+    public int?    HorsepowerCv     { get; set; }
+    public int?    PowerKw          { get; set; }
     public short?  RegistrationMonth { get; set; }
     public short?  RegistrationYear  { get; set; }
     public int     MileageKm        { get; set; }
     public decimal? Price           { get; set; }
     public decimal? PreviousPrice   { get; set; }
     public string  Currency         { get; set; } = "EUR";
+    public bool    VatDeductible    { get; set; }
+    public bool    Imported         { get; set; }
+    public bool    HandicapAccessible { get; set; }
+    public bool    ForSale          { get; set; } = true;
+    public bool    ForRental        { get; set; }
+    public bool    RentalOnly       { get; set; }
+    public decimal? RentalPrice     { get; set; }
+    public decimal? RentalWeeklyPrice  { get; set; }
+    public decimal? RentalWeekendPrice { get; set; }
     public bool    IsSold           { get; set; }
     public bool    ShowAsSold       { get; set; }
     public bool    ProntaConsegna   { get; set; }

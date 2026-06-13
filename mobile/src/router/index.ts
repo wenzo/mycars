@@ -2,7 +2,8 @@ import { createRouter, createWebHistory } from '@ionic/vue-router'
 import { RouteRecordRaw } from 'vue-router'
 
 const routes: Array<RouteRecordRaw> = [
-  { path: '/', redirect: '/tabs/vetrina' },
+  { path: '/', redirect: '/splash' },
+  { path: '/splash', component: () => import('@/views/SplashPage.vue') },
 
   {
     path: '/tabs',
@@ -13,12 +14,17 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'news',         component: () => import('@/views/NewsPage.vue') },
       { path: 'contatti',     component: () => import('@/views/ContattiPage.vue') },
       { path: 'impostazioni', component: () => import('@/views/ImpostazioniPage.vue') },
+      { path: 'noleggio',     component: () => import('@/views/NoleggioDashboard.vue') },
+      { path: 'noleggio/lista',  component: () => import('@/views/NoleggioListaPage.vue') },
+      { path: 'noleggio/nuovo',  component: () => import('@/views/NuovoNoleggioPage.vue') },
+      { path: 'noleggio/flotta', component: () => import('@/views/NoleggioFlottaPage.vue') },
     ],
   },
 
   { path: '/veicolo/:id',   component: () => import('@/views/VehicleDetailPage.vue') },
   { path: '/ricerca',       component: () => import('@/views/SearchPage.vue') },
   { path: '/news/:id',      component: () => import('@/views/NewsDetailPage.vue') },
+  { path: '/noleggio/:id',  component: () => import('@/views/NoleggioDetailPage.vue') },
 ]
 
 export default createRouter({

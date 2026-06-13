@@ -24,7 +24,13 @@ public sealed class OperatorProfile
     public string? AccentColor      { get; set; }
     public string? LogoUrl          { get; set; }
     public string? CoverImageUrl    { get; set; }
+    public string? Tagline          { get; set; }
     public bool    IsActive         { get; set; }
+    // Modulo noleggio
+    public bool    RentalModuleEnabled      { get; set; }
+    public bool    RentalPhotosEnabled      { get; set; }
+    public bool    RentalContractPdfEnabled { get; set; }
+    public bool    RentalShowPrices         { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }

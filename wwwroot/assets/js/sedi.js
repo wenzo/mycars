@@ -320,10 +320,13 @@ function openDeptDrawer(deptId = null) {
         if (d) {
             const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
             const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
-            set('dName',        d.name);
-            set('dDescription', d.description);
-            set('dSortOrder',   d.sortOrder);
-            chk('dActive',      d.isActive);
+            set('dName',            d.name);
+            set('dDescription',     d.description);
+            set('dResponsibleName', d.responsibleName);
+            set('dPhone',           d.phone);
+            set('dEmail',           d.email);
+            set('dSortOrder',       d.sortOrder);
+            chk('dActive',          d.isActive);
             populateBranchSelect(d.branchId);
         }
     }
@@ -346,11 +349,14 @@ async function saveDept(e) {
     const branchVal = document.getElementById('dBranch')?.value || null;
 
     const payload = {
-        name:        get('dName') ?? '',
-        description: get('dDescription'),
-        branchId:    branchVal || null,
-        sortOrder:   parseInt(document.getElementById('dSortOrder')?.value ?? '0', 10) || 0,
-        isActive:    chk('dActive'),
+        name:            get('dName') ?? '',
+        description:     get('dDescription'),
+        responsibleName: get('dResponsibleName'),
+        phone:           get('dPhone'),
+        email:           get('dEmail'),
+        branchId:        branchVal || null,
+        sortOrder:       parseInt(document.getElementById('dSortOrder')?.value ?? '0', 10) || 0,
+        isActive:        chk('dActive'),
     };
 
     try {

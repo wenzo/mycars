@@ -155,15 +155,22 @@ async function openDrawer(vehicleId = null) {
             set('vFuel',        v.fuel);
             set('vTransmission',v.transmission);
             set('vHp',          v.horsepowerCv);
+            set('vKw',          v.powerKw);
             set('vMileage',     v.mileageKm);
             set('vColor',       v.color);
             set('vPrice',       v.price);
             set('vPrevPrice',   v.previousPrice);
             set('vDescription', v.description);
-            chk('vPublished',      v.isPublished);
-            chk('vProntaConsegna', v.prontaConsegna);
-            chk('vNuovoArrivo',    v.isNuovoArrivo);
-            chk('vNegotiable',     v.negotiable);
+            chk('vPublished',          v.isPublished);
+            chk('vProntaConsegna',     v.prontaConsegna);
+            chk('vNuovoArrivo',        v.isNuovoArrivo);
+            chk('vVatDeductible',      v.vatDeductible);
+            chk('vImported',           v.imported);
+            chk('vHandicapAccessible', v.handicapAccessible);
+            chk('vForSale',            v.forSale ?? true);
+            chk('vForRental',          v.forRental);
+            set('vRentalPrice', v.rentalPrice);
+            document.getElementById('rentalPriceGroup').style.display = v.forRental ? '' : 'none';
             setCover(v.coverImageUrl ?? null);
         } catch (err) {
             showToast(err.message || 'Errore caricamento veicolo.', 'error');
@@ -312,16 +319,22 @@ async function saveVehicle(e) {
         fuel:            document.getElementById('vFuel')?.value        || null,
         transmission:    document.getElementById('vTransmission')?.value || null,
         horsepowerCv:    getNum('vHp'),
+        powerKw:         getNum('vKw'),
         registrationYear: getNum('vRegYear'),
         mileageKm:       getNum('vMileage') ?? 0,
         color:           getVal('vColor'),
         price:           getNum('vPrice'),
         previousPrice:   getNum('vPrevPrice'),
-        negotiable:      isChk('vNegotiable'),
-        isPublished:     isChk('vPublished'),
-        prontaConsegna:  isChk('vProntaConsegna'),
-        isNuovoArrivo:   isChk('vNuovoArrivo'),
-        description:     getVal('vDescription'),
+        vatDeductible:      isChk('vVatDeductible'),
+        imported:           isChk('vImported'),
+        handicapAccessible: isChk('vHandicapAccessible'),
+        forSale:            isChk('vForSale'),
+        forRental:          isChk('vForRental'),
+        rentalPrice:        isChk('vForRental') ? getNum('vRentalPrice') : null,
+        isPublished:        isChk('vPublished'),
+        prontaConsegna:     isChk('vProntaConsegna'),
+        isNuovoArrivo:      isChk('vNuovoArrivo'),
+        description:        getVal('vDescription'),
     };
 
     // Converti stringhe vuote a null per i campi enum
@@ -504,6 +517,11 @@ document.addEventListener('DOMContentLoaded', () => {
     galleryInput?.addEventListener('change', e => {
         const files = Array.from(e.target.files || []);
         if (files.length) { uploadGalleryImages(files); e.target.value = ''; }
+    });
+
+    // Show/hide rental price field based on "In noleggio" checkbox
+    document.getElementById('vForRental')?.addEventListener('change', e => {
+        document.getElementById('rentalPriceGroup').style.display = e.target.checked ? '' : 'none';
     });
 
     // Push modal

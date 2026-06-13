@@ -1,7 +1,7 @@
 <template>
   <div class="vcard" :class="layout === 'list' ? 'vcard-list' : ''">
     <div class="vcard-img">
-      <img v-if="vehicle.coverImageUrl" :src="vehicle.coverImageUrl" :alt="vehicle.model" />
+      <img v-if="vehicle.coverImageUrl" :src="op.resolveUrl(vehicle.coverImageUrl)!" :alt="vehicle.model" />
       <div v-else class="vcard-placeholder">
         <ion-icon :icon="carOutline" />
       </div>
@@ -20,9 +20,12 @@
         <span v-if="vehicle.prontaConsegna"    class="vcard-spec vcard-spec-pc">⚡ P.C.</span>
       </div>
       <div v-if="vehicle.price" class="vcard-price">
-        € {{ fmtPrice(vehicle.price) }}<span class="vcard-price-label"> IVA inc.</span>
+        € {{ fmtPrice(vehicle.price) }}<span class="vcard-price-label">{{ vehicle.vatDeductible ? ' IVA esp.' : ' IVA inc.' }}</span>
       </div>
-      <div v-else class="vcard-price" style="color:var(--mc-text-light);font-size:13px">
+      <div v-if="vehicle.forRental && vehicle.rentalPrice" class="vcard-rental">
+        <span class="vcard-spec vcard-spec-rental">🔑 Noleggio € {{ fmtPrice(vehicle.rentalPrice) }}/mese</span>
+      </div>
+      <div v-if="!vehicle.price && !(vehicle.forRental && vehicle.rentalPrice)" class="vcard-price" style="color:var(--mc-text-light);font-size:13px">
         Prezzo su richiesta
       </div>
     </div>
@@ -34,6 +37,9 @@ import { computed } from 'vue'
 import { IonIcon } from '@ionic/vue'
 import { carOutline } from 'ionicons/icons'
 import type { VehicleCard } from '@/stores/vehicles'
+import { useOperatorStore } from '@/stores/operator'
+
+const op = useOperatorStore()
 
 const props = defineProps<{
   vehicle: VehicleCard
@@ -42,16 +48,20 @@ const props = defineProps<{
 
 const conditionBadgeClass = computed(() => {
   switch (props.vehicle.condition) {
-    case 'nuovo': return 'badge-nuovo'
-    case 'km0':   return 'badge-km0'
-    default:      return 'badge-usato'
+    case 'nuovo':        return 'badge-nuovo'
+    case 'km_0':         return 'badge-km0'
+    case 'conto_vendita':return 'badge-conto'
+    case 'epoca':        return 'badge-epoca'
+    default:             return 'badge-usato'
   }
 })
 const conditionLabel = computed(() => {
   switch (props.vehicle.condition) {
-    case 'nuovo': return 'Nuovo'
-    case 'km0':   return 'KM 0'
-    default:      return 'Usato'
+    case 'nuovo':        return 'Nuovo'
+    case 'km_0':         return 'KM 0'
+    case 'conto_vendita':return 'C. Vendita'
+    case 'epoca':        return 'Epoca'
+    default:             return 'Usato'
   }
 })
 
@@ -66,7 +76,8 @@ function fmtPrice(v: number) { return new Intl.NumberFormat('it-IT').format(v) }
 }
 .vcard-list .vcard-img {
   width: 130px;
-  height: auto;
+  height: unset;       /* clear fixed 110px from app.css; flex stretch sets the height */
+  align-self: stretch;
   flex-shrink: 0;
 }
 .vcard-list .vcard-body {

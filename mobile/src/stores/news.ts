@@ -23,6 +23,7 @@ export const useNewsStore = defineStore('news', () => {
   const items      = ref<NewsItem[]>([])
   const totalCount = ref(0)
   const loading    = ref(false)
+  const error      = ref<string | null>(null)
   const detail     = ref<NewsItem | null>(null)
   const activeType = ref<string | null>(null)
   const page       = ref(0)
@@ -32,15 +33,19 @@ export const useNewsStore = defineStore('news', () => {
     if (!op.slug) return
     if (reset) page.value = 0
     loading.value = true
+    error.value   = null
     try {
       const q = new URLSearchParams({ page: String(page.value), pageSize: String(pageSize) })
       if (activeType.value) q.set('newsType', activeType.value)
       const res = await fetch(`${op.apiBase}/api/public/${op.slug}/news?${q}`)
-      if (!res.ok) throw new Error('Errore caricamento news')
-      const data = await res.json()
-      if (reset) items.value = data.items
-      else items.value.push(...data.items)
-      totalCount.value = data.totalCount
+      const text = await res.text()
+      const data = text ? JSON.parse(text) : {}
+      if (!res.ok) throw new Error(data?.error ?? data?.message ?? `Errore ${res.status}`)
+      if (reset) items.value = data.items ?? []
+      else items.value.push(...(data.items ?? []))
+      totalCount.value = data.totalCount ?? 0
+    } catch (e: any) {
+      error.value = e?.message ?? 'Errore caricamento news'
     } finally {
       loading.value = false
     }
@@ -71,7 +76,7 @@ export const useNewsStore = defineStore('news', () => {
   }
 
   return {
-    items, totalCount, loading, detail, activeType, page,
+    items, totalCount, loading, error, detail, activeType, page,
     fetchNews, fetchNextPage, fetchDetail, setType,
   }
 })

@@ -194,6 +194,10 @@
                             <label class="form-label" for="vHp">Potenza (CV)</label>
                             <input class="form-input" type="number" id="vHp" min="0" placeholder="es. 150">
                         </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vKw">Potenza (kW)</label>
+                            <input class="form-input" type="number" id="vKw" min="0" placeholder="es. 110">
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -220,6 +224,10 @@
                             <label class="form-label" for="vPrevPrice">Prezzo prec. (€)</label>
                             <input class="form-input" type="number" id="vPrevPrice" min="0" step="100">
                         </div>
+                        <div class="form-group" id="rentalPriceGroup" style="display:none">
+                            <label class="form-label" for="vRentalPrice">Prezzo noleggio (€/mese)</label>
+                            <input class="form-input" type="number" id="vRentalPrice" min="0" step="10" placeholder="es. 450">
+                        </div>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:10px">
                         <label class="form-check">
@@ -235,8 +243,24 @@
                             <span class="form-check-label">Nuovo arrivo</span>
                         </label>
                         <label class="form-check">
-                            <input class="form-check-input" type="checkbox" id="vNegotiable">
-                            <span class="form-check-label">Prezzo trattabile</span>
+                            <input class="form-check-input" type="checkbox" id="vVatDeductible">
+                            <span class="form-check-label">IVA esposta</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vImported">
+                            <span class="form-check-label">Importata</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vHandicapAccessible">
+                            <span class="form-check-label">Adatta portatori di handicap</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vForSale" checked>
+                            <span class="form-check-label">In vendita</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" id="vForRental">
+                            <span class="form-check-label">In noleggio</span>
                         </label>
                     </div>
                 </div>

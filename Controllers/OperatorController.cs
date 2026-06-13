@@ -43,6 +43,7 @@ public sealed class OperatorController : ControllerBase
             accentColor    = profile.AccentColor,
             logoUrl        = profile.LogoUrl,
             coverImageUrl  = profile.CoverImageUrl,
+            tagline        = profile.Tagline,
         });
     }
 
@@ -74,6 +75,7 @@ public sealed class OperatorController : ControllerBase
             accentColor    = profile.AccentColor,
             logoUrl        = profile.LogoUrl,
             coverImageUrl  = profile.CoverImageUrl,
+            tagline        = profile.Tagline,
         });
     }
 }

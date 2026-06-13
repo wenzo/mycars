@@ -15,6 +15,12 @@ export interface OperatorProfile {
   accentColor: string | null
   logoUrl: string | null
   coverImageUrl: string | null
+  tagline: string | null
+  // Modulo noleggio
+  rentalModuleEnabled:      boolean
+  rentalPhotosEnabled:      boolean
+  rentalContractPdfEnabled: boolean
+  rentalShowPrices:         boolean
 }
 
 const STORAGE_KEY = 'mycars_operator'
@@ -27,6 +33,12 @@ export const useOperatorStore = defineStore('operator', () => {
   const apiBase = computed(() =>
     import.meta.env.VITE_API_BASE_URL ?? ''
   )
+
+  function resolveUrl(url: string | null | undefined): string | null {
+    if (!url) return null
+    if (url.startsWith('http')) return url
+    return (import.meta.env.VITE_API_BASE_URL ?? '') + url
+  }
 
   function load() {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -85,6 +97,7 @@ export const useOperatorStore = defineStore('operator', () => {
     isConnected,
     slug,
     apiBase,
+    resolveUrl,
     load,
     save,
     disconnect,

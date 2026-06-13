@@ -22,6 +22,7 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
                    usage_type::text AS usage_type,
                    fuel::text AS fuel,
                    transmission::text AS transmission,
+                   horsepower_cv, power_kw,
                    registration_month, registration_year, mileage_km,
                    price, previous_price, currency,
                    is_sold, show_as_sold, pronta_consegna, is_nuovo_arrivo, nuovo_arrivo_until,
@@ -52,6 +53,7 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
                    usage_type::text AS usage_type,
                    fuel::text AS fuel,
                    transmission::text AS transmission,
+                   horsepower_cv, power_kw,
                    registration_month, registration_year, mileage_km,
                    price, previous_price, currency,
                    is_sold, show_as_sold, pronta_consegna, is_nuovo_arrivo, nuovo_arrivo_until,
@@ -111,7 +113,7 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
                    v.condition::text AS condition,
                    v.fuel::text AS fuel,
                    v.transmission::text AS transmission,
-                   v.horsepower_cv, v.registration_year, v.mileage_km,
+                   v.horsepower_cv, v.power_kw, v.registration_year, v.mileage_km,
                    v.color, v.price, v.previous_price,
                    v.negotiable, v.is_published, v.pronta_consegna, v.is_nuovo_arrivo,
                    v.description, v.sort_order, v.created_at, v.updated_at
@@ -220,7 +222,7 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
                 (id, operator_id, branch_id, internal_code, targa,
                  vehicle_type, brand_id, model, version,
                  condition, fuel, transmission,
-                 horsepower_cv, registration_year, mileage_km, color,
+                 horsepower_cv, power_kw, registration_year, mileage_km, color,
                  price, previous_price, negotiable,
                  is_published, published_at, pronta_consegna, is_nuovo_arrivo, description,
                  created_at, updated_at)
@@ -229,7 +231,7 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
                  @VehicleType::public.vehicle_type, @BrandId, @Model, @Version,
                  @Condition::public.vehicle_condition, @Fuel::public.fuel_type,
                  @Transmission::public.transmission_type,
-                 @HorsepowerCv, @RegistrationYear, @MileageKm, @Color,
+                 @HorsepowerCv, @PowerKw, @RegistrationYear, @MileageKm, @Color,
                  @Price, @PreviousPrice, @Negotiable,
                  @IsPublished, @PublishedAt, @ProntaConsegna, @IsNuovoArrivo, @Description,
                  @CreatedAt, @UpdatedAt)
@@ -260,6 +262,7 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
                 fuel             = @Fuel::public.fuel_type,
                 transmission     = @Transmission::public.transmission_type,
                 horsepower_cv    = @HorsepowerCv,
+                power_kw         = @PowerKw,
                 registration_year = @RegistrationYear,
                 mileage_km       = @MileageKm,
                 color            = @Color,
@@ -343,7 +346,9 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
 
     public async Task<PagedResult<Vehicle>> GetAllAsync(
         Guid operatorId, PageRequest page, string? condition = null, bool? isPublished = null,
-        bool? isNuovoArrivo = null, bool? prontaConsegna = null)
+        bool? isNuovoArrivo = null, bool? prontaConsegna = null,
+        bool? vatDeductible = null, bool? handicapAccessible = null,
+        bool? imported = null, bool? forSale = null, bool? forRental = null)
     {
         var parts = new List<string> { "operator_id = @operatorId", "deleted_at IS NULL" };
         var p     = new DynamicParameters();
@@ -357,6 +362,16 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
             { parts.Add("is_nuovo_arrivo = @isNuovoArrivo"); p.Add("isNuovoArrivo", isNuovoArrivo.Value); }
         if (prontaConsegna.HasValue)
             { parts.Add("pronta_consegna = @prontaConsegna"); p.Add("prontaConsegna", prontaConsegna.Value); }
+        if (vatDeductible.HasValue)
+            { parts.Add("vat_deductible = @vatDeductible"); p.Add("vatDeductible", vatDeductible.Value); }
+        if (handicapAccessible.HasValue)
+            { parts.Add("handicap_accessible = @handicapAccessible"); p.Add("handicapAccessible", handicapAccessible.Value); }
+        if (imported.HasValue)
+            { parts.Add("imported = @imported"); p.Add("imported", imported.Value); }
+        if (forSale.HasValue)
+            { parts.Add("for_sale = @forSale"); p.Add("forSale", forSale.Value); }
+        if (forRental.HasValue)
+            { parts.Add("for_rental = @forRental"); p.Add("forRental", forRental.Value); }
 
         p.Add("pageSize", page.PageSize);
         p.Add("offset",   page.Page * page.PageSize);

@@ -828,6 +828,8 @@ select
     v.usage_type,
     v.fuel,
     v.transmission,
+    v.horsepower_cv,
+    v.power_kw,
     v.registration_month,
     v.registration_year,
     v.mileage_km,

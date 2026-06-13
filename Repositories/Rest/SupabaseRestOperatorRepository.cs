@@ -11,7 +11,9 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
         "website_url,phone,email,whatsapp_number," +
         "address,city,province,zip_code,latitude,longitude," +
         "primary_color,secondary_color,accent_color," +
-        "logo_url,cover_image_url,is_active,created_at,updated_at";
+        "logo_url,cover_image_url,tagline,is_active," +
+        "rental_module_enabled,rental_photos_enabled,rental_contract_pdf_enabled,rental_show_prices," +
+        "created_at,updated_at";
 
     public Task<OperatorProfile?> GetByIdAsync(Guid id)
         => _db.SelectOneAsync<OperatorProfile>("operators", $"id=eq.{id}", select: AdminCols);
@@ -71,6 +73,7 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
             accent_color    = profile.AccentColor,
             logo_url        = profile.LogoUrl,
             cover_image_url = profile.CoverImageUrl,
+            tagline         = profile.Tagline,
             updated_at      = profile.UpdatedAt,
         }, select: AdminCols);
     }

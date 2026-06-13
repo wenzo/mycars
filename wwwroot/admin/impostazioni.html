@@ -5,6 +5,101 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyCars Admin — Impostazioni</title>
     <link rel="stylesheet" href="/assets/css/admin.css">
+    <style>
+        /* ── Tab bar ── */
+        .tab-bar {
+            display: flex; gap: 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            position: sticky; top: var(--header-h); z-index: 40;
+        }
+        .tab-btn {
+            display: flex; align-items: center; gap: 7px;
+            padding: 0 18px; height: 46px;
+            border: none; border-bottom: 2px solid transparent;
+            background: none; color: var(--text-light);
+            font-size: 13px; font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: color .18s, border-color .18s;
+            margin-bottom: -1px;
+        }
+        .tab-btn svg { width: 15px; height: 15px; opacity: .7; }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--navy); border-bottom-color: var(--red); }
+        .tab-btn.active svg { opacity: 1; }
+
+        /* ── Tab panes ── */
+        .tab-pane { display: none; flex-direction: column; gap: 24px; }
+        .tab-pane.active { display: flex; }
+
+        /* Override content to be block so panes manage their own layout */
+        .content { display: block !important; padding: 24px; }
+
+        /* ── Color swatch ── */
+        .color-row { display: flex; gap: 10px; align-items: center; }
+        .color-swatch {
+            width: 38px; height: 38px; border-radius: var(--r-sm);
+            border: 1px solid var(--border); cursor: pointer;
+            flex-shrink: 0; overflow: hidden; position: relative;
+        }
+        .color-swatch input[type="color"] {
+            opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer;
+        }
+
+        /* ── Upload area ── */
+        .upload-area {
+            border: 2px dashed var(--border); border-radius: var(--r-sm);
+            padding: 20px; text-align: center; cursor: pointer;
+            transition: border-color .18s, background .18s; position: relative;
+        }
+        .upload-area:hover, .upload-area.drag-over { border-color: var(--red); background: #fff5f5; }
+        .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .upload-label { font-size: 13px; color: var(--text-mid); pointer-events: none; }
+        .upload-label strong { color: var(--red); }
+        .upload-preview { width: 100%; max-height: 150px; object-fit: contain; border-radius: var(--r-sm); margin-top: 10px; display: none; }
+        .upload-preview-cover { width: 100%; height: 140px; object-fit: cover; border-radius: var(--r-sm); margin-top: 10px; display: none; }
+
+        /* ── Health grid ── */
+        .health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+        .health-card {
+            background: var(--white); border: 1px solid var(--border);
+            border-radius: var(--r); padding: 16px 18px;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .health-card-header { display: flex; align-items: center; gap: 10px; }
+        .health-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .health-dot.ok   { background: var(--green); box-shadow: 0 0 6px rgba(0,168,107,.35); }
+        .health-dot.warn { background: var(--amber); box-shadow: 0 0 6px rgba(255,140,0,.35); }
+        .health-dot.err  { background: var(--red);   box-shadow: 0 0 6px rgba(214,40,40,.35); }
+        .health-dot.load { background: var(--border); animation: pulse-load 1s ease-in-out infinite; }
+        @keyframes pulse-load { 0%,100%{opacity:.4} 50%{opacity:1} }
+        .health-name { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
+        .health-status {
+            font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+            padding: 2px 8px; border-radius: 20px; align-self: flex-start;
+        }
+        .health-status.ok   { background: var(--green-bg);  color: var(--green); }
+        .health-status.warn { background: var(--amber-bg);  color: var(--amber); }
+        .health-status.err  { background: #FFF0F0; color: var(--red); }
+        .health-detail { font-size: 12px; color: var(--text-light); line-height: 1.45; }
+        .health-error  { font-size: 11px; color: var(--red); margin-top: 2px; word-break: break-all; }
+
+        /* ── App code boxes ── */
+        .code-primary-box {
+            font-family: 'Outfit', monospace; font-size: 22px; font-weight: 800;
+            letter-spacing: .08em; color: var(--navy);
+            background: var(--surface); border: 2px solid var(--border);
+            border-radius: var(--r-sm); padding: 10px 18px;
+            flex: 1; text-align: center; min-height: 48px; line-height: 1.2;
+        }
+
+        @media (max-width: 700px) {
+            .tab-btn { padding: 0 12px; font-size: 12px; }
+            .health-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
 </head>
 <body>
 
@@ -18,264 +113,434 @@
         <h1 class="topbar-title">Impostazioni</h1>
         <div class="topbar-spacer"></div>
     </header>
+
+    <!-- Tab bar -->
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="concessionaria">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Concessionaria
+        </button>
+        <button class="tab-btn" data-tab="account">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Account
+        </button>
+        <button class="tab-btn" data-tab="sistema">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            Sistema
+        </button>
+    </div>
+
     <main class="content">
 
-        <!-- Riga 1: Anagrafica + Dati fiscali -->
-        <div class="two-col" style="align-items:start">
+        <!-- ══════════ TAB: CONCESSIONARIA ══════════ -->
+        <div id="tab-concessionaria" class="tab-pane active">
 
-            <!-- Anagrafica -->
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Anagrafica aziendale</h2></div>
-                <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
-                    <div class="form-group">
-                        <label class="form-label" for="pBusinessName">Ragione sociale <span style="color:var(--red)">*</span></label>
-                        <input class="form-input" type="text" id="pBusinessName" placeholder="es. Rossi Auto S.r.l.">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="pPhone">Telefono</label>
-                            <input class="form-input" type="tel" id="pPhone" placeholder="es. 02 1234567">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="pWhatsapp">WhatsApp</label>
-                            <input class="form-input" type="tel" id="pWhatsapp" placeholder="es. +39 333 1234567">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="pEmail">Email</label>
-                        <input class="form-input" type="email" id="pEmail" placeholder="info@esempio.it">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="pWebsite">Sito web</label>
-                        <input class="form-input" type="url" id="pWebsite" placeholder="https://www.esempio.it">
-                    </div>
-                    <div>
-                        <button class="btn btn-primary btn-sm" id="saveAnagraficaBtn">Salva anagrafica</button>
-                    </div>
-                </div>
-            </div>
+            <div id="loadingMsg" style="text-align:center;padding:48px;color:var(--text-light)">Caricamento…</div>
 
-            <!-- Dati fiscali -->
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Dati fiscali</h2></div>
-                <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
-                    <div class="form-group">
-                        <label class="form-label" for="pVat">Partita IVA</label>
-                        <input class="form-input" type="text" id="pVat" placeholder="es. 12345678901" maxlength="11">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="pFiscal">Codice fiscale</label>
-                        <input class="form-input" type="text" id="pFiscal" placeholder="es. RSSMRA80A01H501Z" maxlength="16">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="pRea">Numero REA</label>
-                        <input class="form-input" type="text" id="pRea" placeholder="es. MI-1234567">
-                    </div>
-                    <div>
-                        <button class="btn btn-primary btn-sm" id="saveFiscaleBtn">Salva dati fiscali</button>
-                    </div>
-                </div>
-            </div>
+            <div id="profileContent" style="display:none;flex-direction:column;gap:24px">
 
-        </div>
+                <!-- Riga 1: Dati aziendali + Fiscale -->
+                <div class="two-col" style="align-items:start">
 
-        <!-- Riga 2: Localizzazione + Branding -->
-        <div class="two-col" style="align-items:start;margin-top:0">
-
-            <!-- Sede legale + coordinate -->
-            <div class="card">
-                <div class="card-header">
-                    <div>
-                        <h2 class="card-title">Sede legale</h2>
-                        <p style="font-size:12px;color:var(--text-light);margin-top:2px">Indirizzo registrato dell'azienda. Per le sedi operative vai a <a href="/admin/sedi.html" style="color:var(--blue)">Sedi &amp; Reparti</a>.</p>
-                    </div>
-                </div>
-                <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
-                    <div class="form-group">
-                        <label class="form-label" for="pAddress">Indirizzo</label>
-                        <input class="form-input" type="text" id="pAddress" placeholder="es. Via Roma 1">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="pZip">CAP</label>
-                            <input class="form-input" type="text" id="pZip" placeholder="es. 20121" maxlength="10">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="pCity">Città</label>
-                            <input class="form-input" type="text" id="pCity" placeholder="es. Milano">
-                        </div>
-                        <div class="form-group" style="max-width:90px">
-                            <label class="form-label" for="pProvince">Prov.</label>
-                            <input class="form-input" type="text" id="pProvince" placeholder="MI" maxlength="4" style="text-transform:uppercase">
-                        </div>
-                    </div>
-                    <div>
-                        <div class="form-section-title" style="margin-bottom:8px">Coordinate geografiche</div>
-                        <div class="form-row" style="align-items:flex-end">
+                    <div class="card">
+                        <div class="card-header"><h2 class="card-title">Dati aziendali</h2></div>
+                        <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
                             <div class="form-group">
-                                <label class="form-label" for="pLat">Latitudine</label>
-                                <input class="form-input" type="number" id="pLat" step="any" placeholder="es. 45.4654219">
+                                <label class="form-label" for="pBusinessName">Ragione sociale <span style="color:var(--red)">*</span></label>
+                                <input class="form-input" type="text" id="pBusinessName" placeholder="es. Rossi Auto S.r.l." maxlength="200">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="pPhone">Telefono</label>
+                                    <input class="form-input" type="tel" id="pPhone" placeholder="es. 02 1234567">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="pWhatsapp">WhatsApp</label>
+                                    <input class="form-input" type="tel" id="pWhatsapp" placeholder="es. +39 333 1234567">
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="pLng">Longitudine</label>
-                                <input class="form-input" type="number" id="pLng" step="any" placeholder="es. 9.1859243">
+                                <label class="form-label" for="pEmail">Email pubblica</label>
+                                <input class="form-input" type="email" id="pEmail" placeholder="info@esempio.it">
                             </div>
-                            <div style="padding-bottom:1px">
-                                <button type="button" class="btn btn-outline btn-sm" id="geocodeBtn" title="Ottieni coordinate dall'indirizzo">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><path d="M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M19.07 4.93l-2.12 2.12M7.05 16.95l-2.12 2.12"/></svg>
-                                    Geocodifica
+                            <div class="form-group">
+                                <label class="form-label" for="pWebsite">Sito web</label>
+                                <input class="form-input" type="url" id="pWebsite" placeholder="https://www.esempio.it">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="pTagline">Slogan / Tagline</label>
+                                <input class="form-input" type="text" id="pTagline" placeholder="es. La tua auto dei sogni ti aspetta" maxlength="200">
+                                <p style="font-size:12px;color:var(--text-light);margin-top:4px">Appare nella schermata iniziale dell'app mobile.</p>
+                            </div>
+                            <div>
+                                <button class="btn btn-primary btn-sm" id="saveAnagraficaBtn">Salva dati aziendali</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h2 class="card-title">Dati fiscali</h2></div>
+                        <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="pVat">Partita IVA</label>
+                                <input class="form-input" type="text" id="pVat" placeholder="es. IT12345678901" maxlength="32">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="pFiscal">Codice fiscale</label>
+                                <input class="form-input" type="text" id="pFiscal" placeholder="es. RSSMRA80A01H501Z" maxlength="16">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="pRea">Numero REA</label>
+                                <input class="form-input" type="text" id="pRea" placeholder="es. MI-1234567">
+                            </div>
+                            <div>
+                                <button class="btn btn-primary btn-sm" id="saveFiscaleBtn">Salva dati fiscali</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Riga 2: Sede legale + Branding -->
+                <div class="two-col" style="align-items:start">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <h2 class="card-title">Sede legale</h2>
+                                <p style="font-size:12px;color:var(--text-light);margin-top:2px">Per le sedi operative vai a <a href="/admin/sedi.html" style="color:var(--blue)">Sedi &amp; Reparti</a>.</p>
+                            </div>
+                        </div>
+                        <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="pAddress">Indirizzo</label>
+                                <input class="form-input" type="text" id="pAddress" placeholder="es. Via Roma 1">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="pZip">CAP</label>
+                                    <input class="form-input" type="text" id="pZip" placeholder="es. 20121" maxlength="10">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="pCity">Città</label>
+                                    <input class="form-input" type="text" id="pCity" placeholder="es. Milano">
+                                </div>
+                                <div class="form-group" style="max-width:90px">
+                                    <label class="form-label" for="pProvince">Prov.</label>
+                                    <input class="form-input" type="text" id="pProvince" placeholder="MI" maxlength="4" style="text-transform:uppercase">
+                                </div>
+                            </div>
+                            <div>
+                                <div class="form-section-title" style="margin-bottom:8px">Coordinate geografiche</div>
+                                <div class="form-row" style="align-items:flex-end">
+                                    <div class="form-group">
+                                        <label class="form-label" for="pLat">Latitudine</label>
+                                        <input class="form-input" type="number" id="pLat" step="any" placeholder="es. 45.4654219">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="pLng">Longitudine</label>
+                                        <input class="form-input" type="number" id="pLng" step="any" placeholder="es. 9.1859243">
+                                    </div>
+                                    <div style="padding-bottom:1px">
+                                        <button type="button" class="btn btn-outline btn-sm" id="geocodeBtn" title="Ottieni coordinate dall'indirizzo">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                                            Geocodifica
+                                        </button>
+                                    </div>
+                                </div>
+                                <p style="font-size:12px;color:var(--text-light);margin-top:4px">Usa <em>Geocodifica</em> per ottenere le coordinate dall'indirizzo inserito.</p>
+                            </div>
+                            <div>
+                                <button class="btn btn-primary btn-sm" id="saveLocalizzazioneBtn">Salva sede legale</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h2 class="card-title">Branding</h2></div>
+                        <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+                            <div class="form-group">
+                                <label class="form-label">Colore primario</label>
+                                <div class="color-row">
+                                    <div class="color-swatch" id="swatchPrimary">
+                                        <input type="color" id="pColorPrimary" oninput="updateSwatch('pColorPrimary','swatchPrimary','pColorPrimaryText')">
+                                    </div>
+                                    <input class="form-input" type="text" id="pColorPrimaryText" maxlength="7" placeholder="#1E3A5F"
+                                           oninput="syncPicker('pColorPrimaryText','pColorPrimary','swatchPrimary')">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Colore secondario</label>
+                                <div class="color-row">
+                                    <div class="color-swatch" id="swatchSecondary">
+                                        <input type="color" id="pColorSecondary" oninput="updateSwatch('pColorSecondary','swatchSecondary','pColorSecondaryText')">
+                                    </div>
+                                    <input class="form-input" type="text" id="pColorSecondaryText" maxlength="7" placeholder="#2A4D73"
+                                           oninput="syncPicker('pColorSecondaryText','pColorSecondary','swatchSecondary')">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Colore accento</label>
+                                <div class="color-row">
+                                    <div class="color-swatch" id="swatchAccent">
+                                        <input type="color" id="pColorAccent" oninput="updateSwatch('pColorAccent','swatchAccent','pColorAccentText')">
+                                    </div>
+                                    <input class="form-input" type="text" id="pColorAccentText" maxlength="7" placeholder="#D62828"
+                                           oninput="syncPicker('pColorAccentText','pColorAccent','swatchAccent')">
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-primary btn-sm" id="saveBrandingBtn">Salva branding</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Riga 3: Logo + Copertina -->
+                <div class="two-col" style="align-items:start">
+
+                    <div class="card">
+                        <div class="card-header"><h2 class="card-title">Logo aziendale</h2></div>
+                        <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+                            <div class="upload-area" id="logoArea">
+                                <input type="file" id="logoFile" accept="image/jpeg,image/png,image/webp,image/svg+xml" onchange="handleUpload('logo')">
+                                <div class="upload-label">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-light);margin-bottom:6px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    <br><strong>Clicca o trascina</strong> il logo<br>
+                                    <span style="font-size:12px;color:var(--text-light)">JPG, PNG, WebP, SVG · max 2 MB</span>
+                                </div>
+                                <img id="logoPreview" class="upload-preview" alt="Logo">
+                            </div>
+                            <div id="logoProgress" style="display:none">
+                                <div style="height:4px;background:var(--surface);border-radius:2px;overflow:hidden">
+                                    <div id="logoProgressBar" style="height:100%;background:var(--red);width:0%;transition:width .3s"></div>
+                                </div>
+                            </div>
+                            <div class="login-error" id="logoError" style="margin-top:4px"></div>
+                            <p style="font-size:12px;color:var(--text-light)">PNG/WebP con sfondo trasparente. Max 2 MB.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h2 class="card-title">Immagine di copertina</h2></div>
+                        <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+                            <div class="upload-area" id="coverArea">
+                                <input type="file" id="coverFile" accept="image/jpeg,image/png,image/webp" onchange="handleUpload('cover')">
+                                <div class="upload-label">
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-light);margin-bottom:6px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                    <br><strong>Clicca o trascina</strong> la copertina<br>
+                                    <span style="font-size:12px;color:var(--text-light)">JPG, PNG, WebP · max 5 MB</span>
+                                </div>
+                                <img id="coverPreview" class="upload-preview-cover" alt="Copertina">
+                            </div>
+                            <div id="coverProgress" style="display:none">
+                                <div style="height:4px;background:var(--surface);border-radius:2px;overflow:hidden">
+                                    <div id="coverProgressBar" style="height:100%;background:var(--red);width:0%;transition:width .3s"></div>
+                                </div>
+                            </div>
+                            <div class="login-error" id="coverError" style="margin-top:4px"></div>
+                            <p style="font-size:12px;color:var(--text-light)">Dimensioni consigliate: 1280×400 px. Max 5 MB.</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Riga 4: App Mobile (full-width) -->
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">App Mobile</h2></div>
+                    <div class="card-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+
+                            <!-- Identificatori + codice primario -->
+                            <div style="display:flex;flex-direction:column;gap:16px">
+                                <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;
+                                            padding-bottom:14px;border-bottom:1px solid var(--border)">
+                                    <div style="display:flex;justify-content:space-between">
+                                        <span style="color:var(--text-light)">Slug</span>
+                                        <code id="infoSlug" style="color:var(--text)">—</code>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between">
+                                        <span style="color:var(--text-light)">Stato</span>
+                                        <span id="infoActive">—</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="form-label" style="margin-bottom:8px">Codice principale</div>
+                                    <div style="display:flex;align-items:center;gap:10px">
+                                        <div id="primaryCodeBox" class="code-primary-box">—</div>
+                                        <button class="btn btn-outline btn-sm" onclick="copyPrimaryCode()" title="Copia">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                        </button>
+                                    </div>
+                                    <p id="primaryCodeUsage" style="font-size:12px;color:var(--text-light);margin-top:6px"></p>
+                                    <p style="font-size:12px;color:var(--text-light);margin-top:2px">L'utente lo inserisce nell'app per collegarsi alla concessionaria.</p>
+                                </div>
+                                <div style="background:var(--surface);border-radius:var(--r-sm);padding:12px;font-size:12px;color:var(--text-mid)">
+                                    <strong>Deep link QR</strong>: <code id="deepLinkHint" style="font-size:11px">mycars://connect?code=—</code><br>
+                                    <span style="color:var(--text-light)">Incorpora in un QR code per accesso immediato.</span>
+                                </div>
+                            </div>
+
+                            <!-- Codici campagna -->
+                            <div style="display:flex;flex-direction:column;gap:12px">
+                                <div>
+                                    <div class="form-label" style="margin-bottom:4px">Codici aggiuntivi</div>
+                                    <p style="font-size:12px;color:var(--text-light)">Crea codici campagna (es. <code>PIRRO-FIERA24</code>) per tracciare canali diversi.</p>
+                                </div>
+                                <div id="extraCodesList" style="display:flex;flex-direction:column;gap:6px"></div>
+
+                                <!-- Form crea codice -->
+                                <div id="createCodeForm" style="display:none;background:var(--surface);border-radius:var(--r-sm);padding:14px;flex-direction:column;gap:10px">
+                                    <div class="form-group">
+                                        <label class="form-label" for="newCodeInput">Codice</label>
+                                        <input class="form-input" type="text" id="newCodeInput" placeholder="es. PIRRO-FIERA24" maxlength="32"
+                                               style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'')">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label" for="newCodeLabel">Etichetta</label>
+                                        <input class="form-input" type="text" id="newCodeLabel" placeholder="es. Fiera del Levante 2024">
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                                        <div class="form-group">
+                                            <label class="form-label" for="newCodeExpires">Scadenza</label>
+                                            <input class="form-input" type="date" id="newCodeExpires">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label" for="newCodeMaxUses">Max utilizzi</label>
+                                            <input class="form-input" type="number" id="newCodeMaxUses" min="1" placeholder="illimitato">
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;gap:8px">
+                                        <button class="btn btn-primary btn-sm" onclick="submitCreateCode()">Crea codice</button>
+                                        <button class="btn btn-outline btn-sm" onclick="cancelCreateCode()">Annulla</button>
+                                    </div>
+                                    <div class="login-error" id="codeCreateError"></div>
+                                </div>
+
+                                <button class="btn btn-outline btn-sm" id="addCodeBtn" onclick="showCreateCodeForm()" style="align-self:flex-start">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Aggiungi codice
                                 </button>
                             </div>
+
                         </div>
-                        <p style="font-size:12px;color:var(--text-light);margin-top:4px">Usa <em>Geocodifica</em> per ottenere le coordinate automaticamente dall'indirizzo inserito.</p>
-                    </div>
-                    <div>
-                        <button class="btn btn-primary btn-sm" id="saveLocalizzazioneBtn">Salva localizzazione</button>
                     </div>
                 </div>
+
+            </div><!-- /profileContent -->
+        </div><!-- /tab-concessionaria -->
+
+
+        <!-- ══════════ TAB: ACCOUNT ══════════ -->
+        <div id="tab-account" class="tab-pane">
+            <div class="two-col" style="align-items:start">
+
+                <div class="card">
+                    <div class="card-header"><h2 class="card-title">Cambio password</h2></div>
+                    <div class="card-body">
+                        <form id="changePasswordForm" style="display:flex;flex-direction:column;gap:14px">
+                            <div class="form-group">
+                                <label class="form-label" for="currentPassword">Password attuale</label>
+                                <input class="form-input" type="password" id="currentPassword" autocomplete="current-password">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="newPassword">Nuova password</label>
+                                <input class="form-input" type="password" id="newPassword" autocomplete="new-password" minlength="8">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="confirmPassword">Conferma nuova password</label>
+                                <input class="form-input" type="password" id="confirmPassword" autocomplete="new-password" minlength="8">
+                            </div>
+                            <div id="pwdError" class="login-error"></div>
+                            <div><button type="submit" class="btn btn-primary btn-sm">Aggiorna password</button></div>
+                        </form>
+                    </div>
+                </div>
+
+                <div></div><!-- spacer colonna destra -->
+
+            </div>
+        </div><!-- /tab-account -->
+
+
+        <!-- ══════════ TAB: SISTEMA ══════════ -->
+        <div id="tab-sistema" class="tab-pane">
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <div>
+                    <h2 style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--text)">Stato del sistema</h2>
+                    <p style="font-size:13px;color:var(--text-light);margin-top:2px">Monitoraggio in tempo reale dei servizi dell'applicazione.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" id="refreshHealthBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    Aggiorna
+                </button>
             </div>
 
-            <!-- Branding -->
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Branding e colori</h2></div>
-                <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
-                    <div class="form-group">
-                        <label class="form-label" for="pColorPrimary">Colore primario</label>
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <input type="color" id="pColorPrimary" style="width:44px;height:38px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;padding:2px">
-                            <input class="form-input" type="text" id="pColorPrimaryText" maxlength="7" placeholder="#1E3A5F"
-                                   style="flex:1" oninput="syncColor('pColorPrimary','pColorPrimaryText')">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="pColorSecondary">Colore secondario</label>
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <input type="color" id="pColorSecondary" style="width:44px;height:38px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;padding:2px">
-                            <input class="form-input" type="text" id="pColorSecondaryText" maxlength="7" placeholder="#2A4D73"
-                                   style="flex:1" oninput="syncColor('pColorSecondary','pColorSecondaryText')">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="pColorAccent">Colore accento</label>
-                        <div style="display:flex;align-items:center;gap:10px">
-                            <input type="color" id="pColorAccent" style="width:44px;height:38px;border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;padding:2px">
-                            <input class="form-input" type="text" id="pColorAccentText" maxlength="7" placeholder="#D62828"
-                                   style="flex:1" oninput="syncColor('pColorAccent','pColorAccentText')">
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:8px">
-                        <div style="flex:1;height:32px;border-radius:var(--r-sm)" id="colorPreviewPrimary"></div>
-                        <div style="flex:1;height:32px;border-radius:var(--r-sm)" id="colorPreviewSecondary"></div>
-                        <div style="flex:1;height:32px;border-radius:var(--r-sm)" id="colorPreviewAccent"></div>
-                    </div>
-                    <div>
-                        <button class="btn btn-primary btn-sm" id="saveBrandingBtn">Salva branding</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Riga 3: Immagini aziendali -->
-        <div class="two-col" style="align-items:start;margin-top:0">
-
-            <!-- Logo -->
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Logo aziendale</h2></div>
-                <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
-                    <div class="img-cover-area" id="logoArea" style="aspect-ratio:3/1;max-height:120px">
-                        <img id="logoImg" src="" alt="" style="display:none;object-fit:contain;background:var(--surface)">
-                        <div class="img-cover-placeholder" id="logoPlaceholder">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--text-light)" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                            <span style="color:var(--text-light);font-size:13px">Nessun logo</span>
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:8px">
-                        <button type="button" class="btn btn-outline btn-sm" id="logoUploadBtn">Carica logo</button>
-                        <button type="button" class="btn btn-outline btn-sm" id="logoRemoveBtn" style="display:none;color:var(--red);border-color:var(--red)">Rimuovi</button>
-                    </div>
-                    <p style="font-size:12px;color:var(--text-light)">Formato consigliato: PNG/WebP con sfondo trasparente. Max 2 MB.</p>
-                    <input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display:none">
-                </div>
-            </div>
-
-            <!-- Copertina -->
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Immagine di copertina</h2></div>
-                <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
-                    <div class="img-cover-area" id="coverArea">
-                        <img id="coverImg" src="" alt="" style="display:none">
-                        <div class="img-cover-placeholder" id="coverPlaceholder">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;color:var(--text-light)" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                            <span style="color:var(--text-light);font-size:13px">Nessuna copertina</span>
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:8px">
-                        <button type="button" class="btn btn-outline btn-sm" id="coverUploadBtn">Carica copertina</button>
-                        <button type="button" class="btn btn-outline btn-sm" id="coverRemoveBtn" style="display:none;color:var(--red);border-color:var(--red)">Rimuovi</button>
-                    </div>
-                    <p style="font-size:12px;color:var(--text-light)">Dimensioni consigliate: 1280×400 px. Max 5 MB.</p>
-                    <input type="file" id="coverInput" accept="image/jpeg,image/png,image/webp" style="display:none">
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Riga 4: Accesso admin + Info sistema -->
-        <div class="two-col" style="align-items:start;margin-top:0">
-
-            <!-- Cambio password -->
-            <div class="card">
-                <div class="card-header"><h2 class="card-title">Accesso admin</h2></div>
-                <div class="card-body">
-                    <form id="changePasswordForm" style="display:flex;flex-direction:column;gap:14px">
-                        <div class="form-group">
-                            <label class="form-label" for="currentPassword">Password attuale</label>
-                            <input class="form-input" type="password" id="currentPassword" autocomplete="current-password">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="newPassword">Nuova password</label>
-                            <input class="form-input" type="password" id="newPassword" autocomplete="new-password" minlength="8">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="confirmPassword">Conferma nuova password</label>
-                            <input class="form-input" type="password" id="confirmPassword" autocomplete="new-password" minlength="8">
-                        </div>
-                        <div id="pwdError" class="login-error"></div>
-                        <div>
-                            <button type="submit" class="btn btn-primary btn-sm">Aggiorna password</button>
-                        </div>
-                    </form>
-                </div>
+            <div id="healthGrid" class="health-grid">
+                <!-- popolato da JS -->
+                <div class="health-card"><div class="health-card-header"><div class="health-dot load"></div><div class="health-name">Caricamento…</div></div></div>
             </div>
 
             <!-- Info sistema -->
             <div class="card">
-                <div class="card-header"><h2 class="card-title">Informazioni sistema</h2></div>
-                <div class="card-body" style="display:flex;flex-direction:column;gap:16px">
+                <div class="card-header"><h2 class="card-title">Informazioni applicazione</h2></div>
+                <div class="card-body">
                     <table style="width:100%;border-collapse:collapse">
-                        <tbody>
+                        <tbody id="sysInfoTable">
                             <tr>
-                                <td style="padding:7px 20px 7px 0;color:var(--text-light);font-size:13px;white-space:nowrap">Versione app</td>
+                                <td style="padding:7px 20px 7px 0;color:var(--text-light);font-size:13px">Versione</td>
                                 <td style="padding:7px 0;font-size:13px;font-weight:600">MyCars 1.0</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:7px 20px 7px 0;color:var(--text-light);font-size:13px">Database</td>
-                                <td style="padding:7px 0;font-size:13px;font-weight:600">Supabase (REST)</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:7px 20px 7px 0;color:var(--text-light);font-size:13px">Endpoint hash</td>
-                                <td style="padding:7px 0;font-size:13px">
-                                    <a href="/api/admin/hash?password=test" target="_blank" style="color:var(--blue);text-decoration:underline">/api/admin/hash</a>
-                                    <span style="color:var(--text-light);font-size:12px;display:block">Solo Development</span>
-                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
-        </div>
+            <!-- Modulo Noleggio -->
+            <div class="card" style="margin-top:24px">
+                <div class="card-header">
+                    <h2 class="card-title">Modulo Noleggio</h2>
+                    <p style="font-size:13px;color:var(--text-light);margin-top:2px">Attiva le funzionalità di gestione del noleggio veicoli.</p>
+                </div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:14px">
+                    <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                        <input type="checkbox" id="rsModuleEnabled" style="width:18px;height:18px">
+                        <div>
+                            <strong>Abilita modulo noleggio</strong>
+                            <div style="font-size:12px;color:var(--text-light)">Mostra il tab Noleggio nell'app mobile e il menu Noleggi nel pannello admin.</div>
+                        </div>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                        <input type="checkbox" id="rsPhotosEnabled" style="width:18px;height:18px">
+                        <div>
+                            <strong>Foto stato veicolo</strong>
+                            <div style="font-size:12px;color:var(--text-light)">Permette di scattare e allegare foto prima/dopo il noleggio.</div>
+                        </div>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                        <input type="checkbox" id="rsContractPdf" style="width:18px;height:18px">
+                        <div>
+                            <strong>Contratto PDF</strong>
+                            <div style="font-size:12px;color:var(--text-light)">Genera il contratto di noleggio stampabile/salvabile come PDF.</div>
+                        </div>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer">
+                        <input type="checkbox" id="rsShowPrices" style="width:18px;height:18px">
+                        <div>
+                            <strong>Mostra sezione economica</strong>
+                            <div style="font-size:12px;color:var(--text-light)">Visualizza importo, deposito e modalità di pagamento.</div>
+                        </div>
+                    </label>
+                    <div>
+                        <button class="btn btn-primary btn-sm" id="saveRentalSettingsBtn">Salva impostazioni noleggio</button>
+                        <span class="form-save-msg" id="rentalSettingsSaved" style="display:none;margin-left:10px;color:var(--green);font-size:13px">Salvato ✓</span>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /tab-sistema -->
 
     </main>
 </div>
@@ -283,33 +548,44 @@
 <script src="/assets/js/admin.js"></script>
 <script src="/assets/js/impostazioni.js"></script>
 <script>
-function syncColor(colorId, textId) {
-    const val = document.getElementById(textId)?.value;
-    if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-        const el = document.getElementById(colorId);
-        if (el) el.value = val;
-        updateColorPreviews();
+// ── Tab switching ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
+        if (tab === 'sistema' && !window._healthLoaded) loadSystemInfo();
+    });
+});
+
+// ── Color picker helpers ───────────────────────────────────────────────────────
+function updateSwatch(pickerId, swatchId, textId) {
+    const val = document.getElementById(pickerId)?.value;
+    if (!val) return;
+    const sw = document.getElementById(swatchId);
+    if (sw) sw.style.background = val;
+    const tx = document.getElementById(textId);
+    if (tx) tx.value = val;
+}
+function syncPicker(textId, pickerId, swatchId) {
+    const val = document.getElementById(textId)?.value?.trim();
+    if (!/^#[0-9a-fA-F]{6}$/.test(val)) return;
+    const pk = document.getElementById(pickerId);
+    if (pk) pk.value = val;
+    const sw = document.getElementById(swatchId);
+    if (sw) sw.style.background = val;
+}
+function setColorField(pickerId, swatchId, textId, value) {
+    const v = value ?? '';
+    const pk = document.getElementById(pickerId);
+    const sw = document.getElementById(swatchId);
+    const tx = document.getElementById(textId);
+    if (tx) tx.value = v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        if (pk) pk.value = v;
+        if (sw) sw.style.background = v;
     }
 }
-function updateColorPreviews() {
-    const pairs = [
-        ['pColorPrimary',   'colorPreviewPrimary',   'pColorPrimaryText'],
-        ['pColorSecondary', 'colorPreviewSecondary',  'pColorSecondaryText'],
-        ['pColorAccent',    'colorPreviewAccent',     'pColorAccentText'],
-    ];
-    pairs.forEach(([colorId, previewId, textId]) => {
-        const val = document.getElementById(colorId)?.value;
-        if (val) {
-            const el = document.getElementById(previewId);
-            if (el) el.style.background = val;
-            const tx = document.getElementById(textId);
-            if (tx && tx.value !== val) tx.value = val;
-        }
-    });
-}
-['pColorPrimary','pColorSecondary','pColorAccent'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', updateColorPreviews);
-});
 </script>
 </body>
 </html>

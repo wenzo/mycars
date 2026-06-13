@@ -52,7 +52,14 @@ public sealed class PublicController : ControllerBase
         [FromQuery] int?     maxMileageKm   = null,
         [FromQuery] int?     minYear        = null,
         [FromQuery] int?     maxYear        = null,
-        [FromQuery] Guid?    branchId       = null)
+        [FromQuery] Guid?    branchId           = null,
+        [FromQuery] string?  search             = null,
+        [FromQuery] string?  transmission       = null,
+        [FromQuery] bool?    vatDeductible      = null,
+        [FromQuery] bool?    handicapAccessible = null,
+        [FromQuery] bool?    imported           = null,
+        [FromQuery] bool?    forSale            = null,
+        [FromQuery] bool?    forRental          = null)
     {
         var op = await ResolveAsync(slug);
         if (op is null) return NotFound();
@@ -61,7 +68,10 @@ public sealed class PublicController : ControllerBase
             vehicleType, condition, fuel,
             prontaConsegna, isNuovoArrivo,
             minPrice, maxPrice, maxMileageKm,
-            minYear, maxYear, branchId);
+            minYear, maxYear, branchId,
+            string.IsNullOrWhiteSpace(search)       ? null : search.Trim(),
+            string.IsNullOrWhiteSpace(transmission) ? null : transmission.Trim(),
+            vatDeductible, handicapAccessible, imported, forSale, forRental);
 
         var result = await _vehicles.GetPublicCardsAsync(
             op.Id,
@@ -99,12 +109,19 @@ public sealed class PublicController : ControllerBase
         var op = await ResolveAsync(slug);
         if (op is null) return NotFound();
 
-        var result = await _news.GetPublishedAsync(
-            op.Id,
-            newsType,
-            new PageRequest(page, Math.Clamp(pageSize, 1, 50)));
+        try
+        {
+            var result = await _news.GetPublishedAsync(
+                op.Id,
+                newsType,
+                new PageRequest(page, Math.Clamp(pageSize, 1, 50)));
 
-        return Ok(result);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message, detail = ex.InnerException?.Message });
+        }
     }
 
     /// <summary>Dettaglio singola news.</summary>

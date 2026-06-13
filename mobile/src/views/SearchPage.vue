@@ -21,21 +21,21 @@
             <div class="frow-icon"><ion-icon :icon="starOutline" /></div>
             <span class="frow-label">Stato</span>
             <div class="frow-value" :class="{ selected: local.condition }">
-              {{ local.condition ?? 'Qualunque' }} <ion-icon :icon="chevronForwardOutline" />
+              {{ displayLabel('condition') }} <ion-icon :icon="chevronForwardOutline" />
             </div>
           </div>
           <div class="frow" @click="openSheet('fuel')">
             <div class="frow-icon"><ion-icon :icon="flashOutline" /></div>
             <span class="frow-label">Alimentazione</span>
             <div class="frow-value" :class="{ selected: local.fuel }">
-              {{ local.fuel ?? 'Qualunque' }} <ion-icon :icon="chevronForwardOutline" />
+              {{ displayLabel('fuel') }} <ion-icon :icon="chevronForwardOutline" />
             </div>
           </div>
           <div class="frow" @click="openSheet('transmission')">
             <div class="frow-icon"><ion-icon :icon="gitNetworkOutline" /></div>
             <span class="frow-label">Cambio</span>
             <div class="frow-value" :class="{ selected: local.transmission }">
-              {{ local.transmission ?? 'Qualunque' }} <ion-icon :icon="chevronForwardOutline" />
+              {{ displayLabel('transmission') }} <ion-icon :icon="chevronForwardOutline" />
             </div>
           </div>
         </div>
@@ -73,10 +73,35 @@
             <span class="frow-label">Pronta consegna</span>
             <button class="mc-toggle" :class="{ on: local.prontaConsegna }" @click="local.prontaConsegna = !local.prontaConsegna" />
           </div>
-          <div class="frow" style="border-bottom:none">
+          <div class="frow">
             <div class="frow-icon amber"><ion-icon :icon="starOutline" /></div>
             <span class="frow-label">Solo nuovi arrivi</span>
             <button class="mc-toggle" :class="{ on: local.isNuovoArrivo }" @click="local.isNuovoArrivo = !local.isNuovoArrivo" />
+          </div>
+          <div class="frow">
+            <div class="frow-icon"><ion-icon :icon="receiptOutline" /></div>
+            <span class="frow-label">IVA esposta</span>
+            <button class="mc-toggle" :class="{ on: local.vatDeductible }" @click="local.vatDeductible = !local.vatDeductible" />
+          </div>
+          <div class="frow">
+            <div class="frow-icon"><ion-icon :icon="globeOutline" /></div>
+            <span class="frow-label">Importata</span>
+            <button class="mc-toggle" :class="{ on: local.imported }" @click="local.imported = !local.imported" />
+          </div>
+          <div class="frow">
+            <div class="frow-icon"><ion-icon :icon="accessibilityOutline" /></div>
+            <span class="frow-label">Portatori di handicap</span>
+            <button class="mc-toggle" :class="{ on: local.handicapAccessible }" @click="local.handicapAccessible = !local.handicapAccessible" />
+          </div>
+          <div class="frow">
+            <div class="frow-icon blue"><ion-icon :icon="keyOutline" /></div>
+            <span class="frow-label">Solo noleggio</span>
+            <button class="mc-toggle" :class="{ on: local.forRental }" @click="toggleRental" />
+          </div>
+          <div class="frow" style="border-bottom:none">
+            <div class="frow-icon green"><ion-icon :icon="cartOutline" /></div>
+            <span class="frow-label">Solo vendita</span>
+            <button class="mc-toggle" :class="{ on: local.forSale }" @click="toggleSale" />
           </div>
         </div>
 
@@ -99,12 +124,12 @@
         <div class="sheet-title">{{ sheetTitle }}</div>
         <div
           v-for="opt in sheetOptions"
-          :key="opt"
+          :key="opt.value"
           class="sheet-option"
-          :class="{ selected: isSelected(opt) }"
-          @click="selectOption(opt)"
+          :class="{ selected: isSelected(opt.value) }"
+          @click="selectOption(opt.value)"
         >
-          <span>{{ opt }}</span>
+          <span>{{ opt.label }}</span>
           <div class="check" />
         </div>
       </div>
@@ -119,7 +144,8 @@ import { IonPage, IonContent, IonIcon } from '@ionic/vue'
 import {
   arrowBackOutline, starOutline, flashOutline, gitNetworkOutline,
   cashOutline, speedometerOutline, arrowForwardOutline,
-  searchOutline, chevronForwardOutline,
+  searchOutline, chevronForwardOutline, receiptOutline,
+  globeOutline, accessibilityOutline, keyOutline, cartOutline,
 } from 'ionicons/icons'
 import { useVehicleStore } from '@/stores/vehicles'
 import type { VehicleFilters } from '@/stores/vehicles'
@@ -127,7 +153,7 @@ import type { VehicleFilters } from '@/stores/vehicles'
 const router = useRouter()
 const store  = useVehicleStore()
 
-const local = ref<VehicleFilters & { transmission?: string }>({ ...store.filters })
+const local = ref<VehicleFilters>({ ...store.filters })
 
 const sheetOpen    = ref(false)
 const currentField = ref<string>('')
@@ -137,21 +163,74 @@ const sheetTitle   = computed(() => ({
   transmission: 'Cambio',
 }[currentField.value] ?? ''))
 
-const sheetOptionsMap: Record<string, string[]> = {
-  condition:    ['Qualunque', 'usato', 'nuovo', 'km0'],
-  fuel:         ['Qualunque', 'Benzina', 'Diesel', 'Ibrida', 'Elettrica', 'GPL', 'Metano'],
-  transmission: ['Qualunque', 'Manuale', 'Automatico'],
+// value → display label
+const conditionLabels: Record<string, string> = {
+  usato:        'Usato',
+  nuovo:        'Nuovo',
+  km_0:         'KM 0',
+  conto_vendita:'Conto vendita',
+  epoca:        'Epoca',
+}
+const fuelLabels: Record<string, string> = {
+  benzina:   'Benzina',
+  diesel:    'Diesel',
+  ibrida:    'Ibrida',
+  elettrica: 'Elettrica',
+  gpl:       'GPL',
+  metano:    'Metano',
+  idrogeno:  'Idrogeno',
+  altro:     'Altro',
+}
+
+const sheetOptionsMap: Record<string, { value: string; label: string }[]> = {
+  condition: [
+    { value: '',             label: 'Qualunque' },
+    { value: 'usato',        label: 'Usato' },
+    { value: 'nuovo',        label: 'Nuovo' },
+    { value: 'km_0',         label: 'KM 0' },
+    { value: 'conto_vendita',label: 'Conto vendita' },
+    { value: 'epoca',        label: 'Epoca' },
+  ],
+  fuel: [
+    { value: '',          label: 'Qualunque' },
+    { value: 'benzina',   label: 'Benzina' },
+    { value: 'diesel',    label: 'Diesel' },
+    { value: 'ibrida',    label: 'Ibrida' },
+    { value: 'elettrica', label: 'Elettrica' },
+    { value: 'gpl',       label: 'GPL' },
+    { value: 'metano',    label: 'Metano' },
+  ],
+  transmission: [
+    { value: '',              label: 'Qualunque' },
+    { value: 'manuale',       label: 'Manuale' },
+    { value: 'automatico',    label: 'Automatico' },
+    { value: 'semiautomatico',label: 'Semiautomatico' },
+  ],
 }
 const sheetOptions = computed(() => sheetOptionsMap[currentField.value] ?? [])
 
 function openSheet(field: string) { currentField.value = field; sheetOpen.value = true }
-function isSelected(opt: string) {
-  const v = (local.value as any)[currentField.value]
-  return opt === 'Qualunque' ? !v : v === opt
+function isSelected(val: string) {
+  const v = (local.value as any)[currentField.value] ?? ''
+  return v === val
 }
-function selectOption(opt: string) {
-  (local.value as any)[currentField.value] = opt === 'Qualunque' ? undefined : opt
+function selectOption(val: string) {
+  (local.value as any)[currentField.value] = val || undefined
   sheetOpen.value = false
+}
+function displayLabel(field: 'condition' | 'fuel' | 'transmission') {
+  const v = (local.value as any)[field]
+  if (!v) return 'Qualunque'
+  if (field === 'condition')    return conditionLabels[v] ?? v
+  if (field === 'fuel')         return fuelLabels[v] ?? v
+  if (field === 'transmission') return v.charAt(0).toUpperCase() + v.slice(1)
+  return v
+}
+function toggleRental() {
+  local.value.forRental = local.value.forRental ? undefined : true
+}
+function toggleSale() {
+  local.value.forSale = local.value.forSale ? undefined : true
 }
 function resetLocal() { local.value = {} }
 function applyAndBack() {
@@ -189,6 +268,7 @@ function fmtN(v: number) { return new Intl.NumberFormat('it-IT').format(v) }
 .frow-icon ion-icon { font-size: 14px; color: var(--mc-blue); }
 .frow-icon.green ion-icon { color: var(--mc-green); }
 .frow-icon.amber ion-icon { color: var(--mc-amber); }
+.frow-icon.blue  ion-icon { color: var(--mc-blue); }
 
 .frow-slider { padding: 13px 16px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--mc-surface); }
 .frow-slider:last-child { border-bottom: none; }

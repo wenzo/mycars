@@ -21,6 +21,9 @@ public sealed class AdminController : ControllerBase
     private readonly IBranchRepository           _branches;
     private readonly IDepartmentRepository       _departments;
     private readonly IScheduledPushRepository    _scheduledPush;
+    private readonly SmtpOptions                 _smtp;
+    private readonly VapidOptions                _vapid;
+    private readonly SupabaseOptions             _supabase;
 
     public AdminController(
         IOperatorUserRepository      users,
@@ -35,7 +38,10 @@ public sealed class AdminController : ControllerBase
         ILogger<AdminController>     log,
         IBranchRepository            branches,
         IDepartmentRepository        departments,
-        IScheduledPushRepository     scheduledPush)
+        IScheduledPushRepository     scheduledPush,
+        IOptions<SmtpOptions>        smtpOpts,
+        IOptions<VapidOptions>       vapidOpts,
+        IOptions<SupabaseOptions>    supabaseOpts)
     {
         _users         = users;
         _operators     = operators;
@@ -50,6 +56,9 @@ public sealed class AdminController : ControllerBase
         _branches      = branches;
         _departments   = departments;
         _scheduledPush = scheduledPush;
+        _smtp          = smtpOpts.Value;
+        _vapid         = vapidOpts.Value;
+        _supabase      = supabaseOpts.Value;
     }
 
     private Guid GetOperatorId() =>
@@ -162,6 +171,23 @@ public sealed class AdminController : ControllerBase
         profile.PrimaryColor    = req.PrimaryColor?.Trim();
         profile.SecondaryColor  = req.SecondaryColor?.Trim();
         profile.AccentColor     = req.AccentColor?.Trim();
+        profile.Tagline         = req.Tagline?.Trim();
+
+        var updated = await _operators.UpdateAsync(profile);
+        return updated is null ? StatusCode(500) : Ok(updated);
+    }
+
+    [HttpPut("profile/rental-settings")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateRentalSettings([FromBody] UpdateRentalSettingsRequest req)
+    {
+        var profile = await _operators.GetByIdAsync(GetOperatorId());
+        if (profile is null) return NotFound();
+
+        profile.RentalModuleEnabled      = req.RentalModuleEnabled;
+        profile.RentalPhotosEnabled      = req.RentalPhotosEnabled;
+        profile.RentalContractPdfEnabled = req.RentalContractPdfEnabled;
+        profile.RentalShowPrices         = req.RentalShowPrices;
 
         var updated = await _operators.UpdateAsync(profile);
         return updated is null ? StatusCode(500) : Ok(updated);
@@ -223,6 +249,72 @@ public sealed class AdminController : ControllerBase
         }
     }
 
+    // ── System health ─────────────────────────────────────────────────────────
+
+    [HttpGet("system")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetSystemInfo()
+    {
+        var opId   = GetOperatorId();
+        var uptime = DateTimeOffset.UtcNow -
+            System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime();
+
+        // DB ping
+        bool    dbOk    = false;
+        string? dbError = null;
+        try   { dbOk = await _operators.GetByIdAsync(opId) is not null; }
+        catch (Exception ex) { dbError = ex.Message; }
+
+        // Storage check
+        bool    storOk   = false;
+        string? storPath = null;
+        try
+        {
+            storPath = Path.Combine(_env.WebRootPath, "uploads");
+            storOk   = Directory.Exists(storPath);
+        }
+        catch { }
+
+        // Supabase host (safe parse)
+        string dbHost;
+        try   { dbHost = new Uri(_supabase.Url).Host; }
+        catch { dbHost = _supabase.Url; }
+
+        return Ok(new
+        {
+            aspnet = new
+            {
+                runtime     = $".NET {Environment.Version}",
+                environment = _env.EnvironmentName,
+                uptimeSec   = (long)uptime.TotalSeconds,
+            },
+            database = new
+            {
+                ok       = dbOk,
+                provider = "Supabase REST",
+                host     = dbHost,
+                error    = dbError,
+            },
+            smtp = new
+            {
+                ok   = !string.IsNullOrEmpty(_smtp.Host) && !string.IsNullOrEmpty(_smtp.Username),
+                host = string.IsNullOrEmpty(_smtp.Host) ? null : _smtp.Host,
+                port = _smtp.Port,
+                from = string.IsNullOrEmpty(_smtp.FromEmail) ? null : _smtp.FromEmail,
+            },
+            vapid = new
+            {
+                ok      = !string.IsNullOrEmpty(_vapid.PublicKey) && !string.IsNullOrEmpty(_vapid.PrivateKey),
+                subject = _vapid.Subject,
+            },
+            storage = new
+            {
+                ok   = storOk,
+                path = storPath,
+            },
+        });
+    }
+
     // ── Recent leads ──────────────────────────────────────────────────────────
 
     [HttpGet("leads/recent")]
@@ -248,17 +340,23 @@ public sealed class AdminController : ControllerBase
     [HttpGet("vehicles")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetVehicles(
-        [FromQuery] int     page           = 0,
-        [FromQuery] int     pageSize       = 20,
-        [FromQuery] string? condition      = null,
-        [FromQuery] bool?   isPublished    = null,
-        [FromQuery] bool?   isNuovoArrivo  = null,
-        [FromQuery] bool?   prontaConsegna = null)
+        [FromQuery] int     page               = 0,
+        [FromQuery] int     pageSize           = 20,
+        [FromQuery] string? condition          = null,
+        [FromQuery] bool?   isPublished        = null,
+        [FromQuery] bool?   isNuovoArrivo      = null,
+        [FromQuery] bool?   prontaConsegna     = null,
+        [FromQuery] bool?   vatDeductible      = null,
+        [FromQuery] bool?   handicapAccessible = null,
+        [FromQuery] bool?   imported           = null,
+        [FromQuery] bool?   forSale            = null,
+        [FromQuery] bool?   forRental          = null)
     {
         var result = await _vehicles.GetAllAsync(
             GetOperatorId(),
             new PageRequest(page, Math.Clamp(pageSize, 1, 100)),
-            condition, isPublished, isNuovoArrivo, prontaConsegna);
+            condition, isPublished, isNuovoArrivo, prontaConsegna,
+            vatDeductible, handicapAccessible, imported, forSale, forRental);
         return Ok(result);
     }
 
@@ -277,6 +375,17 @@ public sealed class AdminController : ControllerBase
             new PageRequest(page, Math.Clamp(pageSize, 1, 100)),
             status, leadType);
         return Ok(result);
+    }
+
+    [HttpPatch("leads/{id:guid}/status")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateLeadStatus(Guid id, [FromBody] UpdateLeadStatusRequest req)
+    {
+        if (string.IsNullOrWhiteSpace(req.Status))
+            return BadRequest(new { message = "Status non valido." });
+        var ok = await _leads.UpdateStatusAsync(id, GetOperatorId(), req.Status.Trim().ToLower());
+        if (!ok) return NotFound();
+        return Ok(new { updated = true });
     }
 
     // ── News list (paginated) ─────────────────────────────────────────────────
@@ -355,16 +464,22 @@ public sealed class AdminController : ControllerBase
         existing.Fuel            = string.IsNullOrEmpty(req.Fuel) ? null : req.Fuel;
         existing.Transmission    = string.IsNullOrEmpty(req.Transmission) ? null : req.Transmission;
         existing.HorsepowerCv    = req.HorsepowerCv;
+        existing.PowerKw         = req.PowerKw;
         existing.RegistrationYear = req.RegistrationYear;
         existing.MileageKm       = req.MileageKm;
-        existing.Color           = req.Color;
-        existing.Price           = req.Price;
-        existing.PreviousPrice   = req.PreviousPrice;
-        existing.Negotiable      = req.Negotiable;
-        existing.IsPublished     = req.IsPublished;
-        existing.ProntaConsegna  = req.ProntaConsegna;
-        existing.IsNuovoArrivo   = req.IsNuovoArrivo;
-        existing.Description     = req.Description;
+        existing.Color              = req.Color;
+        existing.Price              = req.Price;
+        existing.PreviousPrice      = req.PreviousPrice;
+        existing.VatDeductible      = req.VatDeductible;
+        existing.HandicapAccessible = req.HandicapAccessible;
+        existing.Imported           = req.Imported;
+        existing.ForSale            = req.ForSale;
+        existing.ForRental          = req.ForRental;
+        existing.RentalPrice        = req.RentalPrice;
+        existing.IsPublished        = req.IsPublished;
+        existing.ProntaConsegna     = req.ProntaConsegna;
+        existing.IsNuovoArrivo      = req.IsNuovoArrivo;
+        existing.Description        = req.Description;
 
         var updated = await _vehicles.UpdateAsync(existing, req.BrandName.Trim());
         if (updated is null) return NotFound();
@@ -490,17 +605,23 @@ public sealed class AdminController : ControllerBase
         Fuel             = string.IsNullOrEmpty(req.Fuel) ? null : req.Fuel,
         Transmission     = string.IsNullOrEmpty(req.Transmission) ? null : req.Transmission,
         HorsepowerCv     = req.HorsepowerCv,
+        PowerKw          = req.PowerKw,
         RegistrationYear = req.RegistrationYear,
         MileageKm        = req.MileageKm,
-        Color            = req.Color,
-        Price            = req.Price,
-        PreviousPrice    = req.PreviousPrice,
-        Negotiable       = req.Negotiable,
-        IsPublished      = req.IsPublished,
-        PublishedAt      = req.IsPublished ? DateTimeOffset.UtcNow : null,
-        ProntaConsegna   = req.ProntaConsegna,
-        IsNuovoArrivo    = req.IsNuovoArrivo,
-        Description      = req.Description,
+        Color              = req.Color,
+        Price              = req.Price,
+        PreviousPrice      = req.PreviousPrice,
+        VatDeductible      = req.VatDeductible,
+        HandicapAccessible = req.HandicapAccessible,
+        Imported           = req.Imported,
+        ForSale            = req.ForSale,
+        ForRental          = req.ForRental,
+        RentalPrice        = req.RentalPrice,
+        IsPublished        = req.IsPublished,
+        PublishedAt        = req.IsPublished ? DateTimeOffset.UtcNow : null,
+        ProntaConsegna     = req.ProntaConsegna,
+        IsNuovoArrivo      = req.IsNuovoArrivo,
+        Description        = req.Description,
     };
 
     // ── App Codes ─────────────────────────────────────────────────────────────
@@ -726,12 +847,15 @@ public sealed class AdminController : ControllerBase
 
         var dept = new Department
         {
-            OperatorId  = GetOperatorId(),
-            BranchId    = req.BranchId,
-            Name        = req.Name.Trim(),
-            Description = req.Description,
-            SortOrder   = req.SortOrder,
-            IsActive    = req.IsActive,
+            OperatorId      = GetOperatorId(),
+            BranchId        = req.BranchId,
+            Name            = req.Name.Trim(),
+            Description     = req.Description,
+            ResponsibleName = req.ResponsibleName?.Trim(),
+            Phone           = req.Phone?.Trim(),
+            Email           = req.Email?.Trim().ToLowerInvariant(),
+            SortOrder       = req.SortOrder,
+            IsActive        = req.IsActive,
         };
         var created = await _departments.CreateAsync(dept);
         return Ok(created);
@@ -749,11 +873,14 @@ public sealed class AdminController : ControllerBase
         var existing = depts.FirstOrDefault(d => d.Id == id);
         if (existing is null) return NotFound();
 
-        existing.Name        = req.Name.Trim();
-        existing.Description = req.Description;
-        existing.BranchId    = req.BranchId;
-        existing.SortOrder   = req.SortOrder;
-        existing.IsActive    = req.IsActive;
+        existing.Name            = req.Name.Trim();
+        existing.Description     = req.Description;
+        existing.ResponsibleName = req.ResponsibleName?.Trim();
+        existing.Phone           = req.Phone?.Trim();
+        existing.Email           = req.Email?.Trim().ToLowerInvariant();
+        existing.BranchId        = req.BranchId;
+        existing.SortOrder       = req.SortOrder;
+        existing.IsActive        = req.IsActive;
 
         var updated = await _departments.UpdateAsync(existing);
         if (updated is null) return NotFound();
@@ -1031,6 +1158,15 @@ public sealed class UpdateProfileRequest
     public string? PrimaryColor   { get; set; }
     public string? SecondaryColor { get; set; }
     public string? AccentColor    { get; set; }
+    public string? Tagline        { get; set; }
+}
+
+public sealed class UpdateRentalSettingsRequest
+{
+    public bool RentalModuleEnabled      { get; set; }
+    public bool RentalPhotosEnabled      { get; set; }
+    public bool RentalContractPdfEnabled { get; set; }
+    public bool RentalShowPrices         { get; set; }
 }
 
 public sealed class CreateAppCodeRequest
@@ -1039,6 +1175,11 @@ public sealed class CreateAppCodeRequest
     public string? Label     { get; set; }
     public DateTimeOffset? ExpiresAt { get; set; }
     public int?    MaxUses   { get; set; }
+}
+
+public sealed class UpdateLeadStatusRequest
+{
+    public string Status { get; set; } = "";
 }
 
 public sealed class SendPushRequest
@@ -1062,27 +1203,33 @@ public sealed class PushNotifyRequest
 
 public sealed class VehicleUpsertRequest
 {
-    public string   VehicleType      { get; set; } = "autovettura";
-    public string   BrandName        { get; set; } = "";
-    public Guid     BranchId         { get; set; }
-    public string   InternalCode     { get; set; } = "";
-    public string?  Targa            { get; set; }
-    public string   Model            { get; set; } = "";
-    public string?  Version          { get; set; }
-    public string   Condition        { get; set; } = "usato";
-    public string?  Fuel             { get; set; }
-    public string?  Transmission     { get; set; }
-    public int?     HorsepowerCv     { get; set; }
-    public short?   RegistrationYear { get; set; }
-    public int      MileageKm        { get; set; }
-    public string?  Color            { get; set; }
-    public decimal? Price            { get; set; }
-    public decimal? PreviousPrice    { get; set; }
-    public bool     Negotiable       { get; set; }
-    public bool     IsPublished      { get; set; } = true;
-    public bool     ProntaConsegna   { get; set; }
-    public bool     IsNuovoArrivo    { get; set; }
-    public string?  Description      { get; set; }
+    public string   VehicleType        { get; set; } = "autovettura";
+    public string   BrandName          { get; set; } = "";
+    public Guid     BranchId           { get; set; }
+    public string   InternalCode       { get; set; } = "";
+    public string?  Targa              { get; set; }
+    public string   Model              { get; set; } = "";
+    public string?  Version            { get; set; }
+    public string   Condition          { get; set; } = "usato";
+    public string?  Fuel               { get; set; }
+    public string?  Transmission       { get; set; }
+    public int?     HorsepowerCv       { get; set; }
+    public int?     PowerKw            { get; set; }
+    public short?   RegistrationYear   { get; set; }
+    public int      MileageKm          { get; set; }
+    public string?  Color              { get; set; }
+    public decimal? Price              { get; set; }
+    public decimal? PreviousPrice      { get; set; }
+    public bool     VatDeductible      { get; set; }
+    public bool     HandicapAccessible { get; set; }
+    public bool     Imported           { get; set; }
+    public bool     ForSale            { get; set; } = true;
+    public bool     ForRental          { get; set; }
+    public decimal? RentalPrice        { get; set; }
+    public bool     IsPublished        { get; set; } = true;
+    public bool     ProntaConsegna     { get; set; }
+    public bool     IsNuovoArrivo      { get; set; }
+    public string?  Description        { get; set; }
 }
 
 public sealed class BranchUpsertRequest
@@ -1105,11 +1252,14 @@ public sealed class BranchUpsertRequest
 
 public sealed class DepartmentUpsertRequest
 {
-    public string  Name        { get; set; } = "";
-    public string? Description { get; set; }
-    public Guid?   BranchId    { get; set; }
-    public int     SortOrder   { get; set; }
-    public bool    IsActive    { get; set; } = true;
+    public string  Name            { get; set; } = "";
+    public string? Description     { get; set; }
+    public string? ResponsibleName { get; set; }
+    public string? Phone           { get; set; }
+    public string? Email           { get; set; }
+    public Guid?   BranchId        { get; set; }
+    public int     SortOrder       { get; set; }
+    public bool    IsActive        { get; set; } = true;
 }
 
 public sealed class NewsUpsertRequest

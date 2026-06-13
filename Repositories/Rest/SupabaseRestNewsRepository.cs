@@ -11,8 +11,7 @@ public sealed class SupabaseRestNewsRepository : INewsRepository
         var f = $"operator_id=eq.{operatorId}&is_published=eq.true";
         if (!string.IsNullOrEmpty(newsType)) f += $"&news_type=eq.{newsType}";
 
-        var total = await _db.CountAsync("news_items", f);
-        var items = await _db.SelectAsync<NewsItem>(
+        var (items, total) = await _db.SelectWithCountAsync<NewsItem>(
             "news_items", f, order: "published_at.desc",
             limit: page.PageSize, offset: page.Page * page.PageSize);
         return new PagedResult<NewsItem>(items, total);
@@ -61,7 +60,26 @@ public sealed class SupabaseRestNewsRepository : INewsRepository
         item.CreatedAt = DateTimeOffset.UtcNow;
         item.UpdatedAt = DateTimeOffset.UtcNow;
 
-        var result = await _db.InsertAsync<NewsItem>("news_items", item);
+        // Payload esplicito: news_items ha cover_media_id (uuid), NON cover_image_url.
+        var result = await _db.InsertAsync<NewsItem>("news_items", new
+        {
+            id           = item.Id,
+            operator_id  = item.OperatorId,
+            branch_id    = item.BranchId,
+            news_type    = item.NewsType,
+            code         = item.Code,
+            title        = item.Title,
+            slug         = item.Slug,
+            excerpt      = item.Excerpt,
+            body         = item.Body,
+            link_url     = item.LinkUrl,
+            starts_at    = item.StartsAt,
+            expires_at   = item.ExpiresAt,
+            is_published = item.IsPublished,
+            published_at = item.PublishedAt,
+            created_at   = item.CreatedAt,
+            updated_at   = item.UpdatedAt,
+        });
         return result ?? item;
     }
 
@@ -71,7 +89,21 @@ public sealed class SupabaseRestNewsRepository : INewsRepository
         return await _db.UpdateAsync<NewsItem>(
             "news_items",
             $"id=eq.{item.Id}&operator_id=eq.{item.OperatorId}",
-            item);
+            new
+            {
+                news_type    = item.NewsType,
+                code         = item.Code,
+                title        = item.Title,
+                slug         = item.Slug,
+                excerpt      = item.Excerpt,
+                body         = item.Body,
+                link_url     = item.LinkUrl,
+                starts_at    = item.StartsAt,
+                expires_at   = item.ExpiresAt,
+                is_published = item.IsPublished,
+                published_at = item.PublishedAt,
+                updated_at   = item.UpdatedAt,
+            });
     }
 
     public async Task<bool> DeleteAsync(Guid id, Guid operatorId)

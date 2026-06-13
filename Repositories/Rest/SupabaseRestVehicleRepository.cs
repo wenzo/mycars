@@ -15,7 +15,8 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         "registration_month,registration_year,mileage_km," +
         "doors,seats,color,emission_class," +
         "handicap_accessible,vat_deductible,damaged,imported," +
-        "description,price,previous_price,currency,negotiable,listing_date," +
+        "for_sale,for_rental,rental_only,rental_price,rental_weekly_price,rental_weekend_price," +
+        "description,price,previous_price,currency,listing_date," +
         "is_sold,show_as_sold,sold_at," +
         "pronta_consegna,is_nuovo_arrivo,nuovo_arrivo_until," +
         "is_published,published_at,sort_order," +
@@ -25,8 +26,7 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         Guid operatorId, PageRequest page, VehicleFilter? filter = null)
     {
         var f = BuildVehicleFilter(operatorId, filter);
-        var total = await _db.CountAsync("public_vehicle_cards", f);
-        var items = await _db.SelectAsync<VehicleCard>(
+        var (items, total) = await _db.SelectWithCountAsync<VehicleCard>(
             "public_vehicle_cards", f,
             order:  "created_at.desc",
             limit:  page.PageSize,
@@ -94,13 +94,20 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
 
     public async Task<PagedResult<Vehicle>> GetAllAsync(
         Guid operatorId, PageRequest page, string? condition = null, bool? isPublished = null,
-        bool? isNuovoArrivo = null, bool? prontaConsegna = null)
+        bool? isNuovoArrivo = null, bool? prontaConsegna = null,
+        bool? vatDeductible = null, bool? handicapAccessible = null,
+        bool? imported = null, bool? forSale = null, bool? forRental = null)
     {
         var parts = new List<string> { $"operator_id=eq.{operatorId}", "deleted_at=is.null" };
-        if (!string.IsNullOrEmpty(condition))   parts.Add($"condition=eq.{condition}");
-        if (isPublished.HasValue)    parts.Add($"is_published=eq.{isPublished.Value.ToString().ToLower()}");
-        if (isNuovoArrivo.HasValue)  parts.Add($"is_nuovo_arrivo=eq.{isNuovoArrivo.Value.ToString().ToLower()}");
-        if (prontaConsegna.HasValue) parts.Add($"pronta_consegna=eq.{prontaConsegna.Value.ToString().ToLower()}");
+        if (!string.IsNullOrEmpty(condition))    parts.Add($"condition=eq.{condition}");
+        if (isPublished.HasValue)      parts.Add($"is_published=eq.{isPublished.Value.ToString().ToLower()}");
+        if (isNuovoArrivo.HasValue)    parts.Add($"is_nuovo_arrivo=eq.{isNuovoArrivo.Value.ToString().ToLower()}");
+        if (prontaConsegna.HasValue)   parts.Add($"pronta_consegna=eq.{prontaConsegna.Value.ToString().ToLower()}");
+        if (vatDeductible.HasValue)    parts.Add($"vat_deductible=eq.{vatDeductible.Value.ToString().ToLower()}");
+        if (handicapAccessible.HasValue) parts.Add($"handicap_accessible=eq.{handicapAccessible.Value.ToString().ToLower()}");
+        if (imported.HasValue)         parts.Add($"imported=eq.{imported.Value.ToString().ToLower()}");
+        if (forSale.HasValue)          parts.Add($"for_sale=eq.{forSale.Value.ToString().ToLower()}");
+        if (forRental.HasValue)        parts.Add($"for_rental=eq.{forRental.Value.ToString().ToLower()}");
 
         var f     = string.Join("&", parts);
         var total = await _db.CountAsync("vehicles", f);
@@ -210,19 +217,25 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
             fuel             = vehicle.Fuel,
             transmission     = vehicle.Transmission,
             horsepower_cv    = vehicle.HorsepowerCv,
+            power_kw         = vehicle.PowerKw,
             registration_year = vehicle.RegistrationYear,
             mileage_km       = vehicle.MileageKm,
-            color            = vehicle.Color,
-            price            = vehicle.Price,
-            previous_price   = vehicle.PreviousPrice,
-            negotiable       = vehicle.Negotiable,
-            is_published     = vehicle.IsPublished,
-            published_at     = vehicle.PublishedAt,
-            pronta_consegna  = vehicle.ProntaConsegna,
-            is_nuovo_arrivo  = vehicle.IsNuovoArrivo,
-            description      = vehicle.Description,
-            created_at       = vehicle.CreatedAt,
-            updated_at       = vehicle.UpdatedAt,
+            color                = vehicle.Color,
+            price                = vehicle.Price,
+            previous_price       = vehicle.PreviousPrice,
+            vat_deductible       = vehicle.VatDeductible,
+            handicap_accessible  = vehicle.HandicapAccessible,
+            imported             = vehicle.Imported,
+            for_sale             = vehicle.ForSale,
+            for_rental           = vehicle.ForRental,
+            rental_price         = vehicle.RentalPrice,
+            is_published         = vehicle.IsPublished,
+            published_at         = vehicle.PublishedAt,
+            pronta_consegna      = vehicle.ProntaConsegna,
+            is_nuovo_arrivo      = vehicle.IsNuovoArrivo,
+            description          = vehicle.Description,
+            created_at           = vehicle.CreatedAt,
+            updated_at           = vehicle.UpdatedAt,
         }, select: VehicleCols);
         return result ?? vehicle;
     }
@@ -246,17 +259,23 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
             fuel             = vehicle.Fuel,
             transmission     = vehicle.Transmission,
             horsepower_cv    = vehicle.HorsepowerCv,
+            power_kw         = vehicle.PowerKw,
             registration_year = vehicle.RegistrationYear,
             mileage_km       = vehicle.MileageKm,
-            color            = vehicle.Color,
-            price            = vehicle.Price,
-            previous_price   = vehicle.PreviousPrice,
-            negotiable       = vehicle.Negotiable,
-            is_published     = vehicle.IsPublished,
-            pronta_consegna  = vehicle.ProntaConsegna,
-            is_nuovo_arrivo  = vehicle.IsNuovoArrivo,
-            description      = vehicle.Description,
-            updated_at       = vehicle.UpdatedAt,
+            color                = vehicle.Color,
+            price                = vehicle.Price,
+            previous_price       = vehicle.PreviousPrice,
+            vat_deductible       = vehicle.VatDeductible,
+            handicap_accessible  = vehicle.HandicapAccessible,
+            imported             = vehicle.Imported,
+            for_sale             = vehicle.ForSale,
+            for_rental           = vehicle.ForRental,
+            rental_price         = vehicle.RentalPrice,
+            is_published         = vehicle.IsPublished,
+            pronta_consegna      = vehicle.ProntaConsegna,
+            is_nuovo_arrivo      = vehicle.IsNuovoArrivo,
+            description          = vehicle.Description,
+            updated_at           = vehicle.UpdatedAt,
         }, select: VehicleCols);
     }
 
@@ -367,14 +386,25 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         if (!string.IsNullOrEmpty(f.VehicleType))   parts.Add($"vehicle_type=eq.{f.VehicleType}");
         if (!string.IsNullOrEmpty(f.Condition))      parts.Add($"condition=eq.{f.Condition}");
         if (!string.IsNullOrEmpty(f.Fuel))           parts.Add($"fuel=eq.{f.Fuel}");
-        if (f.ProntaConsegna.HasValue)  parts.Add($"pronta_consegna=eq.{f.ProntaConsegna.Value.ToString().ToLower()}");
-        if (f.IsNuovoArrivo.HasValue)   parts.Add($"is_nuovo_arrivo=eq.{f.IsNuovoArrivo.Value.ToString().ToLower()}");
-        if (f.MinPrice.HasValue)        parts.Add($"price=gte.{f.MinPrice}");
-        if (f.MaxPrice.HasValue)        parts.Add($"price=lte.{f.MaxPrice}");
-        if (f.MaxMileageKm.HasValue)    parts.Add($"mileage_km=lte.{f.MaxMileageKm}");
-        if (f.MinYear.HasValue)         parts.Add($"registration_year=gte.{f.MinYear}");
-        if (f.MaxYear.HasValue)         parts.Add($"registration_year=lte.{f.MaxYear}");
-        if (f.BranchId.HasValue)        parts.Add($"branch_id=eq.{f.BranchId}");
+        if (!string.IsNullOrEmpty(f.Transmission))   parts.Add($"transmission=eq.{f.Transmission}");
+        if (f.ProntaConsegna.HasValue)     parts.Add($"pronta_consegna=eq.{f.ProntaConsegna.Value.ToString().ToLower()}");
+        if (f.IsNuovoArrivo.HasValue)      parts.Add($"is_nuovo_arrivo=eq.{f.IsNuovoArrivo.Value.ToString().ToLower()}");
+        if (f.VatDeductible.HasValue)      parts.Add($"vat_deductible=eq.{f.VatDeductible.Value.ToString().ToLower()}");
+        if (f.HandicapAccessible.HasValue) parts.Add($"handicap_accessible=eq.{f.HandicapAccessible.Value.ToString().ToLower()}");
+        if (f.Imported.HasValue)           parts.Add($"imported=eq.{f.Imported.Value.ToString().ToLower()}");
+        if (f.ForSale.HasValue)            parts.Add($"for_sale=eq.{f.ForSale.Value.ToString().ToLower()}");
+        if (f.ForRental.HasValue)          parts.Add($"for_rental=eq.{f.ForRental.Value.ToString().ToLower()}");
+        if (f.MinPrice.HasValue)           parts.Add($"price=gte.{f.MinPrice}");
+        if (f.MaxPrice.HasValue)           parts.Add($"price=lte.{f.MaxPrice}");
+        if (f.MaxMileageKm.HasValue)       parts.Add($"mileage_km=lte.{f.MaxMileageKm}");
+        if (f.MinYear.HasValue)            parts.Add($"registration_year=gte.{f.MinYear}");
+        if (f.MaxYear.HasValue)            parts.Add($"registration_year=lte.{f.MaxYear}");
+        if (f.BranchId.HasValue)           parts.Add($"branch_id=eq.{f.BranchId}");
+        if (!string.IsNullOrWhiteSpace(f.Search))
+        {
+            var t = f.Search.Replace("*", "").Replace("(", "").Replace(")", "");
+            parts.Add($"or=(model.ilike.*{t}*,brand_name.ilike.*{t}*)");
+        }
         return string.Join("&", parts);
     }
 }

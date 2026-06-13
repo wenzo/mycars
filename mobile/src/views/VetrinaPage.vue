@@ -51,7 +51,7 @@
     <!-- Stats bar -->
     <div class="stats-bar">
       <div class="stats-count">
-        <span>{{ store.totalCount }}</span> veicoli
+        <span>{{ displayCount }}</span> veicoli
       </div>
       <div class="layout-toggle">
         <button class="ltbtn" :class="{ active: layout === 'grid' }" @click="layout = 'grid'">
@@ -69,7 +69,7 @@
         :class="layout === 'grid' ? 'grid-2col' : 'list-col'"
       >
         <VehicleCard
-          v-for="v in store.items"
+          v-for="v in filteredItems"
           :key="v.id"
           :vehicle="v"
           :layout="layout"
@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   IonPage, IonContent, IonIcon, IonSpinner,
   IonInfiniteScroll, IonInfiniteScrollContent,
@@ -111,19 +111,32 @@ const activeType = ref('autovettura')
 
 const tipi = [
   { value: 'autovettura', label: 'Auto' },
-  { value: 'moto',        label: 'Moto' },
+  { value: 'motoveicolo', label: 'Moto' },
   { value: 'autocarro',   label: 'Truck' },
-  { value: 'caravan',     label: 'Caravan' },
+  { value: 'autocaravan', label: 'Caravan' },
 ]
+
+const filteredItems = computed(() => {
+  const q = searchText.value.trim().toLowerCase()
+  if (!q) return store.items
+  return store.items.filter(v =>
+    v.brandName?.toLowerCase().includes(q) ||
+    v.model?.toLowerCase().includes(q) ||
+    v.version?.toLowerCase().includes(q)
+  )
+})
+
+const displayCount = computed(() =>
+  searchText.value.trim() ? filteredItems.value.length : store.totalCount
+)
 
 function selectType(type: string) {
   activeType.value = type
+  searchText.value = ''
   store.applyFilters({ ...store.filters, vehicleType: type })
 }
 
-function doSearch() {
-  // text search non ancora supportato dall'API — placeholder
-}
+function doSearch() { /* filtro reattivo via computed */ }
 
 async function onInfinite(ev: CustomEvent) {
   await store.fetchNextPage()
@@ -131,7 +144,7 @@ async function onInfinite(ev: CustomEvent) {
 }
 
 onMounted(() => {
-  if (store.items.length === 0) {
+  if (!store.initialized) {
     store.applyFilters({ vehicleType: activeType.value })
   }
 })

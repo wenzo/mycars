@@ -115,6 +115,7 @@ if (dbProvider.Equals("Rest", StringComparison.OrdinalIgnoreCase))
     builder.Services.AddScoped<IBranchRepository,               SupabaseRestBranchRepository>();
     builder.Services.AddScoped<IDepartmentRepository,           SupabaseRestDepartmentRepository>();
     builder.Services.AddScoped<IScheduledPushRepository,        SupabaseRestScheduledPushRepository>();
+    builder.Services.AddScoped<IRentalRepository,               SupabaseRestRentalRepository>();
 }
 else if (dbProvider.Equals("Npgsql", StringComparison.OrdinalIgnoreCase))
 {
@@ -129,6 +130,7 @@ else if (dbProvider.Equals("Npgsql", StringComparison.OrdinalIgnoreCase))
     builder.Services.AddScoped<IBranchRepository,               PostgresBranchRepository>();
     builder.Services.AddScoped<IDepartmentRepository,           PostgresDepartmentRepository>();
     builder.Services.AddScoped<IScheduledPushRepository,        PostgresScheduledPushRepository>();
+    builder.Services.AddScoped<IRentalRepository,               PostgresRentalRepository>();
 }
 else
 {

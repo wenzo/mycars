@@ -6,11 +6,12 @@ namespace MyCars.Infrastructure.Http;
 public sealed class SupabaseRestClient : ISupabaseRestClient
 {
     private readonly HttpClient _http;
+    // Never skip null properties: PostgREST PATCH requires explicit null to clear nullable columns.
     private static readonly JsonSerializerOptions _json = new()
     {
         PropertyNamingPolicy        = JsonNamingPolicy.SnakeCaseLower,
         PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition      = JsonIgnoreCondition.WhenWritingNull,
+        DefaultIgnoreCondition      = JsonIgnoreCondition.Never,
     };
 
     public SupabaseRestClient(HttpClient http, IOptions<SupabaseOptions> opts)
@@ -115,6 +116,34 @@ public sealed class SupabaseRestClient : ISupabaseRestClient
             }
         }
         return 0;
+    }
+
+    public async Task<(IReadOnlyList<T> Items, long TotalCount)> SelectWithCountAsync<T>(
+        string table, string? filter = null, string? select = null,
+        string? order = null, int? limit = null, int? offset = null)
+    {
+        var url = BuildUrl(table, filter, select, order, limit, offset);
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        req.Headers.Add("Prefer", "count=exact");
+
+        var response = await _http.SendAsync(req);
+        await EnsureSuccessAsync(response);
+
+        long totalCount = 0;
+        if (response.Headers.TryGetValues("Content-Range", out var values))
+        {
+            var range = values.FirstOrDefault();
+            if (range is not null)
+            {
+                var slash = range.IndexOf('/');
+                if (slash >= 0 && long.TryParse(range[(slash + 1)..], out var count))
+                    totalCount = count;
+            }
+        }
+
+        var json  = await response.Content.ReadAsStringAsync();
+        var items = JsonSerializer.Deserialize<List<T>>(json, _json) ?? [];
+        return (items, totalCount);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

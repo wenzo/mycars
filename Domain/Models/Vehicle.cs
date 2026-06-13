@@ -34,12 +34,17 @@ public sealed class Vehicle
     public bool    VatDeductible    { get; set; }
     public bool    Damaged          { get; set; }
     public bool    Imported         { get; set; }
+    public bool    ForSale          { get; set; } = true;
+    public bool    ForRental        { get; set; }
+    public bool    RentalOnly       { get; set; }
+    public decimal? RentalPrice     { get; set; }
+    public decimal? RentalWeeklyPrice  { get; set; }
+    public decimal? RentalWeekendPrice { get; set; }
     public string? Description      { get; set; }
     public string  Equipment        { get; set; } = "[]";
     public decimal? Price           { get; set; }
     public decimal? PreviousPrice   { get; set; }
     public string  Currency         { get; set; } = "EUR";
-    public bool    Negotiable       { get; set; }
     public DateOnly? ListingDate    { get; set; }
     public bool    IsSold           { get; set; }
     public bool    ShowAsSold       { get; set; }

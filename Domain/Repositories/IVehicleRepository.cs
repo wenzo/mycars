@@ -12,7 +12,7 @@ public interface IVehicleRepository
     Task<int>                      CountNuoviArriviAsync(Guid? operatorId = null);
     Task<int>                      CountProntaConsegnaAsync(Guid? operatorId = null);
     Task<IReadOnlyList<Vehicle>>   GetRecentAsync(int count, Guid? operatorId = null);
-    Task<PagedResult<Vehicle>>     GetAllAsync(Guid operatorId, PageRequest page, string? condition = null, bool? isPublished = null, bool? isNuovoArrivo = null, bool? prontaConsegna = null);
+    Task<PagedResult<Vehicle>>     GetAllAsync(Guid operatorId, PageRequest page, string? condition = null, bool? isPublished = null, bool? isNuovoArrivo = null, bool? prontaConsegna = null, bool? vatDeductible = null, bool? handicapAccessible = null, bool? imported = null, bool? forSale = null, bool? forRental = null);
     Task<Vehicle?>                 FindByTargaAsync(string targa, Guid operatorId);
 
     // CRUD

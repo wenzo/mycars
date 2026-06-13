@@ -4,7 +4,14 @@
       <div class="sheet-handle" />
       <div class="modal-title">{{ titles[props.leadType] }}</div>
 
-      <div class="modal-body">
+      <!-- Stato successo -->
+      <div v-if="success" class="success-state">
+        <div class="success-icon">✓</div>
+        <div class="success-title">Richiesta inviata!</div>
+        <div class="success-sub">Ti contatteremo al più presto.</div>
+      </div>
+
+      <div v-else class="modal-body">
         <input v-model="form.fullName"  class="mc-input" type="text"  placeholder="Nome e cognome *" />
         <input v-model="form.phone"     class="mc-input" type="tel"   placeholder="Telefono" />
         <input v-model="form.email"     class="mc-input" type="email" placeholder="Email" />
@@ -44,6 +51,7 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { IonSpinner } from '@ionic/vue'
@@ -52,16 +60,18 @@ import { useVehicleStore } from '@/stores/vehicles'
 
 const props = defineProps<{
   leadType: 'info' | 'test_drive' | 'price_update'
+  initialMessage?: string
 }>()
 const emit = defineEmits<{ close: [] }>()
 
 const op      = useOperatorStore()
 const vStore  = useVehicleStore()
 const sending = ref(false)
+const success = ref(false)
 const error   = ref('')
 
 const form = ref({
-  fullName: '', phone: '', email: '', message: '',
+  fullName: '', phone: '', email: '', message: props.initialMessage ?? '',
   privacyAccepted: false, marketingAccepted: false,
   preferredDate: '', preferredTime: '',
 })
@@ -105,7 +115,8 @@ async function submit() {
       body: JSON.stringify(body),
     })
     if (!res.ok) throw new Error('Errore invio richiesta')
-    emit('close')
+    success.value = true
+    setTimeout(() => emit('close'), 2000)
   } catch (e: any) {
     error.value = e?.message ?? 'Errore di rete'
   } finally {
@@ -144,4 +155,17 @@ async function submit() {
 }
 .privacy-row input { margin-top: 2px; accent-color: var(--dealer-primary); }
 .privacy-row a { color: var(--dealer-primary); }
+.success-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 40px 20px 48px; gap: 10px;
+}
+.success-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #E8F5E9; color: #2E7D32;
+  font-size: 28px; display: flex; align-items: center; justify-content: center;
+}
+.success-title {
+  font-family: var(--mc-font-heading); font-size: 18px; font-weight: 700; color: var(--mc-text);
+}
+.success-sub { font-size: 13px; color: var(--mc-text-mid); }
 </style>
