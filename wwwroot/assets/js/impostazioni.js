@@ -1,6 +1,7 @@
 'use strict';
 
-let _appCodes = [];
+let _appCodes      = [];
+let _primaryCodeId = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,8 @@ async function loadProfile() {
         if (uname) uname.textContent = p.businessName ?? '—';
 
         renderAppCodes(_appCodes);
+        loadRentalSettings(p);
+        loadSmtpSettings(p);
 
         document.getElementById('loadingMsg').style.display    = 'none';
         document.getElementById('profileContent').style.display = 'flex';
@@ -218,6 +221,8 @@ async function handleUpload(type) {
 function renderAppCodes(codes) {
     const primary = codes.find(c => c.isPrimary && c.isActive);
     const extras  = codes.filter(c => !c.isPrimary && c.isActive);
+
+    _primaryCodeId = primary?.id ?? null;
 
     const box   = document.getElementById('primaryCodeBox');
     const usage = document.getElementById('primaryCodeUsage');
@@ -449,13 +454,15 @@ function fmtUptime(sec) {
 
 function loadRentalSettings(profile) {
     const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
-    setChk('rsModuleEnabled',  profile.rentalModuleEnabled);
-    setChk('rsPhotosEnabled',  profile.rentalPhotosEnabled);
-    setChk('rsContractPdf',    profile.rentalContractPdfEnabled);
-    setChk('rsShowPrices',     profile.rentalShowPrices);
+    setChk('rsModuleEnabled', profile.rentalModuleEnabled);
+    setChk('rsPhotosEnabled', profile.rentalPhotosEnabled);
+    setChk('rsContractPdf',   profile.rentalContractPdfEnabled);
+    setChk('rsShowPrices',    profile.rentalShowPrices);
 }
 
 async function saveRentalSettings() {
+    const btn = document.getElementById('saveRentalSettingsBtn');
+    if (btn) btn.disabled = true;
     const payload = {
         rentalModuleEnabled:      document.getElementById('rsModuleEnabled')?.checked ?? false,
         rentalPhotosEnabled:      document.getElementById('rsPhotosEnabled')?.checked ?? false,
@@ -464,27 +471,122 @@ async function saveRentalSettings() {
     };
     try {
         await apiFetch('/api/admin/profile/rental-settings', {
-            method: 'PUT',
+            method:  'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            body:    JSON.stringify(payload),
         });
-        const msg = document.getElementById('rentalSettingsSaved');
-        if (msg) { msg.style.display = ''; setTimeout(() => { msg.style.display = 'none'; }, 2500); }
-    } catch { alert('Errore salvataggio impostazioni noleggio.'); }
+        showToast('Impostazioni noleggio salvate.');
+    } catch (err) {
+        showToast(err.message || 'Errore salvataggio impostazioni noleggio.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+// ── SMTP settings ─────────────────────────────────────────────────────────────
+
+function loadSmtpSettings(profile) {
+    setVal('smtpHost',      profile.smtpHost);
+    setVal('smtpPort',      profile.smtpPort != null ? profile.smtpPort : '');
+    setVal('smtpUsername',  profile.smtpUsername);
+    setVal('smtpFromEmail', profile.smtpFromEmail);
+    setVal('smtpFromName',  profile.smtpFromName);
+    const ssl = document.getElementById('smtpUseSsl');
+    if (ssl) ssl.checked = profile.smtpUseSsl !== false;
+    // password: never populated (read-back)
+    const pwd = document.getElementById('smtpPassword');
+    if (pwd) pwd.placeholder = profile.smtpPassword ? '••••••••' : 'lascia vuoto per non modificarla';
+}
+
+async function saveSmtpSettings() {
+    const btn = document.getElementById('saveSmtpBtn');
+    if (btn) btn.disabled = true;
+    const payload = {
+        host:      getVal('smtpHost'),
+        port:      getNum('smtpPort') ?? 587,
+        useSsl:    document.getElementById('smtpUseSsl')?.checked ?? true,
+        username:  getVal('smtpUsername'),
+        password:  getVal('smtpPassword'),
+        fromEmail: getVal('smtpFromEmail'),
+        fromName:  getVal('smtpFromName'),
+    };
+    try {
+        await apiFetch('/api/admin/profile/smtp', {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+        showToast('Configurazione email salvata.');
+        const pwd = document.getElementById('smtpPassword');
+        if (pwd) { pwd.value = ''; pwd.placeholder = '••••••••'; }
+    } catch (err) {
+        showToast(err.message || 'Errore salvataggio SMTP.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+// ── Primary code edit ─────────────────────────────────────────────────────────
+
+function startEditPrimaryCode() {
+    const current = document.getElementById('primaryCodeBox')?.textContent?.trim();
+    const input   = document.getElementById('primaryCodeInput');
+    if (input) input.value = (current && current !== '—') ? current : '';
+    document.getElementById('codeDisplayMode').style.display = 'none';
+    document.getElementById('codeEditMode').style.display    = 'flex';
+    document.getElementById('codeEditError')?.classList.remove('show');
+    input?.focus();
+}
+
+function cancelEditPrimaryCode() {
+    document.getElementById('codeDisplayMode').style.display = 'flex';
+    document.getElementById('codeEditMode').style.display    = 'none';
+    document.getElementById('codeEditError')?.classList.remove('show');
+}
+
+async function savePrimaryCode() {
+    const errEl = document.getElementById('codeEditError');
+    const input = document.getElementById('primaryCodeInput');
+    const newCode = input?.value.trim().toUpperCase();
+    errEl?.classList.remove('show');
+
+    if (!newCode || newCode.length < 3) {
+        showErr(errEl, 'Il codice deve avere almeno 3 caratteri.');
+        return;
+    }
+    if (!_primaryCodeId) {
+        showErr(errEl, 'Codice principale non trovato.');
+        return;
+    }
+
+    try {
+        const updated = await apiFetch(`/api/admin/app-codes/${_primaryCodeId}`, {
+            method:  'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ code: newCode }),
+        });
+        const idx = _appCodes.findIndex(c => c.id === _primaryCodeId);
+        if (idx >= 0) _appCodes[idx] = updated;
+        renderAppCodes(_appCodes);
+        cancelEditPrimaryCode();
+        showToast('Codice principale aggiornato.');
+    } catch (err) {
+        showErr(errEl, err.message || 'Errore aggiornamento codice.');
+    }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
     loadProfile();
-    apiFetch('/api/admin/profile').then(p => { if (p) loadRentalSettings(p); }).catch(() => {});
     initPasswordForm();
 
-    document.getElementById('saveAnagraficaBtn')        ?.addEventListener('click', saveAnagrafica);
-    document.getElementById('saveFiscaleBtn')            ?.addEventListener('click', saveFiscale);
-    document.getElementById('saveLocalizzazioneBtn')     ?.addEventListener('click', saveLocalizzazione);
-    document.getElementById('saveBrandingBtn')           ?.addEventListener('click', saveBranding);
-    document.getElementById('geocodeBtn')                ?.addEventListener('click', geocode);
-    document.getElementById('refreshHealthBtn')          ?.addEventListener('click', () => { window._healthLoaded = false; loadSystemInfo(); });
-    document.getElementById('saveRentalSettingsBtn')     ?.addEventListener('click', saveRentalSettings);
+    document.getElementById('saveAnagraficaBtn')    ?.addEventListener('click', saveAnagrafica);
+    document.getElementById('saveFiscaleBtn')        ?.addEventListener('click', saveFiscale);
+    document.getElementById('saveLocalizzazioneBtn') ?.addEventListener('click', saveLocalizzazione);
+    document.getElementById('saveBrandingBtn')       ?.addEventListener('click', saveBranding);
+    document.getElementById('geocodeBtn')            ?.addEventListener('click', geocode);
+    document.getElementById('refreshHealthBtn')      ?.addEventListener('click', () => { window._healthLoaded = false; loadSystemInfo(); });
+    document.getElementById('saveRentalSettingsBtn') ?.addEventListener('click', saveRentalSettings);
+    document.getElementById('saveSmtpBtn')           ?.addEventListener('click', saveSmtpSettings);
 });

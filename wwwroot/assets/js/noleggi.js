@@ -323,10 +323,12 @@ function openClose(id) {
 }
 
 function openActionModal() {
-    document.getElementById('actionModalOverlay').style.display = 'flex';
+    document.getElementById('actionModalOverlay').classList.add('open');
+    document.getElementById('actionModal').classList.add('open');
 }
 function closeActionModal() {
-    document.getElementById('actionModalOverlay').style.display = 'none';
+    document.getElementById('actionModalOverlay').classList.remove('open');
+    document.getElementById('actionModal').classList.remove('open');
 }
 
 async function doActivate(id) {

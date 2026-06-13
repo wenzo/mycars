@@ -177,6 +177,26 @@ public sealed class AdminController : ControllerBase
         return updated is null ? StatusCode(500) : Ok(updated);
     }
 
+    [HttpPut("profile/smtp")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateSmtpSettings([FromBody] UpdateSmtpSettingsRequest req)
+    {
+        var profile = await _operators.GetByIdAsync(GetOperatorId());
+        if (profile is null) return NotFound();
+
+        profile.SmtpHost      = string.IsNullOrWhiteSpace(req.Host)      ? null : req.Host.Trim();
+        profile.SmtpPort      = req.Port > 0                             ? req.Port : null;
+        profile.SmtpUseSsl    = req.UseSsl;
+        profile.SmtpUsername  = string.IsNullOrWhiteSpace(req.Username)  ? null : req.Username.Trim();
+        profile.SmtpFromEmail = string.IsNullOrWhiteSpace(req.FromEmail) ? null : req.FromEmail.Trim();
+        profile.SmtpFromName  = string.IsNullOrWhiteSpace(req.FromName)  ? null : req.FromName.Trim();
+        if (!string.IsNullOrWhiteSpace(req.Password))
+            profile.SmtpPassword = req.Password.Trim();
+
+        var updated = await _operators.UpdateAsync(profile);
+        return updated is null ? StatusCode(500) : Ok(new { message = "Salvato." });
+    }
+
     [HttpPut("profile/rental-settings")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateRentalSettings([FromBody] UpdateRentalSettingsRequest req)
@@ -375,6 +395,23 @@ public sealed class AdminController : ControllerBase
             new PageRequest(page, Math.Clamp(pageSize, 1, 100)),
             status, leadType);
         return Ok(result);
+    }
+
+    [HttpGet("leads/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetLeadById(Guid id)
+    {
+        try
+        {
+            var lead = await _leads.GetByIdAsync(id, GetOperatorId());
+            if (lead is null) return NotFound(new { message = "Lead non trovato." });
+            return Ok(lead);
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Errore GetLeadById id={Id}", id);
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
 
     [HttpPatch("leads/{id:guid}/status")]
@@ -654,6 +691,26 @@ public sealed class AdminController : ControllerBase
         {
             var created = await _operators.CreateAppCodeAsync(code);
             return Ok(created);
+        }
+        catch (Exception ex) when (ex.Message.Contains("unique") || ex.Message.Contains("duplicate") || ex.Message.Contains("23505"))
+        {
+            return Conflict(new { message = "Questo codice esiste già." });
+        }
+    }
+
+    [HttpPatch("app-codes/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateAppCode(Guid id, [FromBody] UpdateAppCodeRequest req)
+    {
+        var raw = req.Code.Trim().ToUpperInvariant();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(raw, @"^[A-Z0-9][A-Z0-9_-]{2,31}$"))
+            return BadRequest(new { message = "Formato non valido: usa lettere maiuscole, numeri, _ e – (min 3, max 32 caratteri)." });
+
+        try
+        {
+            var updated = await _operators.UpdateAppCodeAsync(id, GetOperatorId(), raw);
+            if (updated is null) return NotFound(new { message = "Codice non trovato." });
+            return Ok(updated);
         }
         catch (Exception ex) when (ex.Message.Contains("unique") || ex.Message.Contains("duplicate") || ex.Message.Contains("23505"))
         {
@@ -1167,6 +1224,22 @@ public sealed class UpdateRentalSettingsRequest
     public bool RentalPhotosEnabled      { get; set; }
     public bool RentalContractPdfEnabled { get; set; }
     public bool RentalShowPrices         { get; set; }
+}
+
+public sealed class UpdateSmtpSettingsRequest
+{
+    public string? Host      { get; set; }
+    public int     Port      { get; set; } = 587;
+    public bool    UseSsl    { get; set; } = true;
+    public string? Username  { get; set; }
+    public string? Password  { get; set; }
+    public string? FromEmail { get; set; }
+    public string? FromName  { get; set; }
+}
+
+public sealed class UpdateAppCodeRequest
+{
+    public string Code { get; set; } = "";
 }
 
 public sealed class CreateAppCodeRequest

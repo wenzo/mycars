@@ -104,16 +104,19 @@ public sealed class SupabaseRestClient : ISupabaseRestClient
         var response = await _http.SendAsync(req);
         await EnsureSuccessAsync(response);
 
-        // PostgREST risponde con Content-Range: 0-{n-1}/{total}  oppure  */{total}
-        if (response.Headers.TryGetValues("Content-Range", out var values))
+        // PostgREST: Content-Range è un content-header (response.Content.Headers),
+        // ma alcuni client la trovano anche in response.Headers — proviamo entrambi.
+        string? range = null;
+        if (response.Content.Headers.TryGetValues("Content-Range", out var ch))
+            range = ch.FirstOrDefault();
+        else if (response.Headers.TryGetValues("Content-Range", out var rh))
+            range = rh.FirstOrDefault();
+
+        if (range is not null)
         {
-            var range = values.FirstOrDefault();
-            if (range is not null)
-            {
-                var slash = range.IndexOf('/');
-                if (slash >= 0 && long.TryParse(range[(slash + 1)..], out var count))
-                    return count;
-            }
+            var slash = range.IndexOf('/');
+            if (slash >= 0 && long.TryParse(range[(slash + 1)..], out var count))
+                return count;
         }
         return 0;
     }

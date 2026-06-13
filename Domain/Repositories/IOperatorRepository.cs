@@ -13,6 +13,7 @@ public interface IOperatorRepository
     // App Codes
     Task<IReadOnlyList<AppCode>> GetAppCodesAsync(Guid operatorId);
     Task<AppCode>                CreateAppCodeAsync(AppCode code);
+    Task<AppCode?>               UpdateAppCodeAsync(Guid id, Guid operatorId, string newCode);
     Task<bool>                   DeleteAppCodeAsync(Guid id, Guid operatorId);
     Task<OperatorProfile?>       ResolveCodeAsync(string code);
 }

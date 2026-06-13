@@ -14,9 +14,13 @@ public sealed class PostgresOperatorRepository : IOperatorRepository
         o.address, o.city, o.province, o.zip_code,
         o.latitude, o.longitude,
         o.primary_color, o.secondary_color, o.accent_color,
-        o.is_active, o.created_at, o.updated_at,
+        o.tagline, o.is_active, o.created_at, o.updated_at,
         o.cover_image_url,
-        COALESCE(o.logo_url, ma.public_url) AS logo_url
+        COALESCE(o.logo_url, ma.public_url) AS logo_url,
+        o.rental_module_enabled, o.rental_photos_enabled,
+        o.rental_contract_pdf_enabled, o.rental_show_prices,
+        o.smtp_host, o.smtp_port, o.smtp_use_ssl,
+        o.smtp_username, o.smtp_password, o.smtp_from_email, o.smtp_from_name
         """;
 
     public async Task<OperatorProfile?> GetByIdAsync(Guid id)
@@ -86,26 +90,38 @@ public sealed class PostgresOperatorRepository : IOperatorRepository
         profile.UpdatedAt = DateTimeOffset.UtcNow;
         const string sql = """
             UPDATE public.operators SET
-                business_name   = @BusinessName,
-                vat_number      = @VatNumber,
-                fiscal_code     = @FiscalCode,
-                rea_number      = @ReaNumber,
-                phone           = @Phone,
-                email           = @Email,
-                website_url     = @WebsiteUrl,
-                whatsapp_number = @WhatsappNumber,
-                address         = @Address,
-                city            = @City,
-                province        = @Province,
-                zip_code        = @ZipCode,
-                latitude        = @Latitude,
-                longitude       = @Longitude,
-                primary_color   = @PrimaryColor,
-                secondary_color = @SecondaryColor,
-                accent_color    = @AccentColor,
-                logo_url        = @LogoUrl,
-                cover_image_url = @CoverImageUrl,
-                updated_at      = @UpdatedAt
+                business_name               = @BusinessName,
+                vat_number                  = @VatNumber,
+                fiscal_code                 = @FiscalCode,
+                rea_number                  = @ReaNumber,
+                phone                       = @Phone,
+                email                       = @Email,
+                website_url                 = @WebsiteUrl,
+                whatsapp_number             = @WhatsappNumber,
+                address                     = @Address,
+                city                        = @City,
+                province                    = @Province,
+                zip_code                    = @ZipCode,
+                latitude                    = @Latitude,
+                longitude                   = @Longitude,
+                primary_color               = @PrimaryColor,
+                secondary_color             = @SecondaryColor,
+                accent_color                = @AccentColor,
+                tagline                     = @Tagline,
+                logo_url                    = @LogoUrl,
+                cover_image_url             = @CoverImageUrl,
+                rental_module_enabled       = @RentalModuleEnabled,
+                rental_photos_enabled       = @RentalPhotosEnabled,
+                rental_contract_pdf_enabled = @RentalContractPdfEnabled,
+                rental_show_prices          = @RentalShowPrices,
+                smtp_host                   = @SmtpHost,
+                smtp_port                   = @SmtpPort,
+                smtp_use_ssl                = @SmtpUseSsl,
+                smtp_username               = @SmtpUsername,
+                smtp_password               = @SmtpPassword,
+                smtp_from_email             = @SmtpFromEmail,
+                smtp_from_name              = @SmtpFromName,
+                updated_at                  = @UpdatedAt
             WHERE id = @Id
             """;
         using var conn = _factory.CreateConnection();
@@ -143,6 +159,18 @@ public sealed class PostgresOperatorRepository : IOperatorRepository
             """;
         using var conn = _factory.CreateConnection();
         return await conn.QueryFirstAsync<AppCode>(sql, code);
+    }
+
+    public async Task<AppCode?> UpdateAppCodeAsync(Guid id, Guid operatorId, string newCode)
+    {
+        var sql = $"""
+            UPDATE public.operator_app_codes
+            SET code = @newCode, updated_at = now()
+            WHERE id = @id AND operator_id = @operatorId AND is_active = true
+            RETURNING {AppCodeCols}
+            """;
+        using var conn = _factory.CreateConnection();
+        return await conn.QueryFirstOrDefaultAsync<AppCode>(sql, new { id, operatorId, newCode });
     }
 
     public async Task<bool> DeleteAppCodeAsync(Guid id, Guid operatorId)

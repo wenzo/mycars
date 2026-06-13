@@ -13,6 +13,7 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
         "primary_color,secondary_color,accent_color," +
         "logo_url,cover_image_url,tagline,is_active," +
         "rental_module_enabled,rental_photos_enabled,rental_contract_pdf_enabled,rental_show_prices," +
+        "smtp_host,smtp_port,smtp_use_ssl,smtp_username,smtp_password,smtp_from_email,smtp_from_name," +
         "created_at,updated_at";
 
     public Task<OperatorProfile?> GetByIdAsync(Guid id)
@@ -54,27 +55,38 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
         profile.UpdatedAt = DateTimeOffset.UtcNow;
         return await _db.UpdateAsync<OperatorProfile>("operators", $"id=eq.{profile.Id}", new
         {
-            business_name   = profile.BusinessName,
-            vat_number      = profile.VatNumber,
-            fiscal_code     = profile.FiscalCode,
-            rea_number      = profile.ReaNumber,
-            phone           = profile.Phone,
-            email           = profile.Email,
-            website_url     = profile.WebsiteUrl,
-            whatsapp_number = profile.WhatsappNumber,
-            address         = profile.Address,
-            city            = profile.City,
-            province        = profile.Province,
-            zip_code        = profile.ZipCode,
-            latitude        = profile.Latitude,
-            longitude       = profile.Longitude,
-            primary_color   = profile.PrimaryColor,
-            secondary_color = profile.SecondaryColor,
-            accent_color    = profile.AccentColor,
-            logo_url        = profile.LogoUrl,
-            cover_image_url = profile.CoverImageUrl,
-            tagline         = profile.Tagline,
-            updated_at      = profile.UpdatedAt,
+            business_name               = profile.BusinessName,
+            vat_number                  = profile.VatNumber,
+            fiscal_code                 = profile.FiscalCode,
+            rea_number                  = profile.ReaNumber,
+            phone                       = profile.Phone,
+            email                       = profile.Email,
+            website_url                 = profile.WebsiteUrl,
+            whatsapp_number             = profile.WhatsappNumber,
+            address                     = profile.Address,
+            city                        = profile.City,
+            province                    = profile.Province,
+            zip_code                    = profile.ZipCode,
+            latitude                    = profile.Latitude,
+            longitude                   = profile.Longitude,
+            primary_color               = profile.PrimaryColor,
+            secondary_color             = profile.SecondaryColor,
+            accent_color                = profile.AccentColor,
+            logo_url                    = profile.LogoUrl,
+            cover_image_url             = profile.CoverImageUrl,
+            tagline                     = profile.Tagline,
+            rental_module_enabled       = profile.RentalModuleEnabled,
+            rental_photos_enabled       = profile.RentalPhotosEnabled,
+            rental_contract_pdf_enabled = profile.RentalContractPdfEnabled,
+            rental_show_prices          = profile.RentalShowPrices,
+            smtp_host                   = profile.SmtpHost,
+            smtp_port                   = profile.SmtpPort,
+            smtp_use_ssl                = profile.SmtpUseSsl,
+            smtp_username               = profile.SmtpUsername,
+            smtp_password               = profile.SmtpPassword,
+            smtp_from_email             = profile.SmtpFromEmail,
+            smtp_from_name              = profile.SmtpFromName,
+            updated_at                  = profile.UpdatedAt,
         }, select: AdminCols);
     }
 
@@ -107,6 +119,18 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
             created_at  = code.CreatedAt,
         });
         return result ?? code;
+    }
+
+    public async Task<AppCode?> UpdateAppCodeAsync(Guid id, Guid operatorId, string newCode)
+    {
+        var existing = await _db.SelectOneAsync<AppCode>("operator_app_codes",
+            $"id=eq.{id}&operator_id=eq.{operatorId}&is_active=eq.true",
+            select: AppCodeSelect);
+        if (existing is null) return null;
+
+        return await _db.UpdateAsync<AppCode>("operator_app_codes", $"id=eq.{id}",
+            new { code = newCode, updated_at = DateTimeOffset.UtcNow },
+            select: AppCodeSelect);
     }
 
     public async Task<bool> DeleteAppCodeAsync(Guid id, Guid operatorId)

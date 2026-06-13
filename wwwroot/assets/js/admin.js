@@ -101,9 +101,16 @@ async function loadStats() {
         setBadge('testDriveBadge', stats.test_drive);
         setBadge('vehiclesBadge',  stats.veicoli_attivi);
         setBadge('newsBadge',      stats.news_pubblicate);
-    } catch {
-        // cards keep their initial '—' placeholder
+    } catch (err) {
+        console.error('Errore caricamento stats:', err);
     }
+}
+
+async function loadRentalBadge() {
+    try {
+        const data = await apiFetch('/api/admin/rentals/dashboard');
+        setBadge('noleggiBadge', data.returning_today_count ?? 0);
+    } catch { /* silenzioso */ }
 }
 
 // ── Dashboard: recent leads table ────────────────────────────────────────────
@@ -143,7 +150,7 @@ async function loadLeadsTable() {
                     <td>${LEAD_STATO_BADGE[l.status] ?? l.status}</td>
                     <td>${date}</td>
                     <td class="td-actions">
-                        <button class="btn btn-outline btn-sm">Apri</button>
+                        <a class="btn btn-outline btn-sm" href="/admin/lead.html?open=${l.id}">Apri</a>
                     </td>
                 </tr>`;
         }).join('');
@@ -191,6 +198,7 @@ async function loadVehiclesList() {
 
 document.addEventListener('DOMContentLoaded', () => {
     loadStats();
+    loadRentalBadge();
     loadLeadsTable();
     loadVehiclesList();
 });

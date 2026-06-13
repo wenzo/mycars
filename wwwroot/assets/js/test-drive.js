@@ -90,7 +90,7 @@ function openLeadDetail(id) {
     overlay.querySelector('#tdDetailSave').addEventListener('click', async () => {
         const newStatus = overlay.querySelector('#tdDetailStatus').value;
         try {
-            await apiFetch(`/api/admin/leads/${l.id}/status`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
+            await apiFetch(`/api/admin/leads/${l.id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
             l.status = newStatus;
             overlay.remove();
             loadTestDrives();

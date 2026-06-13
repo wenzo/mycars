@@ -31,6 +31,14 @@ public sealed class OperatorProfile
     public bool    RentalPhotosEnabled      { get; set; }
     public bool    RentalContractPdfEnabled { get; set; }
     public bool    RentalShowPrices         { get; set; }
+    // SMTP per-operatore (sovrascrive appsettings se impostato)
+    public string? SmtpHost      { get; set; }
+    public int?    SmtpPort      { get; set; }
+    public bool    SmtpUseSsl    { get; set; } = true;
+    public string? SmtpUsername  { get; set; }
+    public string? SmtpPassword  { get; set; }
+    public string? SmtpFromEmail { get; set; }
+    public string? SmtpFromName  { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset UpdatedAt { get; set; }
 }
