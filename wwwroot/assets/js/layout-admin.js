@@ -27,22 +27,22 @@
         <a class="nav-item" data-page="veicoli.html" href="/admin/veicoli.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2m-4 0H9m4 0v2a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1v-2m4 0H9"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>
             Veicoli
-            <span class="nav-badge nav-badge-blue" id="vehiclesBadge"></span>
+            <span class="nav-badge nav-badge-blue" id="vehiclesBadge" style="display:none"></span>
         </a>
         <a class="nav-item" data-page="news.html" href="/admin/news.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
             News &amp; Promozioni
-            <span class="nav-badge nav-badge-blue" id="newsBadge"></span>
+            <span class="nav-badge nav-badge-blue" id="newsBadge" style="display:none"></span>
         </a>
         <a class="nav-item" data-page="lead.html" href="/admin/lead.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Lead &amp; Richieste
-            <span class="nav-badge" id="leadBadge"></span>
+            <span class="nav-badge" id="leadBadge" style="display:none"></span>
         </a>
         <a class="nav-item" data-page="test-drive.html" href="/admin/test-drive.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Test Drive
-            <span class="nav-badge nav-badge-red" id="testDriveBadge"></span>
+            <span class="nav-badge nav-badge-red" id="testDriveBadge" style="display:none"></span>
         </a>
         <a class="nav-item" data-page="push.html" href="/admin/push.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -51,7 +51,7 @@
         <a class="nav-item" data-page="noleggi.html" href="/admin/noleggi.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             Noleggi
-            <span class="nav-badge nav-badge-yellow" id="noleggiBadge"></span>
+            <span class="nav-badge nav-badge-yellow" id="noleggiBadge" style="display:none"></span>
         </a>
         <div class="nav-divider"></div>
         <a class="nav-item" data-page="sedi.html" href="/admin/sedi.html">

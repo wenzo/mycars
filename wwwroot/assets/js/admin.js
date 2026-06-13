@@ -79,6 +79,17 @@ async function apiFetch(path, options = {}) {
 
 // ── Dashboard: stats cards + nav badges ──────────────────────────────────────
 
+function setBadge(id, count) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (count > 0) {
+        el.textContent    = String(count);
+        el.style.display  = '';
+    } else {
+        el.style.display  = 'none';
+    }
+}
+
 async function loadStats() {
     try {
         const stats = await apiFetch('/api/admin/stats');
@@ -86,14 +97,10 @@ async function loadStats() {
             const el = document.querySelector(`[data-stat="${key}"]`);
             if (el) el.textContent = value;
         });
-        const leadBadge      = document.getElementById('leadBadge');
-        const testDriveBadge = document.getElementById('testDriveBadge');
-        const vehiclesBadge  = document.getElementById('vehiclesBadge');
-        const newsBadge      = document.getElementById('newsBadge');
-        if (leadBadge)      leadBadge.textContent      = stats.lead_aperti      || '';
-        if (testDriveBadge) testDriveBadge.textContent = stats.test_drive       || '';
-        if (vehiclesBadge)  vehiclesBadge.textContent  = stats.veicoli_attivi   || '';
-        if (newsBadge)      newsBadge.textContent       = stats.news_pubblicate  || '';
+        setBadge('leadBadge',      stats.lead_aperti);
+        setBadge('testDriveBadge', stats.test_drive);
+        setBadge('vehiclesBadge',  stats.veicoli_attivi);
+        setBadge('newsBadge',      stats.news_pubblicate);
     } catch {
         // cards keep their initial '—' placeholder
     }
