@@ -88,8 +88,12 @@ async function loadStats() {
         });
         const leadBadge      = document.getElementById('leadBadge');
         const testDriveBadge = document.getElementById('testDriveBadge');
-        if (leadBadge)      leadBadge.textContent      = stats.lead_aperti  ?? '';
-        if (testDriveBadge) testDriveBadge.textContent = stats.test_drive   ?? '';
+        const vehiclesBadge  = document.getElementById('vehiclesBadge');
+        const newsBadge      = document.getElementById('newsBadge');
+        if (leadBadge)      leadBadge.textContent      = stats.lead_aperti      || '';
+        if (testDriveBadge) testDriveBadge.textContent = stats.test_drive       || '';
+        if (vehiclesBadge)  vehiclesBadge.textContent  = stats.veicoli_attivi   || '';
+        if (newsBadge)      newsBadge.textContent       = stats.news_pubblicate  || '';
     } catch {
         // cards keep their initial '—' placeholder
     }

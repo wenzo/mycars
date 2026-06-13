@@ -27,10 +27,12 @@
         <a class="nav-item" data-page="veicoli.html" href="/admin/veicoli.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2m-4 0H9m4 0v2a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1v-2m4 0H9"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>
             Veicoli
+            <span class="nav-badge nav-badge-blue" id="vehiclesBadge"></span>
         </a>
         <a class="nav-item" data-page="news.html" href="/admin/news.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2z"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
             News &amp; Promozioni
+            <span class="nav-badge nav-badge-blue" id="newsBadge"></span>
         </a>
         <a class="nav-item" data-page="lead.html" href="/admin/lead.html">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>

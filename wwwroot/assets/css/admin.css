@@ -668,8 +668,11 @@ body.login-page {
 }
 .nav-sub-item:hover, .nav-sub-item.active { color: rgba(255,255,255,.9) !important; }
 
-/* ── Nav badge red variant ── */
-.nav-badge-red { background: var(--red); }
+/* ── Nav badge variants ── */
+.nav-badge:empty    { display: none; }
+.nav-badge-red      { background: var(--red); }
+.nav-badge-yellow   { background: #d97706; }
+.nav-badge-blue     { background: #2563eb; }
 
 /* ── Nav item logout style ── */
 .nav-item-logout { color: rgba(255,255,255,.5); }
