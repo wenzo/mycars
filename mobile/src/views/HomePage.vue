@@ -1,56 +1,68 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
-      <ion-toolbar>
-        <ion-title>Blank</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <ion-content :fullscreen="true" :scroll-y="false">
+      <div class="home-wrap">
 
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Blank</ion-title>
-        </ion-toolbar>
-      </ion-header>
+        <div class="tile" :style="{ background: primaryColor }" @click="router.push('/tabs/vetrina')">
+          <ion-icon :icon="carSportOutline" class="tile-icon" />
+          <span class="tile-label">VETRINA</span>
+        </div>
 
-      <div id="container">
-        <strong>Ready to create an app?</strong>
-        <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+        <div class="tile" :style="{ background: secondaryColor }" @click="router.push('/tabs/noleggio')">
+          <ion-icon :icon="keyOutline" class="tile-icon" />
+          <span class="tile-label">NOLEGGIO</span>
+        </div>
+
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { IonPage, IonContent, IonIcon } from '@ionic/vue'
+import { carSportOutline, keyOutline } from 'ionicons/icons'
+import { useOperatorStore } from '@/stores/operator'
+
+const router = useRouter()
+const op     = useOperatorStore()
+
+const primaryColor   = computed(() => op.profile?.primaryColor   ?? '#1E3A5F')
+const secondaryColor = computed(() => op.profile?.secondaryColor ?? '#2E75B6')
 </script>
 
 <style scoped>
-#container {
-  text-align: center;
-  
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+.home-wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+.tile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tile:active {
+  filter: brightness(0.82);
 }
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-  
-  color: #8c8c8c;
-  
-  margin: 0;
+.tile-icon {
+  font-size: 80px;
+  color: rgba(255, 255, 255, 0.88);
 }
 
-#container a {
-  text-decoration: none;
+.tile-label {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 4px;
 }
 </style>

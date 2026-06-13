@@ -94,6 +94,43 @@
           </div>
         </div>
 
+        <!-- Simulatore costo noleggio -->
+        <div v-if="fromRental && store.detail.rentalPrice" class="sim-card">
+          <div class="sim-title">🔑 Simula il costo del noleggio</div>
+
+          <div class="sim-dates">
+            <div class="sim-date-field">
+              <label class="sim-label">Data inizio</label>
+              <input v-model="simStart" class="sim-input" type="date" :min="today" @change="clampEnd" />
+            </div>
+            <div class="sim-date-sep">→</div>
+            <div class="sim-date-field">
+              <label class="sim-label">Data fine</label>
+              <input v-model="simEnd" class="sim-input" type="date" :min="simStart || today" />
+            </div>
+          </div>
+
+          <!-- Risultato calcolo -->
+          <div v-if="simDays !== null" class="sim-result">
+            <div class="sim-result-row">
+              <span>Tariffa giornaliera</span>
+              <span>€ {{ fmtPrice(simDailyRate) }}/giorno</span>
+            </div>
+            <div class="sim-result-row">
+              <span>Durata</span>
+              <span>{{ simDays }} giorn{{ simDays === 1 ? 'o' : 'i' }}</span>
+            </div>
+            <div class="sim-result-total">
+              <span>Totale stimato</span>
+              <strong>€ {{ fmtPrice(simTotal) }}</strong>
+            </div>
+            <div class="sim-note">Stima indicativa. Deposito, km e condizioni saranno confermati dal concessionario.</div>
+          </div>
+          <div v-else class="sim-placeholder">
+            Seleziona il periodo per calcolare il costo
+          </div>
+        </div>
+
         <!-- Descrizione -->
         <div v-if="store.detail.description" class="mc-section">
           <div class="mc-section-title">
@@ -104,6 +141,26 @@
           </div>
         </div>
 
+        <!-- Cross-promo: vendita → noleggio -->
+        <div
+          v-if="!fromRental && store.detail.forRental"
+          class="cross-promo"
+          @click="$router.replace({ path: `/veicolo/${store.detail.id}`, query: { from: 'noleggio' } })"
+        >
+          <span>🔑 Sei interessato al noleggio?</span>
+          <span class="cross-promo-link">Scopri le condizioni →</span>
+        </div>
+
+        <!-- Cross-promo: noleggio → vendita -->
+        <div
+          v-if="fromRental && store.detail.forSale"
+          class="cross-promo"
+          @click="$router.replace({ path: `/veicolo/${store.detail.id}` })"
+        >
+          <span>🚗 Saresti interessato all'acquisto?</span>
+          <span class="cross-promo-link">Vedi la scheda vendita →</span>
+        </div>
+
       </ion-content>
 
       <!-- CTA bar fissa -->
@@ -111,7 +168,11 @@
         <button class="btn-secondary" @click="openLead('info')">
           <ion-icon :icon="callOutline" /> Contatta
         </button>
-        <button class="btn-primary btn-danger" @click="openLead('test_drive')">
+        <button v-if="fromRental" class="btn-primary btn-danger" @click="showRentalModal = true">
+          <ion-icon :icon="keyOutline" />
+          {{ simTotal > 0 ? `Richiedi · € ${fmtPrice(simTotal)}` : 'Richiedi Noleggio' }}
+        </button>
+        <button v-else class="btn-primary btn-danger" @click="openLead('test_drive')">
           <ion-icon :icon="calendarOutline" /> Prenota Test Drive
         </button>
       </div>
@@ -123,6 +184,15 @@
 
     <!-- Lead modal -->
     <LeadModal v-if="showLead" :lead-type="leadType" :initial-message="leadInitialMessage" @close="showLead = false" />
+
+    <!-- Rental request modal -->
+    <RentalRequestModal
+      v-if="showRentalModal && store.detail"
+      :vehicle="store.detail"
+      :initial-start-date="simStart"
+      :initial-end-date="simEnd"
+      @close="showRentalModal = false"
+    />
   </ion-page>
 </template>
 
@@ -134,19 +204,45 @@ import {
   arrowBackOutline, heartOutline, shareOutline,
   carOutline, flashOutline, speedometerOutline, calendarOutline,
   gitNetworkOutline, thermometerOutline, colorPaletteOutline,
-  locationOutline, documentTextOutline, callOutline,
+  locationOutline, documentTextOutline, callOutline, keyOutline,
 } from 'ionicons/icons'
 import { useVehicleStore } from '@/stores/vehicles'
 import { useOperatorStore } from '@/stores/operator'
 import LeadModal from '@/components/LeadModal.vue'
+import RentalRequestModal from '@/components/RentalRequestModal.vue'
 
 const route    = useRoute()
 const store    = useVehicleStore()
 const op       = useOperatorStore()
 const imgIndex = ref(0)
 const showLead = ref(false)
+const showRentalModal = ref(false)
 const leadType = ref<'info' | 'test_drive' | 'price_update'>('info')
 const leadInitialMessage = ref('')
+
+const fromRental = computed(() => route.query.from === 'noleggio')
+
+// ── Simulatore costo noleggio ─────────────────────────────────────────────────
+const today    = new Date().toISOString().slice(0, 10)
+const simStart = ref('')
+const simEnd   = ref('')
+
+const simDailyRate = computed(() => {
+  const p = store.detail?.rentalPrice
+  return p ? Math.round(p / 30) : 0
+})
+const simDays = computed<number | null>(() => {
+  if (!simStart.value || !simEnd.value) return null
+  const ms = new Date(simEnd.value).getTime() - new Date(simStart.value).getTime()
+  if (ms <= 0) return null
+  return Math.ceil(ms / 86_400_000)
+})
+const simTotal = computed(() =>
+  simDays.value !== null ? simDailyRate.value * simDays.value : 0
+)
+function clampEnd() {
+  if (simEnd.value && simEnd.value < simStart.value) simEnd.value = simStart.value
+}
 
 const currentImg = computed(() => {
   const raw = store.images[imgIndex.value]?.url ?? store.detail?.coverImageUrl ?? null
@@ -263,6 +359,75 @@ onMounted(() => store.fetchDetail(route.params.id as string))
   background: #FFF0F0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .branch-icon-wrap ion-icon { font-size: 18px; color: var(--dealer-secondary); }
+
+/* ── Simulatore costo noleggio ── */
+.sim-card {
+  margin: 6px 16px; background: #F0F4FF; border-radius: var(--mc-r);
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.sim-title {
+  font-family: var(--mc-font-heading); font-size: 13px; font-weight: 700;
+  color: var(--dealer-primary);
+}
+.sim-dates { display: flex; align-items: flex-end; gap: 8px; }
+.sim-date-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.sim-label { font-size: 11px; font-weight: 600; color: var(--mc-text-mid); }
+.sim-input {
+  width: 100%; height: 42px; border: 1.5px solid var(--mc-border);
+  border-radius: var(--mc-r-sm); padding: 0 10px;
+  font-size: 13px; color: var(--mc-text); background: #fff; outline: none;
+  box-sizing: border-box;
+}
+.sim-input:focus { border-color: var(--dealer-primary); }
+.sim-date-sep { font-size: 16px; color: var(--mc-text-light); padding-bottom: 10px; flex-shrink: 0; }
+
+.sim-result {
+  background: #fff; border-radius: 10px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.sim-result-row {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--mc-text-mid);
+}
+.sim-result-total {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1.5px solid var(--mc-border); padding-top: 8px; margin-top: 2px;
+  font-size: 13px; color: var(--mc-text-mid);
+}
+.sim-result-total strong {
+  font-family: var(--mc-font-heading); font-size: 22px; font-weight: 800;
+  color: var(--dealer-primary);
+}
+.sim-note {
+  font-size: 10.5px; color: var(--mc-text-light); font-style: italic; line-height: 1.4;
+}
+.sim-placeholder {
+  font-size: 13px; color: var(--mc-text-light); text-align: center;
+  padding: 4px 0;
+}
+
+/* Riquadro condizioni noleggio (static fallback) */
+.rental-info-card {
+  margin: 6px 16px; background: #F0F4FF; border-radius: var(--mc-r);
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.ric-title { font-family: var(--mc-font-heading); font-size: 13px; font-weight: 700; color: var(--dealer-primary); }
+.ric-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; color: var(--mc-text-mid);
+}
+.ric-row strong { color: var(--mc-text); font-family: var(--mc-font-heading); }
+.ric-note { font-size: 11px; color: var(--mc-text-light); font-style: italic; line-height: 1.4; }
+
+/* Cross-promo banner */
+.cross-promo {
+  margin: 6px 16px; background: #fff; border: 1.5px solid var(--mc-border);
+  border-radius: var(--mc-r); padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; gap: 8px;
+  font-size: 13px; color: var(--mc-text-mid);
+}
+.cross-promo-link { font-weight: 700; color: var(--dealer-primary); white-space: nowrap; }
 
 .cta-bar {
   background: #fff; border-top: 1px solid var(--mc-border);

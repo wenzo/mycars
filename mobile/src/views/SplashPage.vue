@@ -57,7 +57,7 @@ onMounted(async () => {
   await new Promise(r => setTimeout(r, 2200))
 
   if (op.isConnected) {
-    router.replace('/tabs/vetrina')
+    router.replace('/home')
   } else {
     const toast = await toastController.create({
       message: 'App non ancora associata a nessun operatore. Inserisci il codice del tuo concessionario.',

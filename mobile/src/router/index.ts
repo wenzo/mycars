@@ -4,6 +4,7 @@ import { RouteRecordRaw } from 'vue-router'
 const routes: Array<RouteRecordRaw> = [
   { path: '/', redirect: '/splash' },
   { path: '/splash', component: () => import('@/views/SplashPage.vue') },
+  { path: '/home',   component: () => import('@/views/HomePage.vue') },
 
   {
     path: '/tabs',
@@ -14,10 +15,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'news',         component: () => import('@/views/NewsPage.vue') },
       { path: 'contatti',     component: () => import('@/views/ContattiPage.vue') },
       { path: 'impostazioni', component: () => import('@/views/ImpostazioniPage.vue') },
-      { path: 'noleggio',     component: () => import('@/views/NoleggioDashboard.vue') },
-      { path: 'noleggio/lista',  component: () => import('@/views/NoleggioListaPage.vue') },
-      { path: 'noleggio/nuovo',  component: () => import('@/views/NuovoNoleggioPage.vue') },
-      { path: 'noleggio/flotta', component: () => import('@/views/NoleggioFlottaPage.vue') },
+      { path: 'noleggio', component: () => import('@/views/NoleggioPublicPage.vue') },
     ],
   },
 

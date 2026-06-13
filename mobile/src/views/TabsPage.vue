@@ -19,14 +19,9 @@
           <ion-label>Contatti</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button
-          v-if="rentalEnabled"
-          tab="noleggio"
-          href="/tabs/noleggio"
-        >
+        <ion-tab-button tab="noleggio" href="/tabs/noleggio">
           <ion-icon :icon="keyOutline" />
           <ion-label>Noleggio</ion-label>
-          <ion-badge v-if="returningToday > 0" color="warning">{{ returningToday }}</ion-badge>
         </ion-tab-button>
 
         <ion-tab-button tab="impostazioni" href="/tabs/impostazioni">
@@ -39,10 +34,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import {
   IonPage, IonTabs, IonTabBar, IonTabButton,
-  IonIcon, IonLabel, IonBadge, IonRouterOutlet,
+  IonIcon, IonLabel, IonRouterOutlet,
 } from '@ionic/vue'
 import {
   carOutline,
@@ -51,12 +45,4 @@ import {
   settingsOutline,
   keyOutline,
 } from 'ionicons/icons'
-import { useOperatorStore } from '@/stores/operator'
-import { useRentalsStore } from '@/stores/rentals'
-
-const opStore      = useOperatorStore()
-const rentalsStore = useRentalsStore()
-
-const rentalEnabled  = computed(() => (opStore.profile as any)?.rentalModuleEnabled === true)
-const returningToday = computed(() => rentalsStore.dashboard?.returningTodayCount ?? 0)
 </script>
