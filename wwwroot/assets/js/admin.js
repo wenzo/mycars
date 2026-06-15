@@ -185,7 +185,7 @@ async function loadVehiclesList() {
                     </td>
                     <td>${price}</td>
                     <td class="td-actions">
-                        <button class="btn btn-outline btn-sm">Modifica</button>
+                        <a class="btn btn-outline btn-sm" href="/admin/veicoli.html?open=${v.id}">Modifica</a>
                     </td>
                 </tr>`;
         }).join('');

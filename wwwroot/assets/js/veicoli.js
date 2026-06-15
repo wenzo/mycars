@@ -609,6 +609,10 @@ async function sendPushNotification() {
 document.addEventListener('DOMContentLoaded', () => {
     loadVehicles();
     loadBranches();
+
+    // Apertura diretta da dashboard (?open=<id>)
+    const autoOpen = new URLSearchParams(location.search).get('open');
+    if (autoOpen) openDrawer(autoOpen);
     loadBrandsDatalist();
 
     document.getElementById('addVehicleBtn')?.addEventListener('click', () => openDrawer());
