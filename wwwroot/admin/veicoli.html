@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MyCars Admin — Veicoli</title>
     <link rel="stylesheet" href="/assets/css/admin.css">
+    <style>
+        /* ── Formula tabs nel drawer ── */
+        .formula-tabs {
+            display: flex; border: 1px solid var(--border);
+            border-radius: var(--r-sm); overflow: hidden; background: var(--surface);
+        }
+        .formula-tab {
+            flex: 1; border: none; border-right: 1px solid var(--border);
+            background: none; cursor: pointer; padding: 7px 4px;
+            font-size: 11.5px; font-weight: 600; color: var(--text-light);
+            transition: background .15s, color .15s; font-family: 'Outfit', sans-serif;
+        }
+        .formula-tab:last-child { border-right: none; }
+        .formula-tab:hover { background: var(--white); color: var(--text); }
+        .formula-tab.active { background: var(--navy); color: #fff; }
+    </style>
 </head>
 <body>
 
@@ -224,10 +240,6 @@
                             <label class="form-label" for="vPrevPrice">Prezzo prec. (€)</label>
                             <input class="form-input" type="number" id="vPrevPrice" min="0" step="100">
                         </div>
-                        <div class="form-group" id="rentalPriceGroup" style="display:none">
-                            <label class="form-label" for="vRentalPrice">Prezzo noleggio (€/mese)</label>
-                            <input class="form-input" type="number" id="vRentalPrice" min="0" step="10" placeholder="es. 450">
-                        </div>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:10px">
                         <label class="form-check">
@@ -303,6 +315,79 @@
                         Aggiungi foto
                     </button>
                     <input type="file" id="vGalleryInput" accept="image/jpeg,image/png,image/webp" style="display:none" multiple>
+                </div>
+            </div>
+
+            <!-- ── Sezione Noleggio — visibile se "In noleggio" è attivo ── -->
+            <div id="rentalSection" style="display:none;flex-direction:column;gap:14px">
+                <div class="form-section-title">Tariffario Noleggio</div>
+
+                <!-- Tab formule -->
+                <div class="formula-tabs">
+                    <button type="button" class="formula-tab active" data-formula="daily">Giorn.</button>
+                    <button type="button" class="formula-tab" data-formula="weekend">Weekend</button>
+                    <button type="button" class="formula-tab" data-formula="weekly">Sett.</button>
+                    <button type="button" class="formula-tab" data-formula="monthly">Mensile</button>
+                    <button type="button" class="formula-tab" data-formula="mid_term">Medio T.</button>
+                </div>
+                <p style="font-size:12px;color:var(--text-light);margin:0 0 -4px">Lascia vuoto per non offrire questa formula.</p>
+
+                <!-- Campi formula (condivisi — label aggiornate dal tab attivo) -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" id="labelFPrice">Prezzo (€/giorno)</label>
+                        <input class="form-input" type="number" id="vFPrice" min="0" step="1" placeholder="—">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="labelFKm">Km inclusi/giorno</label>
+                        <input class="form-input" type="number" id="vFKm" min="0" step="10" placeholder="—">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">€/km extra</label>
+                        <input class="form-input" type="number" id="vFExtraKm" min="0" step="0.01" placeholder="—">
+                    </div>
+                </div>
+
+                <!-- Deposito specifico veicolo -->
+                <div class="form-group">
+                    <label class="form-label" for="vRentalDeposit">Deposito cauzionale (€)</label>
+                    <input class="form-input" type="number" id="vRentalDeposit" min="0" step="50"
+                           placeholder="Vuoto = usa il default dalle impostazioni" style="max-width:280px">
+                </div>
+
+                <!-- Note per il cliente -->
+                <div class="form-group">
+                    <label class="form-label" for="vRentalVehicleNotes">Note per il cliente</label>
+                    <textarea class="form-textarea" id="vRentalVehicleNotes" rows="2"
+                              placeholder="es. Veicolo con piccoli segni di usura da parcheggio, meccanica perfetta."></textarea>
+                </div>
+
+                <!-- Noleggio con riscatto -->
+                <div style="background:var(--surface);border-radius:var(--r-sm);padding:12px;display:flex;flex-direction:column;gap:10px">
+                    <label class="form-check">
+                        <input type="checkbox" id="vRedemptionEnabled" class="form-check-input">
+                        <span class="form-check-label" style="font-weight:600">Noleggio con Riscatto</span>
+                    </label>
+                    <p style="font-size:12px;color:var(--text-light);margin:0">
+                        Il cliente può acquistare il veicolo scalando una % dei canoni pagati dal prezzo finale.
+                    </p>
+                    <div id="redemptionFields" style="display:none;flex-direction:column;gap:10px">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label" for="vRedemptionPrice">Prezzo di vendita (€)</label>
+                                <input class="form-input" type="number" id="vRedemptionPrice" min="0" step="100" placeholder="es. 14500">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="vRedemptionPct">% canoni scalati</label>
+                                <input class="form-input" type="number" id="vRedemptionPct" min="0" max="100" step="5" placeholder="es. 50">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vRedemptionNotes">Nota per il cliente</label>
+                            <input class="form-input" type="text" id="vRedemptionNotes" maxlength="200"
+                                   placeholder="es. Il 50% dei canoni pagati sarà scontato dal prezzo finale.">
+                        </div>
+                    </div>
                 </div>
             </div>
 

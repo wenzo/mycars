@@ -7,6 +7,9 @@ public sealed class SupabaseRestLeadRepository : ILeadRepository
 
     public async Task<VehicleLead> CreateAsync(VehicleLead lead)
     {
+        lead.Id        = Guid.NewGuid();
+        lead.CreatedAt = DateTimeOffset.UtcNow;
+        lead.UpdatedAt = DateTimeOffset.UtcNow;
         var result = await _db.InsertAsync<VehicleLead>("vehicle_leads", lead);
         return result ?? throw new InvalidOperationException("Insert lead non ha restituito dati.");
     }

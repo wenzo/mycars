@@ -13,7 +13,9 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
         "primary_color,secondary_color,accent_color," +
         "logo_url,cover_image_url,tagline,is_active," +
         "rental_module_enabled,rental_photos_enabled,rental_contract_pdf_enabled,rental_show_prices," +
+        "rental_conditions,rental_services_catalog," +
         "smtp_host,smtp_port,smtp_use_ssl,smtp_username,smtp_password,smtp_from_email,smtp_from_name," +
+        "privacy_policy_html," +
         "created_at,updated_at";
 
     public Task<OperatorProfile?> GetByIdAsync(Guid id)
@@ -79,6 +81,8 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
             rental_photos_enabled       = profile.RentalPhotosEnabled,
             rental_contract_pdf_enabled = profile.RentalContractPdfEnabled,
             rental_show_prices          = profile.RentalShowPrices,
+            rental_conditions           = profile.RentalConditions,
+            rental_services_catalog     = profile.RentalServicesCatalog,
             smtp_host                   = profile.SmtpHost,
             smtp_port                   = profile.SmtpPort,
             smtp_use_ssl                = profile.SmtpUseSsl,
@@ -86,6 +90,7 @@ public sealed class SupabaseRestOperatorRepository : IOperatorRepository
             smtp_password               = profile.SmtpPassword,
             smtp_from_email             = profile.SmtpFromEmail,
             smtp_from_name              = profile.SmtpFromName,
+            privacy_policy_html         = profile.PrivacyPolicyHtml,
             updated_at                  = profile.UpdatedAt,
         }, select: AdminCols);
     }

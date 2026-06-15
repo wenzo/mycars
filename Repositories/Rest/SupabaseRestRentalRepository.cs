@@ -14,7 +14,9 @@ public sealed class SupabaseRestRentalRepository : IRentalRepository
         "customer_name,customer_phone,customer_license,customer_fiscal_code," +
         "start_date,planned_end_date,actual_end_date," +
         "km_departure,km_return,fuel_departure,fuel_return," +
-        "agreed_price,deposit_amount,deposit_returned,payment_method,is_paid," +
+        "rental_formula,km_included,price_extra_km,selected_options," +
+        "base_price,options_price,agreed_price," +
+        "deposit_amount,deposit_returned,payment_method,is_paid," +
         "status,notes,created_at,updated_at";
 
     // ── Liste ─────────────────────────────────────────────────────────────────
@@ -105,6 +107,12 @@ public sealed class SupabaseRestRentalRepository : IRentalRepository
             customer_fiscal_code = r.CustomerFiscalCode,
             start_date           = r.StartDate.ToString("yyyy-MM-dd"),
             planned_end_date     = r.PlannedEndDate.ToString("yyyy-MM-dd"),
+            rental_formula       = r.RentalFormula,
+            km_included          = r.KmIncluded,
+            price_extra_km       = r.PriceExtraKm,
+            selected_options     = r.SelectedOptions,
+            base_price           = r.BasePrice,
+            options_price        = r.OptionsPrice,
             agreed_price         = r.AgreedPrice,
             deposit_amount       = r.DepositAmount,
             payment_method       = r.PaymentMethod,
@@ -125,6 +133,12 @@ public sealed class SupabaseRestRentalRepository : IRentalRepository
             customer_fiscal_code = r.CustomerFiscalCode,
             start_date           = r.StartDate.ToString("yyyy-MM-dd"),
             planned_end_date     = r.PlannedEndDate.ToString("yyyy-MM-dd"),
+            rental_formula       = r.RentalFormula,
+            km_included          = r.KmIncluded,
+            price_extra_km       = r.PriceExtraKm,
+            selected_options     = r.SelectedOptions,
+            base_price           = r.BasePrice,
+            options_price        = r.OptionsPrice,
             agreed_price         = r.AgreedPrice,
             deposit_amount       = r.DepositAmount,
             deposit_returned     = r.DepositReturned,

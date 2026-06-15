@@ -5,7 +5,8 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
     private readonly ISupabaseRestClient _db;
     public SupabaseRestVehicleRepository(ISupabaseRestClient db) => _db = db;
 
-    // Tutti i campi del modello Vehicle ESCLUSO equipment (jsonb non mappabile a string).
+    // Tutti i campi del modello Vehicle ESCLUSO equipment (jsonb array non mappabile a string).
+    // I campi JSONB del noleggio sono inclusi: restituiscono JsonElement? via System.Text.Json.
     private const string VehicleCols =
         "id,operator_id,branch_id,department_id," +
         "internal_code,external_code,vin,targa," +
@@ -15,7 +16,9 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         "registration_month,registration_year,mileage_km," +
         "doors,seats,color,emission_class," +
         "handicap_accessible,vat_deductible,damaged,imported," +
-        "for_sale,for_rental,rental_only,rental_price,rental_weekly_price,rental_weekend_price," +
+        "for_sale,for_rental,rental_only," +
+        "rental_price,rental_weekly_price,rental_weekend_price," +
+        "rental_formulas,rental_redemption,rental_deposit_override,rental_vehicle_notes," +
         "description,price,previous_price,currency,listing_date," +
         "is_sold,show_as_sold,sold_at," +
         "pronta_consegna,is_nuovo_arrivo,nuovo_arrivo_until," +
@@ -229,6 +232,12 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
             for_sale             = vehicle.ForSale,
             for_rental           = vehicle.ForRental,
             rental_price         = vehicle.RentalPrice,
+            rental_weekly_price  = vehicle.RentalWeeklyPrice,
+            rental_weekend_price = vehicle.RentalWeekendPrice,
+            rental_formulas         = vehicle.RentalFormulas,
+            rental_redemption       = vehicle.RentalRedemption,
+            rental_deposit_override = vehicle.RentalDepositOverride,
+            rental_vehicle_notes    = vehicle.RentalVehicleNotes,
             is_published         = vehicle.IsPublished,
             published_at         = vehicle.PublishedAt,
             pronta_consegna      = vehicle.ProntaConsegna,
@@ -271,6 +280,12 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
             for_sale             = vehicle.ForSale,
             for_rental           = vehicle.ForRental,
             rental_price         = vehicle.RentalPrice,
+            rental_weekly_price  = vehicle.RentalWeeklyPrice,
+            rental_weekend_price = vehicle.RentalWeekendPrice,
+            rental_formulas         = vehicle.RentalFormulas,
+            rental_redemption       = vehicle.RentalRedemption,
+            rental_deposit_override = vehicle.RentalDepositOverride,
+            rental_vehicle_notes    = vehicle.RentalVehicleNotes,
             is_published         = vehicle.IsPublished,
             pronta_consegna      = vehicle.ProntaConsegna,
             is_nuovo_arrivo      = vehicle.IsNuovoArrivo,

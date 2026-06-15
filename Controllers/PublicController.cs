@@ -168,6 +168,16 @@ public sealed class PublicController : ControllerBase
         return Ok(items.Where(d => d.IsActive));
     }
 
+    // ── Privacy Policy ────────────────────────────────────────────────────────
+
+    [HttpGet("privacy-policy")]
+    public async Task<IActionResult> GetPrivacyPolicy(string slug)
+    {
+        var op = await ResolveAsync(slug);
+        if (op is null) return NotFound();
+        return Ok(new { html = op.PrivacyPolicyHtml ?? "" });
+    }
+
     // ── Lead / Richieste ──────────────────────────────────────────────────────
 
     /// <summary>

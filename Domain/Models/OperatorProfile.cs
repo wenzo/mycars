@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace MyCars.Domain.Models;
 
 public sealed class OperatorProfile
@@ -26,11 +28,16 @@ public sealed class OperatorProfile
     public string? CoverImageUrl    { get; set; }
     public string? Tagline          { get; set; }
     public bool    IsActive         { get; set; }
-    // Modulo noleggio
+    // Modulo noleggio — flag
     public bool    RentalModuleEnabled      { get; set; }
     public bool    RentalPhotosEnabled      { get; set; }
     public bool    RentalContractPdfEnabled { get; set; }
     public bool    RentalShowPrices         { get; set; }
+    // Modulo noleggio — configurazione (JSONB)
+    public JsonElement? RentalConditions       { get; set; }  // politiche operative: età, carburante, cauzione, pagamenti
+    public JsonElement? RentalServicesCatalog  { get; set; }  // inclusi e opzionali con prezzi default
+    // Privacy Policy (HTML)
+    public string? PrivacyPolicyHtml { get; set; }
     // SMTP per-operatore (sovrascrive appsettings se impostato)
     public string? SmtpHost      { get; set; }
     public int?    SmtpPort      { get; set; }

@@ -117,6 +117,96 @@ let brandMap = {};
 let currentVehicleId   = null;
 let currentCoverUrl    = null;
 
+// ── Stato noleggio ─────────────────────────────────────────────────────────────
+
+const FORMULA_KEYS = ['daily', 'weekend', 'weekly', 'monthly', 'mid_term'];
+const FORMULA_META = {
+    daily:    { priceLabel: 'Prezzo (€/giorno)', kmLabel: 'Km inclusi/giorno' },
+    weekend:  { priceLabel: 'Prezzo (€ totale)', kmLabel: 'Km totali weekend' },
+    weekly:   { priceLabel: 'Prezzo (€/giorno)', kmLabel: 'Km inclusi totali' },
+    monthly:  { priceLabel: 'Prezzo (€/mese)',   kmLabel: 'Km inclusi/mese'   },
+    mid_term: { priceLabel: 'Prezzo (€/mese)',   kmLabel: 'Km inclusi/mese'   },
+};
+
+function emptyFormulas() {
+    return Object.fromEntries(FORMULA_KEYS.map(k => [k, { price: null, kmIncluded: null, priceExtraKm: null }]));
+}
+
+let _rentalFormulas = emptyFormulas();
+let _activeFormula  = 'daily';
+
+function syncFormulaToState() {
+    const p   = document.getElementById('vFPrice')?.value;
+    const km  = document.getElementById('vFKm')?.value;
+    const xkm = document.getElementById('vFExtraKm')?.value;
+    _rentalFormulas[_activeFormula] = {
+        price:        p   ? parseFloat(p)    : null,
+        kmIncluded:   km  ? parseInt(km, 10) : null,
+        priceExtraKm: xkm ? parseFloat(xkm) : null,
+    };
+}
+
+function applyFormulaTab(formula) {
+    _activeFormula = formula;
+    document.querySelectorAll('.formula-tab').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.formula === formula));
+    const meta = FORMULA_META[formula] || FORMULA_META.daily;
+    const pl = document.getElementById('labelFPrice');
+    const kl = document.getElementById('labelFKm');
+    if (pl) pl.textContent = meta.priceLabel;
+    if (kl) kl.textContent = meta.kmLabel;
+    const f  = _rentalFormulas[formula] || {};
+    const pe = document.getElementById('vFPrice');
+    const ke = document.getElementById('vFKm');
+    const xe = document.getElementById('vFExtraKm');
+    if (pe) pe.value = f.price        ?? '';
+    if (ke) ke.value = f.kmIncluded   ?? '';
+    if (xe) xe.value = f.priceExtraKm ?? '';
+}
+
+function switchFormulaTab(formula) {
+    syncFormulaToState();
+    applyFormulaTab(formula);
+}
+
+function loadRentalData(v) {
+    _rentalFormulas = emptyFormulas();
+    const src = v.rentalFormulas ?? {};
+    FORMULA_KEYS.forEach(key => {
+        if (src[key]) _rentalFormulas[key] = {
+            price:        src[key].price        ?? null,
+            kmIncluded:   src[key].kmIncluded   ?? null,
+            priceExtraKm: src[key].priceExtraKm ?? null,
+        };
+    });
+    applyFormulaTab('daily');
+
+    const r   = v.rentalRedemption ?? {};
+    const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+    chk('vRedemptionEnabled', r.enabled);
+    set('vRedemptionPrice',   r.salePrice);
+    set('vRedemptionPct',     r.canoiDiscountPct);
+    set('vRedemptionNotes',   r.notes);
+    const rdFields = document.getElementById('redemptionFields');
+    if (rdFields) rdFields.style.display = r.enabled ? 'flex' : 'none';
+
+    set('vRentalDeposit',      v.rentalDepositOverride);
+    set('vRentalVehicleNotes', v.rentalVehicleNotes);
+}
+
+function resetRentalData() {
+    _rentalFormulas = emptyFormulas();
+    applyFormulaTab('daily');
+    ['vRentalDeposit','vRentalVehicleNotes','vRedemptionPrice','vRedemptionPct','vRedemptionNotes'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    const chk = document.getElementById('vRedemptionEnabled');
+    if (chk) chk.checked = false;
+    const rdFields = document.getElementById('redemptionFields');
+    if (rdFields) rdFields.style.display = 'none';
+}
+
 // ── Drawer open / close ───────────────────────────────────────────────────────
 
 async function openDrawer(vehicleId = null) {
@@ -129,6 +219,8 @@ async function openDrawer(vehicleId = null) {
     // default: pubblicato checked
     const pubChk = document.getElementById('vPublished');
     if (pubChk && !vehicleId) pubChk.checked = true;
+    resetRentalData();
+    { const rs = document.getElementById('rentalSection'); if (rs) rs.style.display = 'none'; }
 
     if (title)  title.textContent    = vehicleId ? 'Modifica veicolo' : 'Aggiungi veicolo';
     if (delBtn) delBtn.style.display = vehicleId ? '' : 'none';
@@ -169,8 +261,8 @@ async function openDrawer(vehicleId = null) {
             chk('vHandicapAccessible', v.handicapAccessible);
             chk('vForSale',            v.forSale ?? true);
             chk('vForRental',          v.forRental);
-            set('vRentalPrice', v.rentalPrice);
-            document.getElementById('rentalPriceGroup').style.display = v.forRental ? '' : 'none';
+            loadRentalData(v);
+            { const rs = document.getElementById('rentalSection'); if (rs) rs.style.display = v.forRental ? 'flex' : 'none'; }
             setCover(v.coverImageUrl ?? null);
         } catch (err) {
             showToast(err.message || 'Errore caricamento veicolo.', 'error');
@@ -307,6 +399,27 @@ async function saveVehicle(e) {
 
     const branchId = document.getElementById('vBranch')?.value || null;
 
+    // Noleggio: costruisci formule e riscatto
+    const forRental = isChk('vForRental');
+    let rentalFormulas   = null;
+    let rentalRedemption = null;
+    if (forRental) {
+        syncFormulaToState();
+        const fResult = {};
+        Object.entries(_rentalFormulas).forEach(([key, f]) => {
+            if (f.price != null) fResult[key] = f;
+        });
+        if (Object.keys(fResult).length) rentalFormulas = fResult;
+        if (isChk('vRedemptionEnabled')) {
+            rentalRedemption = {
+                enabled:          true,
+                salePrice:        getNum('vRedemptionPrice'),
+                canoiDiscountPct: getNum('vRedemptionPct'),
+                notes:            getVal('vRedemptionNotes'),
+            };
+        }
+    }
+
     const payload = {
         vehicleType:     document.getElementById('vType')?.value      || 'autovettura',
         brandName:       getVal('vBrand')       ?? '',
@@ -328,9 +441,13 @@ async function saveVehicle(e) {
         vatDeductible:      isChk('vVatDeductible'),
         imported:           isChk('vImported'),
         handicapAccessible: isChk('vHandicapAccessible'),
-        forSale:            isChk('vForSale'),
-        forRental:          isChk('vForRental'),
-        rentalPrice:        isChk('vForRental') ? getNum('vRentalPrice') : null,
+        forSale:              isChk('vForSale'),
+        forRental,
+        rentalPrice:          null,
+        rentalFormulas,
+        rentalRedemption,
+        rentalDepositOverride: forRental ? getNum('vRentalDeposit') : null,
+        rentalVehicleNotes:    forRental ? getVal('vRentalVehicleNotes') : null,
         isPublished:        isChk('vPublished'),
         prontaConsegna:     isChk('vProntaConsegna'),
         isNuovoArrivo:      isChk('vNuovoArrivo'),
@@ -519,9 +636,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (files.length) { uploadGalleryImages(files); e.target.value = ''; }
     });
 
-    // Show/hide rental price field based on "In noleggio" checkbox
+    // Sezione noleggio — mostra/nascondi al toggle "In noleggio"
     document.getElementById('vForRental')?.addEventListener('change', e => {
-        document.getElementById('rentalPriceGroup').style.display = e.target.checked ? '' : 'none';
+        const section = document.getElementById('rentalSection');
+        if (section) section.style.display = e.target.checked ? 'flex' : 'none';
+        if (!e.target.checked) resetRentalData();
+    });
+
+    // Tab formule noleggio
+    document.querySelectorAll('.formula-tab').forEach(btn =>
+        btn.addEventListener('click', () => switchFormulaTab(btn.dataset.formula)));
+
+    // Toggle riscatto
+    document.getElementById('vRedemptionEnabled')?.addEventListener('change', e => {
+        const fields = document.getElementById('redemptionFields');
+        if (fields) fields.style.display = e.target.checked ? 'flex' : 'none';
     });
 
     // Push modal

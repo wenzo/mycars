@@ -1,7 +1,19 @@
 'use strict';
 
-let _appCodes      = [];
-let _primaryCodeId = null;
+let _appCodes           = [];
+let _primaryCodeId      = null;
+let _optionalServices   = [];
+
+const DEFAULT_OPTIONAL_SERVICES = [
+    { key: 'damage_waiver', label: 'Riduzione Franchigia Danni/Furto', pricePerDay: 15.00, priceFlat: null },
+    { key: 'second_driver', label: 'Secondo Conducente',               pricePerDay:  5.00, priceFlat: null },
+    { key: 'child_seat',    label: 'Seggiolino bimbo',                 pricePerDay: null,  priceFlat: 10.00 },
+    { key: 'snow_chains',   label: 'Catene da neve',                   pricePerDay: null,  priceFlat: 15.00 },
+    { key: 'gps',           label: 'Navigatore GPS',                   pricePerDay:  5.00, priceFlat: null  },
+    { key: 'out_of_hours',  label: 'Consegna Fuori Orario/Sede',       pricePerDay: null,  priceFlat: 20.00 },
+    { key: 'straps_kit',    label: 'Kit Cinghie Fissaggio (Furgoni)',  pricePerDay: null,  priceFlat: 10.00 },
+    { key: 'hand_truck',    label: 'Carrello a mano (Furgoni)',        pricePerDay: null,  priceFlat: 10.00 },
+];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -60,7 +72,10 @@ async function loadProfile() {
 
         renderAppCodes(_appCodes);
         loadRentalSettings(p);
+        loadRentalConditions(p);
+        loadRentalServicesCatalog(p);
         loadSmtpSettings(p);
+        loadPrivacyPolicy(p);
 
         document.getElementById('loadingMsg').style.display    = 'none';
         document.getElementById('profileContent').style.display = 'flex';
@@ -483,6 +498,164 @@ async function saveRentalSettings() {
     }
 }
 
+// ── Rental conditions ─────────────────────────────────────────────────────────
+
+function loadRentalConditions(profile) {
+    const c = profile.rentalConditions || {};
+    const setChk = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+    setVal('rcMinAge',          c.minDriverAge     ?? 21);
+    setVal('rcMinLicense',      c.minLicenseYears  ?? 2);
+    setVal('rcFuelPolicy',      c.fuelPolicy       ?? 'full_to_full');
+    setVal('rcDepositDefault',  c.depositDefault   != null ? c.depositDefault : '');
+    setChk('rcCreditCardRequired', c.creditCardRequired ?? false);
+    setVal('rcCleaningNote',    c.cleaningPenaltyNote ?? '');
+
+    const methods = c.acceptedPaymentMethods ?? ['credit_card', 'debit_card', 'cash'];
+    setChk('rcPayCredit',   methods.includes('credit_card'));
+    setChk('rcPayDebit',    methods.includes('debit_card'));
+    setChk('rcPayCash',     methods.includes('cash'));
+    setChk('rcPayTransfer', methods.includes('transfer'));
+}
+
+async function saveRentalConditions() {
+    const btn = document.getElementById('saveRentalConditionsBtn');
+    if (btn) btn.disabled = true;
+
+    const methods = [];
+    if (document.getElementById('rcPayCredit')?.checked)   methods.push('credit_card');
+    if (document.getElementById('rcPayDebit')?.checked)    methods.push('debit_card');
+    if (document.getElementById('rcPayCash')?.checked)     methods.push('cash');
+    if (document.getElementById('rcPayTransfer')?.checked) methods.push('transfer');
+
+    const payload = {
+        minDriverAge:          getNum('rcMinAge'),
+        minLicenseYears:       getNum('rcMinLicense'),
+        fuelPolicy:            getVal('rcFuelPolicy'),
+        depositDefault:        getNum('rcDepositDefault'),
+        creditCardRequired:    document.getElementById('rcCreditCardRequired')?.checked ?? false,
+        acceptedPaymentMethods: methods,
+        cleaningPenaltyNote:   getVal('rcCleaningNote'),
+    };
+    try {
+        await apiFetch('/api/admin/profile/rental-conditions', {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+        showToast('Condizioni di noleggio salvate.');
+    } catch (err) {
+        showToast(err.message || 'Errore salvataggio condizioni.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+// ── Rental services catalog ────────────────────────────────────────────────────
+
+function loadRentalServicesCatalog(profile) {
+    const cat      = profile.rentalServicesCatalog || {};
+    const included = cat.included ?? ['rca', 'roadside_24h', 'maintenance'];
+    const setChk   = (id, v) => { const el = document.getElementById(id); if (el) el.checked = !!v; };
+
+    setChk('scIncRca',         included.includes('rca'));
+    setChk('scIncRoadside',    included.includes('roadside_24h'));
+    setChk('scIncMaintenance', included.includes('maintenance'));
+
+    _optionalServices = (cat.optional ?? DEFAULT_OPTIONAL_SERVICES).map(s => ({ ...s }));
+    renderOptionalServices();
+}
+
+function renderOptionalServices() {
+    const list = document.getElementById('optionalServicesList');
+    if (!list) return;
+
+    list.innerHTML = _optionalServices.map((_, idx) => `
+        <div class="svc-row" data-idx="${idx}">
+            <input type="text"   class="form-input svc-label" placeholder="Nome servizio">
+            <input type="number" class="form-input svc-day"   placeholder="—" min="0" step="0.5" style="text-align:right">
+            <input type="number" class="form-input svc-flat"  placeholder="—" min="0" step="0.5" style="text-align:right">
+            <button type="button" class="btn btn-outline btn-sm svc-remove"
+                    style="color:var(--red);border-color:transparent;min-width:0;padding:5px 8px"
+                    data-idx="${idx}" title="Rimuovi">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            </button>
+        </div>`).join('');
+
+    // Imposta valori in modo sicuro (no XSS in attributi value)
+    list.querySelectorAll('.svc-row').forEach((row, idx) => {
+        const svc = _optionalServices[idx];
+        if (!svc) return;
+        const lbl  = row.querySelector('.svc-label');
+        const day  = row.querySelector('.svc-day');
+        const flat = row.querySelector('.svc-flat');
+        if (lbl)  lbl.value  = svc.label        || '';
+        if (day)  day.value  = svc.pricePerDay  ?? '';
+        if (flat) flat.value = svc.priceFlat    ?? '';
+    });
+
+    list.querySelectorAll('.svc-remove').forEach(btn => {
+        btn.addEventListener('click', () => removeOptionalService(parseInt(btn.dataset.idx)));
+    });
+}
+
+function syncServicesFromDom() {
+    document.querySelectorAll('#optionalServicesList .svc-row').forEach((row, idx) => {
+        if (!_optionalServices[idx]) return;
+        const dayVal  = row.querySelector('.svc-day')?.value;
+        const flatVal = row.querySelector('.svc-flat')?.value;
+        _optionalServices[idx].label       = row.querySelector('.svc-label')?.value?.trim() || '';
+        _optionalServices[idx].pricePerDay = dayVal  ? parseFloat(dayVal)  : null;
+        _optionalServices[idx].priceFlat   = flatVal ? parseFloat(flatVal) : null;
+    });
+}
+
+function addOptionalService() {
+    syncServicesFromDom();
+    _optionalServices.push({ key: `custom_${Date.now()}`, label: '', pricePerDay: null, priceFlat: null });
+    renderOptionalServices();
+    const rows = document.querySelectorAll('#optionalServicesList .svc-row');
+    rows[rows.length - 1]?.querySelector('.svc-label')?.focus();
+}
+
+function removeOptionalService(idx) {
+    syncServicesFromDom();
+    _optionalServices.splice(idx, 1);
+    renderOptionalServices();
+}
+
+async function saveRentalServicesCatalog() {
+    syncServicesFromDom();
+    const btn = document.getElementById('saveServicesCatalogBtn');
+    if (btn) btn.disabled = true;
+
+    const included = [];
+    if (document.getElementById('scIncRca')?.checked)         included.push('rca');
+    if (document.getElementById('scIncRoadside')?.checked)    included.push('roadside_24h');
+    if (document.getElementById('scIncMaintenance')?.checked) included.push('maintenance');
+
+    const optional = _optionalServices
+        .filter(s => s.label.trim() !== '')
+        .map(s => ({
+            key:         s.key,
+            label:       s.label,
+            pricePerDay: s.pricePerDay,
+            priceFlat:   s.priceFlat,
+        }));
+
+    try {
+        await apiFetch('/api/admin/profile/rental-services-catalog', {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ included, optional }),
+        });
+        showToast('Catalogo servizi salvato.');
+    } catch (err) {
+        showToast(err.message || 'Errore salvataggio catalogo servizi.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
 // ── SMTP settings ─────────────────────────────────────────────────────────────
 
 function loadSmtpSettings(profile) {
@@ -521,6 +694,56 @@ async function saveSmtpSettings() {
         if (pwd) { pwd.value = ''; pwd.placeholder = '••••••••'; }
     } catch (err) {
         showToast(err.message || 'Errore salvataggio SMTP.', 'error');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+// ── Privacy Policy editor ─────────────────────────────────────────────────────
+
+let ppDirty = false;
+
+function loadPrivacyPolicy(profile) {
+    const ed = document.getElementById('ppEditor');
+    if (ed) ed.innerHTML = profile.privacyPolicyHtml || '';
+    ppDirty = false;
+}
+
+function ppCmd(cmd) {
+    document.getElementById('ppEditor')?.focus();
+    document.execCommand(cmd, false, null);
+}
+
+function ppHeading(tag) {
+    document.getElementById('ppEditor')?.focus();
+    document.execCommand('formatBlock', false, tag);
+}
+
+function ppLink() {
+    const url = prompt('URL del link:');
+    if (!url) return;
+    document.getElementById('ppEditor')?.focus();
+    document.execCommand('createLink', false, url);
+}
+
+async function savePrivacyPolicy() {
+    const btn    = document.getElementById('savePrivacyBtn');
+    const status = document.getElementById('ppStatus');
+    const html   = document.getElementById('ppEditor')?.innerHTML ?? '';
+
+    if (btn) btn.disabled = true;
+    if (status) status.textContent = '';
+    try {
+        await apiFetch('/api/admin/profile/privacy-policy', {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ html }),
+        });
+        ppDirty = false;
+        showToast('Privacy Policy salvata.');
+        if (status) status.textContent = 'Salvato.';
+    } catch (err) {
+        showToast(err.message || 'Errore salvataggio Privacy Policy.', 'error');
     } finally {
         if (btn) btn.disabled = false;
     }
@@ -587,6 +810,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('saveBrandingBtn')       ?.addEventListener('click', saveBranding);
     document.getElementById('geocodeBtn')            ?.addEventListener('click', geocode);
     document.getElementById('refreshHealthBtn')      ?.addEventListener('click', () => { window._healthLoaded = false; loadSystemInfo(); });
-    document.getElementById('saveRentalSettingsBtn') ?.addEventListener('click', saveRentalSettings);
-    document.getElementById('saveSmtpBtn')           ?.addEventListener('click', saveSmtpSettings);
+    document.getElementById('saveRentalSettingsBtn')    ?.addEventListener('click', saveRentalSettings);
+    document.getElementById('saveRentalConditionsBtn')  ?.addEventListener('click', saveRentalConditions);
+    document.getElementById('saveServicesCatalogBtn')   ?.addEventListener('click', saveRentalServicesCatalog);
+    document.getElementById('addServiceBtn')            ?.addEventListener('click', addOptionalService);
+    document.getElementById('saveSmtpBtn')              ?.addEventListener('click', saveSmtpSettings);
 });

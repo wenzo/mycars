@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MyCars.Infrastructure.Push;
 using MyCars.Repositories.Postgres;
 using MyCars.Repositories.Rest;
@@ -211,6 +212,64 @@ public sealed class AdminController : ControllerBase
 
         var updated = await _operators.UpdateAsync(profile);
         return updated is null ? StatusCode(500) : Ok(updated);
+    }
+
+    [HttpPut("profile/rental-conditions")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateRentalConditions([FromBody] UpdateRentalConditionsRequest req)
+    {
+        var profile = await _operators.GetByIdAsync(GetOperatorId());
+        if (profile is null) return NotFound();
+
+        profile.RentalConditions = JsonSerializer.SerializeToElement(new
+        {
+            minDriverAge           = req.MinDriverAge,
+            minLicenseYears        = req.MinLicenseYears,
+            fuelPolicy             = req.FuelPolicy,
+            depositDefault         = req.DepositDefault,
+            creditCardRequired     = req.CreditCardRequired,
+            acceptedPaymentMethods = req.AcceptedPaymentMethods,
+            cleaningPenaltyNote    = req.CleaningPenaltyNote,
+        });
+
+        var updated = await _operators.UpdateAsync(profile);
+        return updated is null ? StatusCode(500) : Ok(new { message = "Salvato." });
+    }
+
+    [HttpPut("profile/rental-services-catalog")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateRentalServicesCatalog([FromBody] UpdateRentalServicesCatalogRequest req)
+    {
+        var profile = await _operators.GetByIdAsync(GetOperatorId());
+        if (profile is null) return NotFound();
+
+        profile.RentalServicesCatalog = JsonSerializer.SerializeToElement(new
+        {
+            included = req.Included,
+            optional = req.Optional.Select(s => new
+            {
+                key         = s.Key,
+                label       = s.Label,
+                pricePerDay = s.PricePerDay,
+                priceFlat   = s.PriceFlat,
+            }).ToArray(),
+        });
+
+        var updated = await _operators.UpdateAsync(profile);
+        return updated is null ? StatusCode(500) : Ok(new { message = "Salvato." });
+    }
+
+    [HttpPut("profile/privacy-policy")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdatePrivacyPolicy([FromBody] UpdatePrivacyPolicyRequest req)
+    {
+        var profile = await _operators.GetByIdAsync(GetOperatorId());
+        if (profile is null) return NotFound();
+
+        profile.PrivacyPolicyHtml = string.IsNullOrWhiteSpace(req.Html) ? null : req.Html;
+
+        var updated = await _operators.UpdateAsync(profile);
+        return updated is null ? StatusCode(500) : Ok(new { message = "Salvato." });
     }
 
     [HttpPost("profile/logo")]
@@ -510,9 +569,13 @@ public sealed class AdminController : ControllerBase
         existing.VatDeductible      = req.VatDeductible;
         existing.HandicapAccessible = req.HandicapAccessible;
         existing.Imported           = req.Imported;
-        existing.ForSale            = req.ForSale;
-        existing.ForRental          = req.ForRental;
-        existing.RentalPrice        = req.RentalPrice;
+        existing.ForSale              = req.ForSale;
+        existing.ForRental            = req.ForRental;
+        existing.RentalPrice          = req.RentalPrice;
+        existing.RentalFormulas       = req.RentalFormulas;
+        existing.RentalRedemption     = req.RentalRedemption;
+        existing.RentalDepositOverride = req.RentalDepositOverride;
+        existing.RentalVehicleNotes   = req.RentalVehicleNotes;
         existing.IsPublished        = req.IsPublished;
         existing.ProntaConsegna     = req.ProntaConsegna;
         existing.IsNuovoArrivo      = req.IsNuovoArrivo;
@@ -651,9 +714,13 @@ public sealed class AdminController : ControllerBase
         VatDeductible      = req.VatDeductible,
         HandicapAccessible = req.HandicapAccessible,
         Imported           = req.Imported,
-        ForSale            = req.ForSale,
-        ForRental          = req.ForRental,
-        RentalPrice        = req.RentalPrice,
+        ForSale               = req.ForSale,
+        ForRental             = req.ForRental,
+        RentalPrice           = req.RentalPrice,
+        RentalFormulas        = req.RentalFormulas,
+        RentalRedemption      = req.RentalRedemption,
+        RentalDepositOverride = req.RentalDepositOverride,
+        RentalVehicleNotes    = req.RentalVehicleNotes,
         IsPublished        = req.IsPublished,
         PublishedAt        = req.IsPublished ? DateTimeOffset.UtcNow : null,
         ProntaConsegna     = req.ProntaConsegna,
@@ -1226,6 +1293,36 @@ public sealed class UpdateRentalSettingsRequest
     public bool RentalShowPrices         { get; set; }
 }
 
+public sealed class UpdateRentalConditionsRequest
+{
+    public int?     MinDriverAge           { get; set; }
+    public int?     MinLicenseYears        { get; set; }
+    public string?  FuelPolicy             { get; set; }
+    public decimal? DepositDefault         { get; set; }
+    public bool     CreditCardRequired     { get; set; }
+    public string[] AcceptedPaymentMethods { get; set; } = [];
+    public string?  CleaningPenaltyNote    { get; set; }
+}
+
+public sealed class RentalOptionalServiceItem
+{
+    public string   Key         { get; set; } = "";
+    public string   Label       { get; set; } = "";
+    public decimal? PricePerDay { get; set; }
+    public decimal? PriceFlat   { get; set; }
+}
+
+public sealed class UpdateRentalServicesCatalogRequest
+{
+    public string[]                    Included { get; set; } = [];
+    public RentalOptionalServiceItem[] Optional { get; set; } = [];
+}
+
+public sealed class UpdatePrivacyPolicyRequest
+{
+    public string? Html { get; set; }
+}
+
 public sealed class UpdateSmtpSettingsRequest
 {
     public string? Host      { get; set; }
@@ -1297,8 +1394,12 @@ public sealed class VehicleUpsertRequest
     public bool     HandicapAccessible { get; set; }
     public bool     Imported           { get; set; }
     public bool     ForSale            { get; set; } = true;
-    public bool     ForRental          { get; set; }
-    public decimal? RentalPrice        { get; set; }
+    public bool         ForRental             { get; set; }
+    public decimal?     RentalPrice           { get; set; }
+    public JsonElement? RentalFormulas        { get; set; }
+    public JsonElement? RentalRedemption      { get; set; }
+    public decimal?     RentalDepositOverride { get; set; }
+    public string?      RentalVehicleNotes    { get; set; }
     public bool     IsPublished        { get; set; } = true;
     public bool     ProntaConsegna     { get; set; }
     public bool     IsNuovoArrivo      { get; set; }

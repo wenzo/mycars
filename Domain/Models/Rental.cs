@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace MyCars.Domain.Models;
 
 public sealed class Rental
@@ -23,12 +25,20 @@ public sealed class Rental
     public string? FuelDeparture    { get; set; }  // full | three_quarters | half | quarter | empty
     public string? FuelReturn       { get; set; }
 
+    // Formula applicata
+    public string?  RentalFormula    { get; set; }  // daily | weekend | weekly | monthly | mid_term
+    public int?     KmIncluded       { get; set; }
+    public decimal? PriceExtraKm     { get; set; }
+    public JsonElement? SelectedOptions { get; set; }  // [{key,label,price_per_day,price_flat,qty}]
+
     // Economico (semi-strutturato, tutto opzionale)
-    public decimal? AgreedPrice     { get; set; }
-    public decimal? DepositAmount   { get; set; }
-    public bool    DepositReturned  { get; set; }
-    public string? PaymentMethod    { get; set; }  // cash | pos | transfer
-    public bool    IsPaid           { get; set; }
+    public decimal? BasePrice        { get; set; }   // prezzo formula × giorni (calcolato, per storico)
+    public decimal? OptionsPrice     { get; set; }   // totale opzioni (calcolato, per storico)
+    public decimal? AgreedPrice      { get; set; }   // prezzo definitivo concordato (può sovrascrivere)
+    public decimal? DepositAmount    { get; set; }
+    public bool    DepositReturned   { get; set; }
+    public string? PaymentMethod     { get; set; }   // cash | pos | transfer
+    public bool    IsPaid            { get; set; }
 
     // Stato workflow
     public string  Status           { get; set; } = "booked";  // booked | active | closed | cancelled

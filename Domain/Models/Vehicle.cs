@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace MyCars.Domain.Models;
 
 public sealed class Vehicle
@@ -37,9 +39,15 @@ public sealed class Vehicle
     public bool    ForSale          { get; set; } = true;
     public bool    ForRental        { get; set; }
     public bool    RentalOnly       { get; set; }
-    public decimal? RentalPrice     { get; set; }
+    // Tariffe legacy (mantenute per retrocompatibilità)
+    public decimal? RentalPrice        { get; set; }
     public decimal? RentalWeeklyPrice  { get; set; }
     public decimal? RentalWeekendPrice { get; set; }
+    // Noleggio esteso (JSONB)
+    public JsonElement? RentalFormulas        { get; set; }  // { daily, weekend, weekly, monthly, mid_term }
+    public JsonElement? RentalRedemption      { get; set; }  // { enabled, sale_price, canoni_discount_pct, notes }
+    public decimal?     RentalDepositOverride { get; set; }  // NULL = usa deposit_default dell'operatore
+    public string?      RentalVehicleNotes    { get; set; }  // note stato d'uso visibili al cliente
     public string? Description      { get; set; }
     public string  Equipment        { get; set; } = "[]";
     public decimal? Price           { get; set; }
