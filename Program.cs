@@ -157,6 +157,7 @@ else
 // ── Firebase Admin (FCM per Android) ─────────────────────────────────────────
 var fbCredPath = builder.Configuration["Firebase:CredentialsPath"];
 var fbCredJson = builder.Configuration["Firebase:CredentialJson"];
+var fbSection  = builder.Configuration.GetSection("Firebase");
 
 if (!string.IsNullOrWhiteSpace(fbCredPath) && File.Exists(fbCredPath))
 {
@@ -168,9 +169,19 @@ else if (!string.IsNullOrWhiteSpace(fbCredJson))
     FirebaseApp.Create(new AppOptions { Credential = GoogleCredential.FromJson(fbCredJson) });
     Console.WriteLine("[Firebase] Admin SDK inizializzato da CredentialJson.");
 }
+else if (fbSection.Exists() && !string.IsNullOrWhiteSpace(fbSection["project_id"]))
+{
+    // Credenziali inserite come proprietà annidate in appsettings (es. Firebase:project_id)
+    var dict = fbSection.GetChildren()
+                        .Where(c => c.Value is not null)
+                        .ToDictionary(c => c.Key, c => c.Value!);
+    var json = JsonSerializer.Serialize(dict);
+    FirebaseApp.Create(new AppOptions { Credential = GoogleCredential.FromJson(json) });
+    Console.WriteLine("[Firebase] Admin SDK inizializzato da sezione appsettings Firebase.");
+}
 else
 {
-    Console.WriteLine("[Firebase] ATTENZIONE: Firebase:CredentialsPath e Firebase:CredentialJson non configurati — FCM disabilitato.");
+    Console.WriteLine("[Firebase] ATTENZIONE: Firebase non configurato — FCM Android disabilitato.");
 }
 
 // ── VAPID / Web Push ──────────────────────────────────────────────────────────
