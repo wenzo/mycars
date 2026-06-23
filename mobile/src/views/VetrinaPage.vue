@@ -160,7 +160,7 @@ onMounted(() => {
   font-family: var(--mc-font-heading);
   font-size: 10.5px; font-weight: 600;
 }
-.tipo-btn.active   { background: rgba(255,255,255,.92); color: var(--dealer-primary); }
+.tipo-btn.active   { background: rgba(255,255,255,.92); color: var(--dealer-primary); font-weight: 700; }
 .tipo-btn.inactive { background: rgba(255,255,255,.12); color: rgba(255,255,255,.65); }
 
 .search-row { display: flex; gap: 8px; align-items: center; }

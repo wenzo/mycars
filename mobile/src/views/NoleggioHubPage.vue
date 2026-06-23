@@ -725,7 +725,7 @@ onMounted(async () => {
   border-radius: var(--mc-r-sm);
   font-family: var(--mc-font-heading); font-size: 10px; font-weight: 600;
 }
-.tipo-btn.active   { background: rgba(255,255,255,.9); color: var(--dealer-secondary); }
+.tipo-btn.active   { background: rgba(255,255,255,.92); color: var(--dealer-secondary); font-weight: 700; }
 .tipo-btn.inactive { background: rgba(255,255,255,.12); color: rgba(255,255,255,.7); }
 .search-row { margin-bottom: 10px; }
 .search-box {

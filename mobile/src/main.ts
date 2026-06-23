@@ -28,4 +28,6 @@ router.isReady().then(() => {
   const opStore = useOperatorStore()
   opStore.load()
   app.mount('#app')
+  // Aggiorna il profilo dal backend in background per avere sempre i settings più recenti
+  opStore.refreshProfile()
 })

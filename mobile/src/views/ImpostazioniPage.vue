@@ -190,11 +190,9 @@ function confirmDisconnect() {
   }
 }
 
-// Controlla stato notifiche: su native usa Notification.permission,
-// su web verifica la subscription attiva nel service worker.
 async function checkPushStatus() {
   if (isNative) {
-    pushEnabled.value = ('Notification' in window) && Notification.permission === 'granted'
+    pushEnabled.value = localStorage.getItem('pushOptIn') === 'true'
     return
   }
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
@@ -217,9 +215,9 @@ function togglePush() {
 async function disablePush() {
   pushError.value = ''
 
-  // Su native non è possibile revocare il permesso via codice: guidare l'utente
   if (isNative) {
-    pushError.value = 'Per disabilitare le notifiche vai in Impostazioni → App → MyCars → Notifiche.'
+    localStorage.setItem('pushOptIn', 'false')
+    pushEnabled.value = false
     return
   }
 
@@ -246,18 +244,15 @@ async function disablePush() {
 async function requestPush() {
   pushError.value = ''
 
-  if (!('Notification' in window)) {
-    pushError.value = 'Le notifiche non sono supportate su questo dispositivo.'
+  if (isNative) {
+    localStorage.setItem('pushOptIn', 'true')
+    pushEnabled.value = true
+    pushError.value = 'Verifica che le notifiche siano attive in Impostazioni → App → EasyCars → Notifiche.'
     return
   }
 
-  // Su native basta richiedere il permesso via API standard del browser/WebView
-  if (isNative) {
-    const permission = await Notification.requestPermission()
-    pushEnabled.value = permission === 'granted'
-    if (permission !== 'granted') {
-      pushError.value = 'Permesso negato. Abilita le notifiche nelle impostazioni del dispositivo.'
-    }
+  if (!('Notification' in window)) {
+    pushError.value = 'Le notifiche non sono supportate su questo dispositivo.'
     return
   }
 

@@ -164,11 +164,11 @@ const bgStyle = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 18px 10px 16px;
+  gap: 10px;
+  padding: 24px 12px 22px;
   border: none;
   background: var(--mc-surface, #f5f6f8);
-  border-radius: 16px;
+  border-radius: 18px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.14s ease, box-shadow 0.14s ease;
@@ -178,16 +178,16 @@ const bgStyle = computed(() => {
 }
 
 .htile-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0,0,0,.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,.22);
 }
 .htile-icon ion-icon {
-  font-size: 30px;
+  font-size: 36px;
   color: #fff;
 }
 
