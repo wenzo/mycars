@@ -38,13 +38,18 @@ router.isReady().then(() => {
     })
   }
 
-  // Native Android: aggiorna il token FCM ad ogni avvio se l'utente aveva dato il consenso
-  if (Capacitor.isNativePlatform() && localStorage.getItem('pushOptIn') === 'true') {
-    import('@capacitor/push-notifications').then(async ({ PushNotifications }) => {
-      // Listener permanente per notifiche ricevute mentre l'app è in foreground
+  // Listener foreground sempre attivo su native, indipendentemente da pushOptIn
+  if (Capacitor.isNativePlatform()) {
+    import('@capacitor/push-notifications').then(({ PushNotifications }) => {
       PushNotifications.addListener('pushNotificationReceived', notification => {
         console.warn('[FCM] Notifica in foreground:', notification.title, notification.body)
       })
+    }).catch(() => {})
+  }
+
+  // Native Android: aggiorna il token FCM ad ogni avvio se l'utente aveva dato il consenso
+  if (Capacitor.isNativePlatform() && localStorage.getItem('pushOptIn') === 'true') {
+    import('@capacitor/push-notifications').then(async ({ PushNotifications }) => {
 
       await PushNotifications.createChannel({
         id:          'default',
