@@ -104,10 +104,8 @@ public sealed class VapidWebPushService : IWebPushService
     {
         var messaging = FirebaseMessaging.DefaultInstance;
         if (messaging is null)
-        {
-            _log.LogWarning("Firebase Admin non inizializzato — impossibile inviare FCM ad Android.");
-            return;
-        }
+            throw new InvalidOperationException(
+                "Firebase Admin non inizializzato. Configura Firebase:CredentialsPath o Firebase:CredentialJson.");
 
         var msg = new Message
         {
