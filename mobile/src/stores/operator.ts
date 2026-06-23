@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { Capacitor } from '@capacitor/core'
 
 export interface OperatorProfile {
   operatorId: string
@@ -38,9 +39,13 @@ export const useOperatorStore = defineStore('operator', () => {
 
   const isConnected = computed(() => profile.value !== null)
   const slug = computed(() => profile.value?.slug ?? '')
-  const apiBase = computed(() =>
-    import.meta.env.VITE_API_BASE_URL ?? ''
-  )
+  const apiBase = computed(() => {
+    const env = import.meta.env.VITE_API_BASE_URL as string | undefined
+    if (env) return env
+    // Su Capacitor nativo gli URL relativi puntano a capacitor://localhost, non al server.
+    // In quel caso usiamo sempre l'URL di produzione come fallback.
+    return Capacitor.isNativePlatform() ? 'https://www.mywebexp.com' : ''
+  })
 
   function resolveUrl(url: string | null | undefined): string {
     if (!url) return ''

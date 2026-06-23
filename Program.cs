@@ -159,9 +159,19 @@ var fbCredPath = builder.Configuration["Firebase:CredentialsPath"];
 var fbCredJson = builder.Configuration["Firebase:CredentialJson"];
 
 if (!string.IsNullOrWhiteSpace(fbCredPath) && File.Exists(fbCredPath))
+{
     FirebaseApp.Create(new AppOptions { Credential = GoogleCredential.FromFile(fbCredPath) });
+    Console.WriteLine("[Firebase] Admin SDK inizializzato da file: " + fbCredPath);
+}
 else if (!string.IsNullOrWhiteSpace(fbCredJson))
+{
     FirebaseApp.Create(new AppOptions { Credential = GoogleCredential.FromJson(fbCredJson) });
+    Console.WriteLine("[Firebase] Admin SDK inizializzato da CredentialJson.");
+}
+else
+{
+    Console.WriteLine("[Firebase] ATTENZIONE: Firebase:CredentialsPath e Firebase:CredentialJson non configurati — FCM disabilitato.");
+}
 
 // ── VAPID / Web Push ──────────────────────────────────────────────────────────
 var vapidCfg = builder.Configuration.GetSection("Vapid").Get<VapidOptions>() ?? new();

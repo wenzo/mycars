@@ -124,14 +124,22 @@ public sealed class VapidWebPushService : IWebPushService
             },
         };
 
+        _log.LogInformation(
+            "FCM → invio a token ...{Token}, titolo='{Title}'",
+            sub.Endpoint[^Math.Min(20, sub.Endpoint.Length)..], title);
+
         try
         {
-            await messaging.SendAsync(msg);
+            var msgId = await messaging.SendAsync(msg);
+            _log.LogInformation("FCM → consegnato, messageId={MsgId}", msgId);
         }
         catch (FirebaseMessagingException ex)
             when (ex.MessagingErrorCode is MessagingErrorCode.Unregistered
                                         or MessagingErrorCode.InvalidArgument)
         {
+            _log.LogWarning(
+                "FCM → token non valido ({Code}): {Msg} — rimosso dal DB",
+                ex.MessagingErrorCode, ex.Message);
             await TryDeleteSubscriptionAsync(sub.Endpoint);
         }
     }

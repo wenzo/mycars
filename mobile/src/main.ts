@@ -49,8 +49,7 @@ router.isReady().then(() => {
       const regHandle = await PushNotifications.addListener('registration', async token => {
         await regHandle.remove()
         localStorage.setItem('fcmToken', token.value)
-        const base = import.meta.env.VITE_API_BASE_URL ?? ''
-        await fetch(`${base}/api/push/subscribe`, {
+        await fetch(`${opStore.apiBase}/api/push/subscribe`, {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
