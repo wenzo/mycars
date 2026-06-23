@@ -192,7 +192,9 @@ function confirmDisconnect() {
 
 async function checkPushStatus() {
   if (isNative) {
-    pushEnabled.value = localStorage.getItem('pushOptIn') === 'true'
+    const { PushNotifications } = await import('@capacitor/push-notifications')
+    const status = await PushNotifications.checkPermissions()
+    pushEnabled.value = status.receive === 'granted' && localStorage.getItem('pushOptIn') === 'true'
     return
   }
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
@@ -216,6 +218,15 @@ async function disablePush() {
   pushError.value = ''
 
   if (isNative) {
+    const fcmToken = localStorage.getItem('fcmToken')
+    if (fcmToken) {
+      await fetch(`${op.apiBase}/api/push/unsubscribe`, {
+        method:  'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ endpoint: fcmToken }),
+      }).catch(() => {})
+      localStorage.removeItem('fcmToken')
+    }
     localStorage.setItem('pushOptIn', 'false')
     pushEnabled.value = false
     return
@@ -245,9 +256,54 @@ async function requestPush() {
   pushError.value = ''
 
   if (isNative) {
-    localStorage.setItem('pushOptIn', 'true')
-    pushEnabled.value = true
-    pushError.value = 'Verifica che le notifiche siano attive in Impostazioni → App → EasyCars → Notifiche.'
+    const { PushNotifications } = await import('@capacitor/push-notifications')
+
+    pushError.value = '⏳ Richiesta permesso...'
+    const perm = await PushNotifications.requestPermissions()
+    if (perm.receive !== 'granted') {
+      pushError.value = 'Permesso negato. Abilita le notifiche in Impostazioni → App → EasyCars.'
+      return
+    }
+
+    pushError.value = '⏳ Registrazione FCM...'
+    await new Promise<void>(async (resolve, reject) => {
+      const regHandle = await PushNotifications.addListener('registration', async token => {
+        await regHandle.remove()
+        try {
+          const base = op.apiBase
+          const res  = await fetch(`${base}/api/push/subscribe`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              endpoint:      token.value,
+              p256dh:        '',
+              auth:          '',
+              operatorId:    op.profile?.operatorId,
+              deviceType:    'android',
+              topicGeneral:  true,
+              topicVehicles: true,
+              topicNews:     true,
+            }),
+          })
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          localStorage.setItem('fcmToken', token.value)
+          localStorage.setItem('pushOptIn', 'true')
+          pushEnabled.value = true
+          pushError.value   = '✅ Notifiche Android attive'
+          resolve()
+        } catch (e) { reject(e) }
+      })
+
+      const errHandle = await PushNotifications.addListener('registrationError', async err => {
+        await errHandle.remove()
+        reject(new Error(`FCM: ${err.error}`))
+      })
+
+      await PushNotifications.register()
+    }).catch((e: any) => {
+      pushError.value = `ERRORE: ${e?.message ?? 'sconosciuto'}`
+    })
+
     return
   }
 

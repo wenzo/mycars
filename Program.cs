@@ -1,4 +1,6 @@
 using Dapper;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.OpenApi;
 using MyCars.Configuration;
 using MyCars.Infrastructure.Database;
@@ -151,6 +153,15 @@ if (!string.IsNullOrWhiteSpace(smtpCfg.Host) && !string.IsNullOrWhiteSpace(smtpC
     builder.Services.AddSingleton<IEmailService, SmtpEmailService>();
 else
     builder.Services.AddSingleton<IEmailService, NullEmailService>();
+
+// ── Firebase Admin (FCM per Android) ─────────────────────────────────────────
+var fbCredPath = builder.Configuration["Firebase:CredentialsPath"];
+var fbCredJson = builder.Configuration["Firebase:CredentialJson"];
+
+if (!string.IsNullOrWhiteSpace(fbCredPath) && File.Exists(fbCredPath))
+    FirebaseApp.Create(new AppOptions { Credential = GoogleCredential.FromFile(fbCredPath) });
+else if (!string.IsNullOrWhiteSpace(fbCredJson))
+    FirebaseApp.Create(new AppOptions { Credential = GoogleCredential.FromJson(fbCredJson) });
 
 // ── VAPID / Web Push ──────────────────────────────────────────────────────────
 var vapidCfg = builder.Configuration.GetSection("Vapid").Get<VapidOptions>() ?? new();

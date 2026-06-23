@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 
 import { IonicVue } from '@ionic/vue'
+import { Capacitor } from '@capacitor/core'
 
 import '@ionic/vue/css/core.css'
 import '@ionic/vue/css/normalize.css'
@@ -35,5 +36,42 @@ router.isReady().then(() => {
       if (e.data?.type === 'sw-push')
         console.warn('[APP] Push ricevuto dal SW:', e.data.title)
     })
+  }
+
+  // Native Android: aggiorna il token FCM ad ogni avvio se l'utente aveva dato il consenso
+  if (Capacitor.isNativePlatform() && localStorage.getItem('pushOptIn') === 'true') {
+    import('@capacitor/push-notifications').then(async ({ PushNotifications }) => {
+      // Listener permanente per notifiche ricevute mentre l'app è in foreground
+      PushNotifications.addListener('pushNotificationReceived', notification => {
+        console.warn('[FCM] Notifica in foreground:', notification.title, notification.body)
+      })
+
+      const regHandle = await PushNotifications.addListener('registration', async token => {
+        await regHandle.remove()
+        localStorage.setItem('fcmToken', token.value)
+        const base = import.meta.env.VITE_API_BASE_URL ?? ''
+        await fetch(`${base}/api/push/subscribe`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint:      token.value,
+            p256dh:        '',
+            auth:          '',
+            operatorId:    opStore.profile?.operatorId,
+            deviceType:    'android',
+            topicGeneral:  true,
+            topicVehicles: true,
+            topicNews:     true,
+          }),
+        }).catch(() => {})
+      })
+
+      const errHandle = await PushNotifications.addListener('registrationError', async err => {
+        await errHandle.remove()
+        console.error('[FCM] Refresh token fallito:', err.error)
+      })
+
+      await PushNotifications.register()
+    }).catch(() => {})
   }
 })

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FirebaseAdmin.Messaging;
 using Lib.Net.Http.WebPush.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using MyCars.Configuration;
@@ -65,32 +66,74 @@ public sealed class VapidWebPushService : IWebPushService
         {
             try
             {
-                var libSub = new LibPushSub
-                {
-                    Endpoint = sub.Endpoint,
-                    Keys = new Dictionary<string, string>
-                    {
-                        ["auth"]   = sub.Auth,
-                        ["p256dh"] = sub.P256dh,
-                    },
-                };
-                await _client.RequestPushMessageDeliveryAsync(libSub, message);
+                if (string.Equals(sub.DeviceType, "android", StringComparison.OrdinalIgnoreCase))
+                    await SendFcmAsync(sub, title, body, iconUrl);
+                else
+                    await SendVapidAsync(sub, message);
                 sent++;
             }
             catch (Exception ex)
             {
                 _log.LogWarning(
-                    "WebPush fallito per {Endpoint}: {Msg}",
+                    "Push fallito per {Endpoint}: {Msg}",
                     sub.Endpoint[..Math.Min(50, sub.Endpoint.Length)],
                     ex.Message);
 
-                // Rimuove la subscription se il push service segnala che è scaduta/invalida
-                // (HTTP 410 Gone = subscription expirata, 404 = endpoint non più valido)
                 if (IsExpiredEndpoint(ex))
                     await TryDeleteSubscriptionAsync(sub.Endpoint);
             }
         }
         return sent;
+    }
+
+    private async Task SendVapidAsync(DomainSub sub, LibPushMsg message)
+    {
+        var libSub = new LibPushSub
+        {
+            Endpoint = sub.Endpoint,
+            Keys = new Dictionary<string, string>
+            {
+                ["auth"]   = sub.Auth   ?? "",
+                ["p256dh"] = sub.P256dh ?? "",
+            },
+        };
+        await _client.RequestPushMessageDeliveryAsync(libSub, message);
+    }
+
+    private async Task SendFcmAsync(DomainSub sub, string title, string body, string? iconUrl)
+    {
+        var messaging = FirebaseMessaging.DefaultInstance;
+        if (messaging is null)
+        {
+            _log.LogWarning("Firebase Admin non inizializzato — impossibile inviare FCM ad Android.");
+            return;
+        }
+
+        var msg = new Message
+        {
+            Token = sub.Endpoint,
+            Notification = new Notification { Title = title, Body = body },
+            Android = new AndroidConfig
+            {
+                Priority = Priority.High,
+                Notification = new AndroidNotification
+                {
+                    Sound      = "default",
+                    ImageUrl   = iconUrl,
+                },
+            },
+        };
+
+        try
+        {
+            await messaging.SendAsync(msg);
+        }
+        catch (FirebaseMessagingException ex)
+            when (ex.MessagingErrorCode is MessagingErrorCode.Unregistered
+                                        or MessagingErrorCode.InvalidArgument)
+        {
+            await TryDeleteSubscriptionAsync(sub.Endpoint);
+        }
     }
 
     private async Task TryDeleteSubscriptionAsync(string endpoint)

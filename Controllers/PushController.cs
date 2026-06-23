@@ -27,16 +27,16 @@ public sealed class PushController : ControllerBase
     [HttpPost("subscribe")]
     public async Task<IActionResult> Subscribe([FromBody] SubscribeRequest req)
     {
+        var isAndroid = "android".Equals(req.DeviceType, StringComparison.OrdinalIgnoreCase);
         if (string.IsNullOrWhiteSpace(req.Endpoint) ||
-            string.IsNullOrWhiteSpace(req.P256dh)   ||
-            string.IsNullOrWhiteSpace(req.Auth))
-            return BadRequest(new { message = "endpoint, p256dh e auth sono obbligatori." });
+            (!isAndroid && (string.IsNullOrWhiteSpace(req.P256dh) || string.IsNullOrWhiteSpace(req.Auth))))
+            return BadRequest(new { message = "Parametri mancanti." });
 
         await _push.UpsertAsync(new PushSubscription
         {
             Endpoint      = req.Endpoint.Trim(),
-            P256dh        = req.P256dh.Trim(),
-            Auth          = req.Auth.Trim(),
+            P256dh        = req.P256dh?.Trim() ?? "",
+            Auth          = req.Auth?.Trim()   ?? "",
             OperatorId    = req.OperatorId,
             VehicleId     = req.VehicleId,
             DeviceType    = req.DeviceType ?? "web",
@@ -54,6 +54,7 @@ public sealed class PushController : ControllerBase
     /// Usare solo per debug — rimuovere in produzione.
     /// GET /api/push/debug?operatorId=xxx
     /// </summary>
+    [Authorize(Roles = "Admin")]
     [HttpGet("debug")]
     public async Task<IActionResult> Debug([FromQuery] Guid? operatorId)
     {
