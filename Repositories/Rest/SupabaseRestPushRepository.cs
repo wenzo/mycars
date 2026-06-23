@@ -8,7 +8,7 @@ public sealed class SupabaseRestPushRepository : IPushRepository
     private const string Cols = "id,operator_id,vehicle_id,user_email,endpoint,p256dh,auth,device_type,topic_general,topic_vehicles,topic_news";
 
     public Task UpsertAsync(PushSubscription subscription)
-        => _db.InsertAsync<PushSubscription>("push_subscriptions", new
+        => _db.UpsertAsync("push_subscriptions", new
         {
             operator_id    = subscription.OperatorId,
             vehicle_id     = subscription.VehicleId,
@@ -21,7 +21,7 @@ public sealed class SupabaseRestPushRepository : IPushRepository
             topic_vehicles = subscription.TopicVehicles,
             topic_news     = subscription.TopicNews,
             last_active_at = DateTimeOffset.UtcNow,
-        });
+        }, onConflict: "endpoint");
 
     public Task<IReadOnlyList<PushSubscription>> GetAllAsync(Guid? operatorId = null)
     {

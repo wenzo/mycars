@@ -67,6 +67,19 @@ public sealed class SupabaseRestClient : ISupabaseRestClient
         return list is { Count: > 0 } ? list[0] : default;
     }
 
+    public async Task UpsertAsync(string table, object payload, string onConflict)
+    {
+        var url = $"{table}?on_conflict={Uri.EscapeDataString(onConflict)}";
+        using var req = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = Serialize(payload),
+        };
+        req.Headers.Add("Prefer", "resolution=merge-duplicates,return=minimal");
+
+        var response = await _http.SendAsync(req);
+        await EnsureSuccessAsync(response);
+    }
+
     public async Task<T?> UpdateAsync<T>(string table, string filter, object payload, string? select = null)
     {
         var qs = new List<string>(2);

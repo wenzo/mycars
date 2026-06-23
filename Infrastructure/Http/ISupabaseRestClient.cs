@@ -17,6 +17,8 @@ public interface ISupabaseRestClient
 
     Task<T?> InsertAsync<T>(string table, object payload, string? select = null);
 
+    Task UpsertAsync(string table, object payload, string onConflict);
+
     Task<T?> UpdateAsync<T>(string table, string filter, object payload, string? select = null);
 
     Task DeleteAsync(string table, string filter);
