@@ -27,7 +27,7 @@
             <h2>{{ v.brandName }} {{ v.model }}</h2>
             <p v-if="v.version">{{ v.version }}</p>
             <p>
-              <span v-if="v.vehicleTarga" class="targa">{{ v.vehicleTarga }}</span>
+              <span v-if="v.targa" class="targa">{{ v.targa }}</span>
               <span class="rental-price" v-if="v.rentalPrice">
                 € {{ v.rentalPrice }}/gg
               </span>
@@ -56,11 +56,11 @@ import {
   IonRefresherContent, IonSpinner,
 } from '@ionic/vue'
 import { carOutline } from 'ionicons/icons'
-import { useVehiclesStore } from '@/stores/vehicles'
+import { useVehicleStore } from '@/stores/vehicles'
 import { useRentalsStore } from '@/stores/rentals'
 import { useOperatorStore } from '@/stores/operator'
 
-const vehiclesStore = useVehiclesStore()
+const vehiclesStore = useVehicleStore()
 const rentalsStore  = useRentalsStore()
 const opStore       = useOperatorStore()
 

@@ -3,7 +3,7 @@
     <div v-if="store.detail" style="display:flex;flex-direction:column;height:100%">
 
       <!-- Hero immagine -->
-      <div class="hero">
+      <div class="hero" ref="heroEl">
         <div class="hero-gradient" />
 
         <img v-if="currentImg" :src="currentImg" alt="Foto veicolo" class="hero-img" />
@@ -61,10 +61,10 @@
             </div>
             <div v-if="discount" class="price-discount">−{{ discount }}%</div>
           </div>
-          <div v-if="store.detail.forRental && store.detail.rentalPrice" class="rental-row">
+          <div v-if="store.detail.forRental && rentalStartPrice && op.profile?.rentalShowPrices" class="rental-row">
             <span class="rental-icon">🔑</span>
-            <span class="rental-label">Noleggio</span>
-            <span class="rental-price">€ {{ fmtPrice(store.detail.rentalPrice) }}/mese</span>
+            <span class="rental-label">Noleggio da</span>
+            <span class="rental-price">€ {{ fmtPrice(rentalStartPrice) }}{{ rentalStartUnit }}</span>
           </div>
         </div>
 
@@ -95,8 +95,29 @@
         </div>
 
         <!-- Simulatore costo noleggio -->
-        <div v-if="fromRental && store.detail.rentalPrice" class="sim-card">
+        <div v-if="fromRental && hasRentalPricing && op.profile?.rentalShowPrices" class="sim-card">
           <div class="sim-title">🔑 Simula il costo del noleggio</div>
+
+          <!-- Formula selector (solo se ci sono formule configurate) -->
+          <div v-if="availableFormulas.length > 1" class="formula-chips">
+            <button
+              v-for="fk in availableFormulas"
+              :key="fk"
+              class="formula-chip"
+              :class="{ active: selectedFormula === fk }"
+              @click="selectedFormula = fk"
+            >{{ FORMULA_LABELS[fk] ?? fk }}</button>
+          </div>
+
+          <!-- Dettaglio formula selezionata -->
+          <div v-if="currentFormulaData" class="formula-detail">
+            <span class="fd-price">
+              € {{ fmtPrice(currentFormulaData.price) }}<small>{{ FORMULA_UNITS[selectedFormula] }}</small>
+            </span>
+            <span v-if="currentFormulaData.kmIncluded" class="fd-km">
+              · {{ fmtKm(currentFormulaData.kmIncluded) }} km inclusi
+            </span>
+          </div>
 
           <div class="sim-dates">
             <div class="sim-date-field">
@@ -113,21 +134,115 @@
           <!-- Risultato calcolo -->
           <div v-if="simDays !== null" class="sim-result">
             <div class="sim-result-row">
-              <span>Tariffa giornaliera</span>
-              <span>€ {{ fmtPrice(simDailyRate) }}/giorno</span>
+              <span>Tariffa {{ (FORMULA_LABELS[selectedFormula] ?? selectedFormula).toLowerCase() }}</span>
+              <span>€ {{ fmtPrice(simUnitPrice) }}{{ FORMULA_UNITS[selectedFormula] ?? '/giorno' }}</span>
             </div>
             <div class="sim-result-row">
               <span>Durata</span>
               <span>{{ simDays }} giorn{{ simDays === 1 ? 'o' : 'i' }}</span>
             </div>
+            <div v-if="currentFormulaData?.kmIncluded" class="sim-result-row">
+              <span>Km inclusi</span>
+              <span>{{ fmtKm(currentFormulaData.kmIncluded) }} km</span>
+            </div>
+            <div v-if="optionsCost > 0" class="sim-result-row">
+              <span>Servizi aggiuntivi</span>
+              <span>+ € {{ fmtPrice(optionsCost) }}</span>
+            </div>
             <div class="sim-result-total">
               <span>Totale stimato</span>
-              <strong>€ {{ fmtPrice(simTotal) }}</strong>
+              <strong>€ {{ fmtPrice(totalWithOptions) }}</strong>
             </div>
-            <div class="sim-note">Stima indicativa. Deposito, km e condizioni saranno confermati dal concessionario.</div>
+            <div class="sim-note">Stima indicativa. Deposito e condizioni definitivi confermati dal concessionario.</div>
           </div>
           <div v-else class="sim-placeholder">
             Seleziona il periodo per calcolare il costo
+          </div>
+        </div>
+
+        <!-- Sempre incluso -->
+        <div v-if="fromRental && servicesCatalog?.included?.length" class="mc-section">
+          <div class="mc-section-title">
+            <ion-icon :icon="checkmarkCircleOutline" /> Sempre incluso
+          </div>
+          <div class="inclusi-chips">
+            <div v-for="svc in servicesCatalog.included" :key="svc" class="incluso-chip">
+              <ion-icon :icon="checkmarkOutline" />
+              <span>{{ svc }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aggiungi servizi opzionali -->
+        <div v-if="fromRental && servicesCatalog?.optional?.length" class="mc-section">
+          <div class="mc-section-title">
+            <ion-icon :icon="addCircleOutline" /> Aggiungi servizi
+          </div>
+          <div class="optional-list">
+            <div
+              v-for="opt in servicesCatalog.optional"
+              :key="opt.key"
+              class="optional-item"
+              @click="selectedOpts[opt.key] = !selectedOpts[opt.key]"
+            >
+              <div class="opt-body">
+                <span class="opt-label">{{ opt.label }}</span>
+                <span v-if="op.profile?.rentalShowPrices" class="opt-price">
+                  + € {{ opt.pricePerDay ?? opt.priceFlat }}
+                  {{ opt.pricePerDay ? '/ giorno' : 'una tantum' }}
+                </span>
+              </div>
+              <span class="opt-check" :class="{ active: selectedOpts[opt.key] }">
+                <ion-icon v-if="selectedOpts[opt.key]" :icon="checkmarkOutline" />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buono a sapersi -->
+        <div v-if="fromRental && (rentalConditionsData || (depositAmount && op.profile?.rentalShowPrices))" class="mc-section">
+          <div class="mc-section-title">
+            <ion-icon :icon="informationCircleOutline" /> Buono a sapersi
+          </div>
+          <div class="cond-list">
+            <div v-if="depositAmount && op.profile?.rentalShowPrices" class="cond-row">
+              <ion-icon :icon="cardOutline" />
+              <span class="cond-key">Deposito cauzionale</span>
+              <span class="cond-val">€ {{ fmtPrice(depositAmount) }} su carta</span>
+            </div>
+            <div v-if="rentalConditionsData?.minDriverAge" class="cond-row">
+              <ion-icon :icon="personOutline" />
+              <span class="cond-key">Età minima</span>
+              <span class="cond-val">
+                {{ rentalConditionsData.minDriverAge }} anni
+                <template v-if="rentalConditionsData.minLicenseYears">
+                  · {{ rentalConditionsData.minLicenseYears }} anni patente
+                </template>
+              </span>
+            </div>
+            <div v-if="fuelPolicyLabel" class="cond-row">
+              <ion-icon :icon="flashOutline" />
+              <span class="cond-key">Carburante</span>
+              <span class="cond-val">{{ fuelPolicyLabel }}</span>
+            </div>
+            <div v-if="op.profile?.city" class="cond-row">
+              <ion-icon :icon="locationOutline" />
+              <span class="cond-key">Ritiro</span>
+              <span class="cond-val">
+                {{ op.profile.city }}
+                <template v-if="op.profile.province"> ({{ op.profile.province }})</template>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Note veicolo per noleggio -->
+        <div v-if="fromRental && store.detail.rentalVehicleNotes" class="mc-section">
+          <div class="mc-section-title">
+            <ion-icon :icon="documentTextOutline" /> Note per il noleggio
+          </div>
+          <div style="font-size:13px;color:var(--mc-text-mid);line-height:1.65">
+            {{ store.detail.rentalVehicleNotes }}
           </div>
         </div>
 
@@ -170,7 +285,7 @@
         </button>
         <button v-if="fromRental" class="btn-primary btn-danger" @click="showRentalModal = true">
           <ion-icon :icon="keyOutline" />
-          {{ simTotal > 0 ? `Richiedi · € ${fmtPrice(simTotal)}` : 'Richiedi Noleggio' }}
+          {{ (totalWithOptions > 0 && op.profile?.rentalShowPrices) ? `Richiedi · € ${fmtPrice(totalWithOptions)}` : 'Richiedi Noleggio' }}
         </button>
         <button v-else class="btn-primary btn-danger" @click="openLead('test_drive')">
           <ion-icon :icon="calendarOutline" /> Prenota Test Drive
@@ -191,20 +306,24 @@
       :vehicle="store.detail"
       :initial-start-date="simStart"
       :initial-end-date="simEnd"
+      :initial-formula="selectedFormula"
+      :selected-options="selectedOptsList"
       @close="showRentalModal = false"
     />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, watchEffect, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/vue'
+import { IonPage, IonContent, IonIcon, IonSpinner, createGesture } from '@ionic/vue'
 import {
   arrowBackOutline, heartOutline, shareOutline,
   carOutline, flashOutline, speedometerOutline, calendarOutline,
   gitNetworkOutline, thermometerOutline, colorPaletteOutline,
   locationOutline, documentTextOutline, callOutline, keyOutline,
+  checkmarkCircleOutline, addCircleOutline, informationCircleOutline,
+  cardOutline, personOutline, checkmarkOutline,
 } from 'ionicons/icons'
 import { useVehicleStore } from '@/stores/vehicles'
 import { useOperatorStore } from '@/stores/operator'
@@ -215,6 +334,30 @@ const route    = useRoute()
 const store    = useVehicleStore()
 const op       = useOperatorStore()
 const imgIndex = ref(0)
+const heroEl   = ref<HTMLElement | null>(null)
+
+let gesture: ReturnType<typeof createGesture> | null = null
+
+watch(heroEl, (el) => {
+  gesture?.destroy()
+  gesture = null
+  if (!el) return
+  gesture = createGesture({
+    el,
+    gestureName: 'gallery-swipe',
+    threshold: 10,
+    onEnd(d) {
+      if (Math.abs(d.deltaX) < 30 || Math.abs(d.deltaY) > 60) return
+      const len = store.images.length
+      if (len < 2) return
+      if (d.deltaX < 0) imgIndex.value = Math.min(imgIndex.value + 1, len - 1)
+      else               imgIndex.value = Math.max(imgIndex.value - 1, 0)
+    },
+  })
+  gesture.enable()
+})
+onUnmounted(() => gesture?.destroy())
+
 const showLead = ref(false)
 const showRentalModal = ref(false)
 const leadType = ref<'info' | 'test_drive' | 'price_update'>('info')
@@ -222,27 +365,148 @@ const leadInitialMessage = ref('')
 
 const fromRental = computed(() => route.query.from === 'noleggio')
 
+// ── Formule noleggio ──────────────────────────────────────────────────────────
+const FORMULA_ORDER = ['daily', 'weekend', 'weekly', 'monthly', 'mid_term'] as const
+const FORMULA_LABELS: Record<string, string> = {
+  daily:    'Giornaliero',
+  weekend:  'Weekend',
+  weekly:   'Settimanale',
+  monthly:  'Mensile',
+  mid_term: 'Lungo Termine',
+}
+const FORMULA_UNITS: Record<string, string> = {
+  daily:    '/giorno',
+  weekend:  '/weekend',
+  weekly:   '/settimana',
+  monthly:  '/mese',
+  mid_term: '/mese',
+}
+
+const rentalFormulas = computed(() => store.detail?.rentalFormulas ?? null)
+const availableFormulas = computed(() =>
+  FORMULA_ORDER.filter(k => (rentalFormulas.value as Record<string, any>)?.[k]?.price != null)
+)
+const hasRentalFormulas = computed(() => availableFormulas.value.length > 0)
+const hasRentalPricing  = computed(() => hasRentalFormulas.value || !!store.detail?.rentalPrice)
+
+const selectedFormula = ref('daily')
+watchEffect(() => {
+  if (availableFormulas.value.length > 0 && !availableFormulas.value.includes(selectedFormula.value as any)) {
+    selectedFormula.value = availableFormulas.value[0]
+  }
+})
+
+const currentFormulaData = computed(() => {
+  return (rentalFormulas.value as Record<string, any>)?.[selectedFormula.value] ?? null
+})
+
+// Prezzo "da" mostrato nell'info-card
+const rentalStartPrice = computed<number | null>(() => {
+  if (rentalFormulas.value) {
+    const daily = (rentalFormulas.value as Record<string, any>)?.daily?.price
+    if (daily) return daily
+    const first = availableFormulas.value[0]
+    if (first) return (rentalFormulas.value as Record<string, any>)[first]?.price ?? null
+  }
+  return store.detail?.rentalPrice ?? null
+})
+const rentalStartUnit = computed(() => {
+  if (rentalFormulas.value) {
+    const daily = (rentalFormulas.value as Record<string, any>)?.daily?.price
+    if (daily) return '/giorno'
+    const first = availableFormulas.value[0]
+    if (first) return FORMULA_UNITS[first] ?? '/mese'
+  }
+  return '/mese'
+})
+
 // ── Simulatore costo noleggio ─────────────────────────────────────────────────
 const today    = new Date().toISOString().slice(0, 10)
 const simStart = ref('')
 const simEnd   = ref('')
 
-const simDailyRate = computed(() => {
-  const p = store.detail?.rentalPrice
-  return p ? Math.round(p / 30) : 0
-})
 const simDays = computed<number | null>(() => {
   if (!simStart.value || !simEnd.value) return null
   const ms = new Date(simEnd.value).getTime() - new Date(simStart.value).getTime()
   if (ms <= 0) return null
   return Math.ceil(ms / 86_400_000)
 })
-const simTotal = computed(() =>
-  simDays.value !== null ? simDailyRate.value * simDays.value : 0
-)
+
+const simUnitPrice = computed<number>(() => {
+  if (currentFormulaData.value?.price) return currentFormulaData.value.price
+  const p = store.detail?.rentalPrice
+  return p ? Math.round(p / 30) : 0
+})
+
+const simTotal = computed(() => {
+  if (simDays.value === null || !simUnitPrice.value) return 0
+  const days = simDays.value
+  switch (selectedFormula.value) {
+    case 'weekly':   return Math.ceil(days / 7) * simUnitPrice.value
+    case 'monthly':
+    case 'mid_term': return Math.ceil(days / 30) * simUnitPrice.value
+    case 'weekend':  return simUnitPrice.value
+    default:         return days * simUnitPrice.value
+  }
+})
+
 function clampEnd() {
   if (simEnd.value && simEnd.value < simStart.value) simEnd.value = simStart.value
 }
+
+// ── Catalogo servizi e condizioni noleggio ────────────────────────────────────
+interface RentalOptSvc {
+  key: string; label: string; pricePerDay?: number | null; priceFlat?: number | null
+}
+interface SvcCatalog { included?: string[]; optional?: RentalOptSvc[] }
+interface RentalConds {
+  minDriverAge?: number; minLicenseYears?: number; fuelPolicy?: string
+  depositDefault?: number; creditCardRequired?: boolean
+}
+
+const selectedOpts = ref<Record<string, boolean>>({})
+
+const servicesCatalog = computed<SvcCatalog | null>(() => {
+  const raw = op.profile?.rentalServicesCatalog as SvcCatalog | null
+  return (raw?.included?.length || raw?.optional?.length) ? raw : null
+})
+
+const rentalConditionsData = computed<RentalConds | null>(() => {
+  const raw = op.profile?.rentalConditions as RentalConds | null
+  return (raw?.minDriverAge || raw?.depositDefault || raw?.fuelPolicy) ? raw : null
+})
+
+const depositAmount = computed(() =>
+  store.detail?.rentalDepositOverride ??
+  (rentalConditionsData.value?.depositDefault ?? null)
+)
+
+const optionsCost = computed(() => {
+  const opts = servicesCatalog.value?.optional
+  if (!opts?.length) return 0
+  const days = simDays.value ?? 0
+  return opts.reduce((sum, o) => {
+    if (!selectedOpts.value[o.key]) return sum
+    if (o.pricePerDay) return sum + o.pricePerDay * days
+    if (o.priceFlat)   return sum + o.priceFlat
+    return sum
+  }, 0)
+})
+
+const totalWithOptions = computed(() => simTotal.value + optionsCost.value)
+
+const selectedOptsList = computed(() =>
+  (servicesCatalog.value?.optional ?? [])
+    .filter(o => selectedOpts.value[o.key])
+    .map(o => ({ key: o.key, label: o.label, pricePerDay: o.pricePerDay ?? null, priceFlat: o.priceFlat ?? null }))
+)
+
+const fuelPolicyLabel = computed(() => {
+  const map: Record<string, string> = {
+    full_full: 'Pieno / Pieno', full_any: 'Pieno / Qualsiasi', same: 'Stesso livello',
+  }
+  return map[rentalConditionsData.value?.fuelPolicy ?? ''] ?? null
+})
 
 const currentImg = computed(() => {
   const raw = store.images[imgIndex.value]?.url ?? store.detail?.coverImageUrl ?? null
@@ -291,7 +555,7 @@ onMounted(() => store.fetchDetail(route.params.id as string))
 }
 .action-btn {
   width: 36px; height: 36px;
-  background: rgba(0,0,0,.38); backdrop-filter: blur(10px);
+  background: rgba(0,0,0,.52);
   border: 1px solid rgba(255,255,255,.15); border-radius: 50%; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
@@ -312,7 +576,7 @@ onMounted(() => store.fetchDetail(route.params.id as string))
 
 .info-card {
   background: #fff; margin: -22px 16px 0;
-  border-radius: 18px; padding: 16px 18px 14px;
+  border-radius: 18px; padding: 30px 18px 14px;
   box-shadow: 0 6px 28px rgba(30,58,95,.13); position: relative; z-index: 5;
 }
 .info-brand   { font-size: 11.5px; font-weight: 600; color: var(--mc-text-light); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; }
@@ -369,6 +633,26 @@ onMounted(() => store.fetchDetail(route.params.id as string))
   font-family: var(--mc-font-heading); font-size: 13px; font-weight: 700;
   color: var(--dealer-primary);
 }
+
+/* Formula chips */
+.formula-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.formula-chip {
+  padding: 6px 12px; border-radius: 20px;
+  border: 1.5px solid var(--mc-border);
+  background: #fff; font-size: 12px; font-weight: 600;
+  color: var(--mc-text-mid); cursor: pointer; transition: all .15s;
+}
+.formula-chip.active {
+  background: var(--dealer-primary); color: #fff; border-color: var(--dealer-primary);
+}
+.formula-detail { display: flex; align-items: center; gap: 8px; }
+.fd-price {
+  font-family: var(--mc-font-heading); font-size: 20px; font-weight: 800;
+  color: var(--dealer-primary); display: flex; align-items: baseline; gap: 3px;
+}
+.fd-price small { font-size: 11px; font-weight: 600; color: var(--mc-text-light); }
+.fd-km { font-size: 12px; color: var(--mc-text-mid); }
+
 .sim-dates { display: flex; align-items: flex-end; gap: 8px; }
 .sim-date-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .sim-label { font-size: 11px; font-weight: 600; color: var(--mc-text-mid); }
@@ -406,18 +690,17 @@ onMounted(() => store.fetchDetail(route.params.id as string))
   padding: 4px 0;
 }
 
-/* Riquadro condizioni noleggio (static fallback) */
-.rental-info-card {
-  margin: 6px 16px; background: #F0F4FF; border-radius: var(--mc-r);
-  padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+/* Sezione testo generica */
+.mc-section {
+  margin: 6px 16px; background: #fff; border-radius: var(--mc-r);
+  padding: 14px 16px; box-shadow: var(--mc-shadow-sm);
 }
-.ric-title { font-family: var(--mc-font-heading); font-size: 13px; font-weight: 700; color: var(--dealer-primary); }
-.ric-row {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: 13px; color: var(--mc-text-mid);
+.mc-section-title {
+  font-family: var(--mc-font-heading); font-size: 13px; font-weight: 700;
+  color: var(--mc-text); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
 }
-.ric-row strong { color: var(--mc-text); font-family: var(--mc-font-heading); }
-.ric-note { font-size: 11px; color: var(--mc-text-light); font-style: italic; line-height: 1.4; }
+.mc-section-title ion-icon { color: var(--dealer-primary); }
 
 /* Cross-promo banner */
 .cross-promo {
@@ -428,6 +711,44 @@ onMounted(() => store.fetchDetail(route.params.id as string))
   font-size: 13px; color: var(--mc-text-mid);
 }
 .cross-promo-link { font-weight: 700; color: var(--dealer-primary); white-space: nowrap; }
+
+/* ── Sempre incluso ── */
+.inclusi-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.incluso-chip {
+  display: flex; align-items: center; gap: 5px;
+  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 20px;
+  padding: 5px 11px; font-size: 11.5px; font-weight: 600; color: #15803d;
+}
+.incluso-chip ion-icon { font-size: 13px; flex-shrink: 0; }
+
+/* ── Opzionali ── */
+.optional-list { display: flex; flex-direction: column; }
+.optional-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 0; border-bottom: 1px solid var(--mc-surface); cursor: pointer;
+}
+.optional-item:last-child { border-bottom: none; }
+.opt-body { flex: 1; }
+.opt-label { display: block; font-size: 13px; color: var(--mc-text); font-weight: 500; }
+.opt-price { font-size: 11.5px; color: var(--mc-text-mid); margin-top: 2px; }
+.opt-check {
+  width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--mc-border);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: all .15s;
+}
+.opt-check.active { background: var(--dealer-primary); border-color: var(--dealer-primary); }
+.opt-check.active ion-icon { font-size: 13px; color: #fff; }
+
+/* ── Buono a sapersi ── */
+.cond-list { display: flex; flex-direction: column; }
+.cond-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--mc-surface); font-size: 12.5px;
+}
+.cond-row:last-child { border-bottom: none; }
+.cond-row ion-icon { font-size: 15px; color: var(--mc-text-light); flex-shrink: 0; }
+.cond-key { color: var(--mc-text-mid); flex: 1; }
+.cond-val { color: var(--mc-text); font-weight: 600; text-align: right; max-width: 55%; }
 
 .cta-bar {
   background: #fff; border-top: 1px solid var(--mc-border);

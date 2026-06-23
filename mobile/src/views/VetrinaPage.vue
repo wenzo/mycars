@@ -4,7 +4,7 @@
       <div class="dealer-bar">
         <div class="dealer-logo-wrap">
           <div class="dealer-logo-icon">
-            <img v-if="op.profile?.logoUrl" :src="op.profile.logoUrl" alt="logo" />
+            <img v-if="op.profile?.logoUrl" :src="op.resolveUrl(op.profile.logoUrl)" alt="logo" />
             <ion-icon v-else :icon="carOutline" style="color:#fff;font-size:20px" />
           </div>
           <div>
@@ -160,7 +160,7 @@ onMounted(() => {
   font-family: var(--mc-font-heading);
   font-size: 10.5px; font-weight: 600;
 }
-.tipo-btn.active   { background: var(--dealer-secondary); color: #fff; }
+.tipo-btn.active   { background: rgba(255,255,255,.92); color: var(--dealer-primary); }
 .tipo-btn.inactive { background: rgba(255,255,255,.12); color: rgba(255,255,255,.65); }
 
 .search-row { display: flex; gap: 8px; align-items: center; }
@@ -187,7 +187,7 @@ onMounted(() => {
 
 .stats-bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 18px 6px; background: var(--mc-surface);
+  padding: 10px 18px 10px; background: var(--mc-surface);
 }
 .stats-count { font-family: var(--mc-font-heading); font-size: 13px; font-weight: 600; color: var(--mc-text-mid); }
 .stats-count span { color: var(--dealer-primary); font-weight: 700; }
@@ -201,7 +201,7 @@ onMounted(() => {
 .ltbtn.active ion-icon { color: #fff; }
 .ltbtn ion-icon { color: var(--mc-text-light); font-size: 16px; }
 
-.veicoli-scroll { padding: 0 12px 12px; }
+.veicoli-scroll { padding: 10px 12px 12px; }
 .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .list-col   { display: flex; flex-direction: column; gap: 10px; }
 

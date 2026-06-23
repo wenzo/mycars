@@ -13,19 +13,33 @@ public sealed class PostgresLeadRepository : ILeadRepository
             INSERT INTO public.vehicle_leads
                 (operator_id, vehicle_id, branch_id, full_name, email, phone, message,
                  privacy_accepted, marketing_accepted, source,
-                 status, lead_type, preferred_date, preferred_time)
+                 status, lead_type, preferred_date, preferred_time, tracking_code)
             VALUES
                 (@OperatorId, @VehicleId, @BranchId, @FullName, @Email, @Phone, @Message,
                  @PrivacyAccepted, @MarketingAccepted, @Source,
                  @Status::public.lead_status, @LeadType::public.lead_type,
-                 @PreferredDate, @PreferredTime)
+                 @PreferredDate, @PreferredTime, @TrackingCode)
             RETURNING id, operator_id, vehicle_id, branch_id, full_name, email, phone,
                       message, privacy_accepted, marketing_accepted, source,
                       status::text AS status, lead_type::text AS lead_type,
-                      preferred_date, preferred_time, created_at, updated_at
+                      preferred_date, preferred_time, created_at, updated_at, tracking_code
             """;
         using var conn = _factory.CreateConnection();
         return await conn.QueryFirstAsync<VehicleLead>(sql, lead);
+    }
+
+    public async Task<VehicleLead?> GetByTrackingCodeAsync(Guid operatorId, string code)
+    {
+        const string sql = """
+            SELECT id, operator_id, vehicle_id, full_name,
+                   status::text AS status, lead_type::text AS lead_type,
+                   preferred_date, preferred_time, created_at, tracking_code
+            FROM public.vehicle_leads
+            WHERE operator_id = @operatorId AND tracking_code = @code
+            LIMIT 1
+            """;
+        using var conn = _factory.CreateConnection();
+        return await conn.QueryFirstOrDefaultAsync<VehicleLead>(sql, new { operatorId, code });
     }
 
     public async Task<PagedResult<VehicleLead>> GetByOperatorAsync(

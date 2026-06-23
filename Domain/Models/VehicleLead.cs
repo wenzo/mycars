@@ -17,6 +17,7 @@ public sealed class VehicleLead
     public string  LeadType           { get; set; } = "info";
     public DateOnly? PreferredDate    { get; set; }
     public string? PreferredTime      { get; set; }
+    public string? TrackingCode       { get; set; }
     public DateTimeOffset CreatedAt   { get; set; }
     public DateTimeOffset UpdatedAt   { get; set; }
 }

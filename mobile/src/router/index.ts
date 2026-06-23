@@ -15,7 +15,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'news',         component: () => import('@/views/NewsPage.vue') },
       { path: 'contatti',     component: () => import('@/views/ContattiPage.vue') },
       { path: 'impostazioni', component: () => import('@/views/ImpostazioniPage.vue') },
-      { path: 'noleggio', component: () => import('@/views/NoleggioPublicPage.vue') },
+      { path: 'noleggio', component: () => import('@/views/NoleggioHubPage.vue') },
     ],
   },
 

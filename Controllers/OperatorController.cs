@@ -28,23 +28,7 @@ public sealed class OperatorController : ControllerBase
         if (profile is null)
             return NotFound(new { message = "Codice non valido, scaduto o esaurito." });
 
-        return Ok(new
-        {
-            operatorId     = profile.Id,
-            businessName   = profile.BusinessName,
-            publicCode     = profile.PublicCode,
-            slug           = profile.Slug,
-            phone          = profile.Phone,
-            email          = profile.Email,
-            websiteUrl     = profile.WebsiteUrl,
-            whatsappNumber = profile.WhatsappNumber,
-            primaryColor   = profile.PrimaryColor,
-            secondaryColor = profile.SecondaryColor,
-            accentColor    = profile.AccentColor,
-            logoUrl        = profile.LogoUrl,
-            coverImageUrl  = profile.CoverImageUrl,
-            tagline        = profile.Tagline,
-        });
+        return Ok(BuildProfileDto(profile));
     }
 
     /// <summary>
@@ -60,22 +44,35 @@ public sealed class OperatorController : ControllerBase
         var profile = await _operators.GetBySlugAsync(slug);
         if (profile is null) return NotFound(new { message = "Concessionario non trovato." });
 
-        return Ok(new
-        {
-            operatorId     = profile.Id,
-            businessName   = profile.BusinessName,
-            publicCode     = profile.PublicCode,
-            slug           = profile.Slug,
-            phone          = profile.Phone,
-            email          = profile.Email,
-            websiteUrl     = profile.WebsiteUrl,
-            whatsappNumber = profile.WhatsappNumber,
-            primaryColor   = profile.PrimaryColor,
-            secondaryColor = profile.SecondaryColor,
-            accentColor    = profile.AccentColor,
-            logoUrl        = profile.LogoUrl,
-            coverImageUrl  = profile.CoverImageUrl,
-            tagline        = profile.Tagline,
-        });
+        return Ok(BuildProfileDto(profile));
     }
+
+    private static object BuildProfileDto(OperatorProfile p) => new
+    {
+        operatorId                = p.Id,
+        businessName              = p.BusinessName,
+        publicCode                = p.PublicCode,
+        slug                      = p.Slug,
+        phone                     = p.Phone,
+        email                     = p.Email,
+        websiteUrl                = p.WebsiteUrl,
+        whatsappNumber            = p.WhatsappNumber,
+        address                   = p.Address,
+        city                      = p.City,
+        province                  = p.Province,
+        zipCode                   = p.ZipCode,
+        primaryColor              = p.PrimaryColor,
+        secondaryColor            = p.SecondaryColor,
+        accentColor               = p.AccentColor,
+        logoUrl                   = p.LogoUrl,
+        coverImageUrl             = p.CoverImageUrl,
+        tagline                   = p.Tagline,
+        rentalModuleEnabled       = p.RentalModuleEnabled,
+        rentalPhotosEnabled       = p.RentalPhotosEnabled,
+        rentalContractPdfEnabled  = p.RentalContractPdfEnabled,
+        rentalShowPrices          = p.RentalShowPrices,
+        rentalConditions          = p.RentalConditions,
+        rentalServicesCatalog     = p.RentalServicesCatalog,
+        privacyPolicyHtml         = p.PrivacyPolicyHtml,
+    };
 }

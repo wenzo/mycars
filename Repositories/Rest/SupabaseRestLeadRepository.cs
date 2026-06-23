@@ -31,6 +31,10 @@ public sealed class SupabaseRestLeadRepository : ILeadRepository
         => _db.SelectOneAsync<VehicleLead>("vehicle_leads",
             $"id=eq.{id}&operator_id=eq.{operatorId}");
 
+    public Task<VehicleLead?> GetByTrackingCodeAsync(Guid operatorId, string code)
+        => _db.SelectOneAsync<VehicleLead>("vehicle_leads",
+            $"operator_id=eq.{operatorId}&tracking_code=eq.{Uri.EscapeDataString(code)}");
+
     public async Task<bool> UpdateStatusAsync(Guid id, Guid operatorId, string status)
     {
         var result = await _db.UpdateAsync<VehicleLead>(

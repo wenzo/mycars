@@ -7,6 +7,8 @@ public interface ILeadRepository
     Task<VehicleLead?>                 GetByIdAsync(Guid id, Guid operatorId);
     Task<bool>                         UpdateStatusAsync(Guid id, Guid operatorId, string status);
 
+    Task<VehicleLead?>                 GetByTrackingCodeAsync(Guid operatorId, string code);
+
     // Admin
     Task<int>                          CountOpenAsync(Guid? operatorId = null);
     Task<int>                          CountTestDrivePendingAsync(Guid? operatorId = null);

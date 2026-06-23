@@ -19,7 +19,7 @@
           <ion-label>Contatti</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="noleggio" href="/tabs/noleggio">
+        <ion-tab-button v-if="op.profile?.rentalModuleEnabled" tab="noleggio" href="/tabs/noleggio">
           <ion-icon :icon="keyOutline" />
           <ion-label>Noleggio</ion-label>
         </ion-tab-button>
@@ -45,4 +45,7 @@ import {
   settingsOutline,
   keyOutline,
 } from 'ionicons/icons'
+import { useOperatorStore } from '@/stores/operator'
+
+const op = useOperatorStore()
 </script>

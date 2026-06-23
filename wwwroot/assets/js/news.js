@@ -151,6 +151,10 @@ function initTinyMCE() {
         toolbar: 'bold italic underline | bullist numlist | link image | code | removeformat',
         content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; } img { max-width: 100%; height: auto; }',
 
+        // Mantieni le URL esattamente come vengono restituite dal server (non convertire)
+        convert_urls: false,
+        relative_urls: false,
+
         // Upload immagini al server
         automatic_uploads: true,
         file_picker_types: 'image',

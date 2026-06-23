@@ -19,9 +19,9 @@
         <span v-if="vehicle.registrationYear"  class="vcard-spec">{{ vehicle.registrationYear }}</span>
         <span v-if="vehicle.prontaConsegna"    class="vcard-spec vcard-spec-pc">⚡ P.C.</span>
       </div>
-      <!-- Modalità noleggio: mostra prezzo/giorno -->
+      <!-- Modalità noleggio: mostra prezzo/giorno solo se rentalShowPrices è attivo -->
       <template v-if="rentalMode">
-        <div v-if="vehicle.rentalPrice" class="vcard-price vcard-price-rental">
+        <div v-if="vehicle.rentalPrice && op.profile?.rentalShowPrices" class="vcard-price vcard-price-rental">
           da € {{ dailyPrice }}<span class="vcard-price-label">/giorno</span>
         </div>
         <div v-else class="vcard-price" style="color:var(--mc-text-light);font-size:13px">
@@ -33,10 +33,10 @@
         <div v-if="vehicle.price" class="vcard-price">
           € {{ fmtPrice(vehicle.price) }}<span class="vcard-price-label">{{ vehicle.vatDeductible ? ' IVA esp.' : ' IVA inc.' }}</span>
         </div>
-        <div v-if="vehicle.forRental && vehicle.rentalPrice" class="vcard-rental">
+        <div v-if="vehicle.forRental && vehicle.rentalPrice && op.profile?.rentalShowPrices" class="vcard-rental">
           <span class="vcard-spec vcard-spec-rental">🔑 Noleggio € {{ fmtPrice(vehicle.rentalPrice) }}/mese</span>
         </div>
-        <div v-if="!vehicle.price && !(vehicle.forRental && vehicle.rentalPrice)" class="vcard-price" style="color:var(--mc-text-light);font-size:13px">
+        <div v-if="!vehicle.price && !(vehicle.forRental && vehicle.rentalPrice && op.profile?.rentalShowPrices)" class="vcard-price" style="color:var(--mc-text-light);font-size:13px">
           Prezzo su richiesta
         </div>
       </template>

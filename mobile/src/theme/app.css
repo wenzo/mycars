@@ -7,7 +7,9 @@
 /* ── Header dealer (condiviso tra le tab) ────────────────────────────────── */
 .dealer-header {
   background: var(--dealer-primary);
-  padding: 10px 20px 16px;
+  padding: max(20px, calc(env(safe-area-inset-top) + 10px)) 20px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+  position: relative; z-index: 10;
 }
 .dealer-bar {
   display: flex;
@@ -59,7 +61,7 @@
   font-size: 10px; font-weight: 700; letter-spacing: .03em;
 }
 .vcard-badge-right { left: auto; right: 7px; }
-.vcard-body { padding: 9px 10px 11px; }
+.vcard-body { padding: 12px 12px 13px; }
 .vcard-brand {
   font-size: 10px; font-weight: 600; color: var(--mc-text-light);
   text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px;

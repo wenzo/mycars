@@ -11,8 +11,8 @@
 
         <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
 
-          <!-- Push banner (se non ancora abilitato) -->
-          <div v-if="!pushEnabled" class="push-banner">
+          <!-- Push banner (solo web, non su app nativa) -->
+          <div v-if="!pushEnabled && !isNative" class="push-banner">
             <div class="push-banner-icon">
               <ion-icon :icon="notificationsOutline" />
             </div>
@@ -32,7 +32,12 @@
           <div class="mc-section" style="padding:0">
             <div v-if="op.profile" class="dealer-chip">
               <div class="dealer-chip-logo">
-                <img v-if="op.profile.logoUrl" :src="op.profile.logoUrl" alt="logo" />
+                <img
+                  v-if="op.profile.logoUrl && !logoFailed"
+                  :src="op.resolveUrl(op.profile.logoUrl)"
+                  alt="logo"
+                  @error="logoFailed = true"
+                />
                 <ion-icon v-else :icon="carOutline" style="color:#fff;font-size:20px" />
               </div>
               <div style="flex:1">
@@ -82,15 +87,15 @@
           <!-- Notifiche -->
           <div class="section-label">Notifiche</div>
           <div class="mc-section" style="padding:0">
-            <div class="srow">
+            <div class="srow" @click="togglePush">
               <div class="srow-icon navy"><ion-icon :icon="notificationsOutline" /></div>
               <div class="srow-info">
                 <div class="srow-label">Notifiche push</div>
                 <div class="srow-sub">Nuovi veicoli, promozioni e aggiornamenti richieste</div>
               </div>
-              <button class="mc-toggle" :class="{ on: pushEnabled }" @click="togglePush" />
+              <button class="mc-toggle" :class="{ on: pushEnabled }" @click.stop="togglePush" />
             </div>
-            <div v-if="pushError" style="padding:0 16px 12px;font-size:12px;color:var(--mc-red)">
+            <div v-if="pushError" style="padding:0 16px 12px;font-size:12px;color:var(--mc-text-light)">
               {{ pushError }}
             </div>
           </div>
@@ -142,6 +147,7 @@ import {
   sendOutline, shieldOutline, trashOutline,
   chevronForwardOutline, closeOutline, informationCircleOutline,
 } from 'ionicons/icons'
+import { Capacitor } from '@capacitor/core'
 import { useOperatorStore } from '@/stores/operator'
 
 const op           = useOperatorStore()
@@ -150,7 +156,9 @@ const connecting   = ref(false)
 const connectError = ref('')
 const pushEnabled  = ref(false)
 const pushError    = ref('')
+const logoFailed   = ref(false)
 
+const isNative = Capacitor.isNativePlatform()
 const SW_PATH = '/sw.js'
 
 function urlBase64ToUint8Array(base64: string) {
@@ -164,6 +172,7 @@ async function connect() {
   if (!codeInput.value.trim()) return
   connecting.value   = true
   connectError.value = ''
+  logoFailed.value   = false
   try {
     await op.connectByCode(codeInput.value.trim())
     codeInput.value = ''
@@ -175,11 +184,19 @@ async function connect() {
 }
 
 function confirmDisconnect() {
-  if (confirm('Disconnettere la concessionaria?')) op.disconnect()
+  if (confirm('Disconnettere la concessionaria?')) {
+    logoFailed.value = false
+    op.disconnect()
+  }
 }
 
-// Controlla se esiste già una subscription attiva e aggiorna il toggle di conseguenza.
+// Controlla stato notifiche: su native usa Notification.permission,
+// su web verifica la subscription attiva nel service worker.
 async function checkPushStatus() {
+  if (isNative) {
+    pushEnabled.value = ('Notification' in window) && Notification.permission === 'granted'
+    return
+  }
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
   try {
     const reg = await navigator.serviceWorker.getRegistration(SW_PATH)
@@ -199,11 +216,26 @@ function togglePush() {
 
 async function disablePush() {
   pushError.value = ''
+
+  // Su native non è possibile revocare il permesso via codice: guidare l'utente
+  if (isNative) {
+    pushError.value = 'Per disabilitare le notifiche vai in Impostazioni → App → MyCars → Notifiche.'
+    return
+  }
+
   try {
     const reg = await navigator.serviceWorker.getRegistration(SW_PATH)
     if (reg) {
       const sub = await reg.pushManager.getSubscription()
-      if (sub) await sub.unsubscribe()
+      if (sub) {
+        // Rimuove la subscription dal backend prima di de-registrarla localmente
+        await fetch(`${op.apiBase}/api/push/unsubscribe`, {
+          method:  'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ endpoint: sub.endpoint }),
+        }).catch(() => { /* non blocca il flusso */ })
+        await sub.unsubscribe()
+      }
     }
     pushEnabled.value = false
   } catch (e: any) {
@@ -213,6 +245,23 @@ async function disablePush() {
 
 async function requestPush() {
   pushError.value = ''
+
+  if (!('Notification' in window)) {
+    pushError.value = 'Le notifiche non sono supportate su questo dispositivo.'
+    return
+  }
+
+  // Su native basta richiedere il permesso via API standard del browser/WebView
+  if (isNative) {
+    const permission = await Notification.requestPermission()
+    pushEnabled.value = permission === 'granted'
+    if (permission !== 'granted') {
+      pushError.value = 'Permesso negato. Abilita le notifiche nelle impostazioni del dispositivo.'
+    }
+    return
+  }
+
+  // Web: service worker + VAPID
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     pushError.value = 'Le notifiche push non sono supportate da questo browser.'
     return
@@ -223,8 +272,8 @@ async function requestPush() {
       pushError.value = 'Permesso notifiche negato. Abilitalo nelle impostazioni del browser.'
       return
     }
-    const reg  = await navigator.serviceWorker.register(SW_PATH)
-    const base = op.apiBase
+    const reg    = await navigator.serviceWorker.register(SW_PATH)
+    const base   = op.apiBase
     const cfgRes = await fetch(`${base}/api/push/config`)
     if (!cfgRes.ok) throw new Error('Configurazione push non disponibile.')
     const { vapidPublicKey } = await cfgRes.json()
@@ -232,7 +281,7 @@ async function requestPush() {
       userVisibleOnly:      true,
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
     })
-    const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
+    const json    = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
     const saveRes = await fetch(`${base}/api/push/subscribe`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },

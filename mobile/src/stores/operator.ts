@@ -10,6 +10,10 @@ export interface OperatorProfile {
   email: string | null
   websiteUrl: string | null
   whatsappNumber: string | null
+  address: string | null
+  city: string | null
+  province: string | null
+  zipCode: string | null
   primaryColor: string | null
   secondaryColor: string | null
   accentColor: string | null
@@ -21,6 +25,10 @@ export interface OperatorProfile {
   rentalPhotosEnabled:      boolean
   rentalContractPdfEnabled: boolean
   rentalShowPrices:         boolean
+  rentalConditions:         Record<string, unknown> | null
+  rentalServicesCatalog:    Record<string, unknown> | null
+  // Privacy
+  privacyPolicyHtml:        string | null
 }
 
 const STORAGE_KEY = 'mycars_operator'
@@ -34,8 +42,8 @@ export const useOperatorStore = defineStore('operator', () => {
     import.meta.env.VITE_API_BASE_URL ?? ''
   )
 
-  function resolveUrl(url: string | null | undefined): string | null {
-    if (!url) return null
+  function resolveUrl(url: string | null | undefined): string {
+    if (!url) return ''
     if (url.startsWith('http')) return url
     return (import.meta.env.VITE_API_BASE_URL ?? '') + url
   }
@@ -92,6 +100,18 @@ export const useOperatorStore = defineStore('operator', () => {
     }
   }
 
+  async function fetchPrivacyPolicy(): Promise<string | null> {
+    if (!slug.value) return null
+    try {
+      const res = await fetch(`${apiBase.value}/api/public/privacy-policy?slug=${encodeURIComponent(slug.value)}`)
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.html || null
+    } catch {
+      return null
+    }
+  }
+
   return {
     profile,
     isConnected,
@@ -104,5 +124,6 @@ export const useOperatorStore = defineStore('operator', () => {
     applyTheme,
     connectByCode,
     refreshProfile,
+    fetchPrivacyPolicy,
   }
 })

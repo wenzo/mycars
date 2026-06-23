@@ -28,9 +28,23 @@ export interface VehicleCard {
   prontaConsegna: boolean
   isNuovoArrivo: boolean
   coverImageUrl: string | null
+  targa: string | null
   branchName: string | null
   city: string | null
   province: string | null
+}
+
+export interface RentalFormula {
+  price: number
+  kmIncluded: number | null
+  priceExtraKm: number | null
+}
+
+export interface RentalRedemption {
+  enabled: boolean
+  salePrice: number | null
+  canoiDiscountPct: number | null
+  notes: string | null
 }
 
 export interface VehicleDetail extends VehicleCard {
@@ -45,6 +59,10 @@ export interface VehicleDetail extends VehicleCard {
   description: string | null
   equipment: string
   branchId: string
+  rentalFormulas: Record<string, RentalFormula> | null
+  rentalRedemption: RentalRedemption | null
+  rentalDepositOverride: number | null
+  rentalVehicleNotes: string | null
 }
 
 export interface VehicleImage {

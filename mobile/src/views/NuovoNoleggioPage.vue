@@ -23,7 +23,7 @@
                 :key="v.id"
                 :value="v.id"
               >
-                {{ v.brandName }} {{ v.model }} – {{ v.targa ?? v.internalCode }}
+                {{ v.brandName }} {{ v.model }}{{ v.targa ? ' – ' + v.targa : '' }}
               </ion-select-option>
             </ion-select>
           </ion-item>
@@ -112,7 +112,7 @@
         <ion-list lines="full" class="ion-margin-bottom">
           <ion-item>
             <ion-label position="stacked">Note</ion-label>
-            <ion-textarea v-model="form.notes" rows="3" placeholder="Eventuali note…" />
+            <ion-textarea v-model="form.notes" :rows="3" placeholder="Eventuali note…" />
           </ion-item>
         </ion-list>
 
@@ -139,12 +139,12 @@ import {
   toastController,
 } from '@ionic/vue'
 import { useRentalsStore } from '@/stores/rentals'
-import { useVehiclesStore } from '@/stores/vehicles'
+import { useVehicleStore } from '@/stores/vehicles'
 import { useOperatorStore } from '@/stores/operator'
 
 const router    = useRouter()
 const store     = useRentalsStore()
-const vehicles  = useVehiclesStore()
+const vehicles  = useVehicleStore()
 const opStore   = useOperatorStore()
 
 const operatorProfile = computed(() => opStore.profile)

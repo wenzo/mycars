@@ -29,7 +29,7 @@
         <div
           v-if="store.detail.body"
           class="news-body"
-          v-html="store.detail.body"
+          v-html="bodyHtml"
         />
         <a
           v-if="store.detail.linkUrl"
@@ -55,9 +55,19 @@ import { useRoute } from 'vue-router'
 import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/vue'
 import { arrowBackOutline } from 'ionicons/icons'
 import { useNewsStore } from '@/stores/news'
+import { useOperatorStore } from '@/stores/operator'
 
 const route = useRoute()
 const store = useNewsStore()
+const op    = useOperatorStore()
+
+const bodyHtml = computed(() => {
+  const body = store.detail?.body
+  if (!body) return ''
+  const base = op.apiBase
+  if (!base) return body
+  return body.replace(/src="(\/.+?)"/g, `src="${base}$1"`)
+})
 
 const newsGradients: Record<string, string> = {
   nuovo_arrivo:  'linear-gradient(135deg,#700000,#B01020)',

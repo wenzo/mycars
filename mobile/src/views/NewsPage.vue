@@ -4,7 +4,7 @@
       <div class="dealer-bar">
         <div class="dealer-logo-wrap">
           <div class="dealer-logo-icon">
-            <img v-if="op.profile?.logoUrl" :src="op.profile.logoUrl" alt="logo" />
+            <img v-if="op.profile?.logoUrl" :src="op.resolveUrl(op.profile.logoUrl)" alt="logo" />
             <ion-icon v-else :icon="carOutline" style="color:#fff;font-size:20px" />
           </div>
           <div>
