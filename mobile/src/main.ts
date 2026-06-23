@@ -28,6 +28,9 @@ router.isReady().then(() => {
   const opStore = useOperatorStore()
   opStore.load()
   app.mount('#app')
-  // Aggiorna il profilo dal backend in background per avere sempre i settings più recenti
   opStore.refreshProfile()
+  // Mantiene il Service Worker registrato e attivo (necessario per ricevere push)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  }
 })

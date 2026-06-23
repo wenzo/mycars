@@ -267,8 +267,10 @@ async function requestPush() {
       pushError.value = 'Permesso notifiche negato. Abilitalo nelle impostazioni del browser.'
       return
     }
-    const reg    = await navigator.serviceWorker.register(SW_PATH)
-    const base   = op.apiBase
+    // register() installa il SW se non presente; ready attende che sia attivo
+    await navigator.serviceWorker.register(SW_PATH)
+    const reg  = await navigator.serviceWorker.ready
+    const base = op.apiBase
     const cfgRes = await fetch(`${base}/api/push/config`)
     if (!cfgRes.ok) throw new Error('Configurazione push non disponibile.')
     const { vapidPublicKey } = await cfgRes.json()
