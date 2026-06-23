@@ -46,3 +46,7 @@ mobile/android/app/build/
 mobile/android/build/
 mobile/.env.local
 mobile/.env.production
+
+# Firebase — credenziali sensibili (mai in git)
+mobile/android/app/google-services.json
+*firebase-adminsdk*.json
