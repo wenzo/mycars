@@ -118,9 +118,15 @@ public sealed class VapidWebPushService : IWebPushService
                 Priority = Priority.High,
                 Notification = new AndroidNotification
                 {
-                    Sound      = "default",
-                    ImageUrl   = iconUrl,
+                    ChannelId = "default",
+                    Sound     = "default",
+                    ImageUrl  = iconUrl,
                 },
+            },
+            Data = new Dictionary<string, string>
+            {
+                ["title"] = title,
+                ["body"]  = body,
             },
         };
 
