@@ -46,6 +46,15 @@ router.isReady().then(() => {
         console.warn('[FCM] Notifica in foreground:', notification.title, notification.body)
       })
 
+      await PushNotifications.createChannel({
+        id:          'default',
+        name:        'Notifiche',
+        description: 'Nuovi veicoli, promozioni e aggiornamenti richieste',
+        importance:  5,
+        visibility:  1,
+        vibration:   true,
+      })
+
       const regHandle = await PushNotifications.addListener('registration', async token => {
         await regHandle.remove()
         localStorage.setItem('fcmToken', token.value)

@@ -266,6 +266,15 @@ async function requestPush() {
     }
 
     pushError.value = '⏳ Registrazione FCM...'
+    await PushNotifications.createChannel({
+      id:          'default',
+      name:        'Notifiche',
+      description: 'Nuovi veicoli, promozioni e aggiornamenti richieste',
+      importance:  5,
+      visibility:  1,
+      vibration:   true,
+    })
+
     await new Promise<void>(async (resolve, reject) => {
       const regHandle = await PushNotifications.addListener('registration', async token => {
         await regHandle.remove()
