@@ -49,6 +49,47 @@ public sealed class PushController : ControllerBase
         return Ok(new { message = "ok" });
     }
 
+    /// <summary>
+    /// Endpoint di diagnostica: mostra le subscription in DB e invia una notifica di test.
+    /// Usare solo per debug — rimuovere in produzione.
+    /// GET /api/push/debug?operatorId=xxx
+    /// </summary>
+    [HttpGet("debug")]
+    public async Task<IActionResult> Debug([FromQuery] Guid? operatorId)
+    {
+        var all  = await _push.GetAllAsync(operatorId);
+        var results = new List<object>();
+
+        foreach (var sub in all)
+        {
+            string status;
+            try
+            {
+                var sent = await _webPush.SendAsync(
+                    new[] { sub },
+                    "Test EasyCars",
+                    "Notifica di test inviata da /api/push/debug",
+                    null);
+                status = sent > 0 ? "ok (201)" : "skipped";
+            }
+            catch (Exception ex)
+            {
+                status = $"errore: {ex.Message}";
+            }
+
+            results.Add(new
+            {
+                endpoint    = sub.Endpoint[..Math.Min(60, sub.Endpoint.Length)],
+                deviceType  = sub.DeviceType,
+                operatorId  = sub.OperatorId,
+                topicGeneral = sub.TopicGeneral,
+                pushResult  = status,
+            });
+        }
+
+        return Ok(new { total = all.Count, results });
+    }
+
     /// <summary>Rimuove una sottoscrizione quando l'utente revoca il permesso.</summary>
     [HttpDelete("unsubscribe")]
     public async Task<IActionResult> Unsubscribe([FromBody] UnsubscribeRequest req)

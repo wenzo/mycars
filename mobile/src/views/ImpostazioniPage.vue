@@ -252,32 +252,39 @@ async function requestPush() {
   }
 
   if (!('Notification' in window)) {
-    pushError.value = 'Le notifiche non sono supportate su questo dispositivo.'
+    pushError.value = 'ERRORE: API Notification non disponibile in questo browser.'
+    return
+  }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    pushError.value = 'ERRORE: Service Worker o PushManager non supportati.'
     return
   }
 
-  // Web: service worker + VAPID
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    pushError.value = 'Le notifiche push non sono supportate da questo browser.'
-    return
-  }
   try {
+    pushError.value = '⏳ Richiesta permesso...'
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') {
-      pushError.value = 'Permesso notifiche negato. Abilitalo nelle impostazioni del browser.'
+      pushError.value = `ERRORE: permesso = "${permission}". Sblocca le notifiche nelle impostazioni del browser.`
       return
     }
-    // register() installa il SW se non presente; ready attende che sia attivo
+
+    pushError.value = '⏳ Registrazione SW...'
     await navigator.serviceWorker.register(SW_PATH)
-    const reg  = await navigator.serviceWorker.ready
+    const reg = await navigator.serviceWorker.ready
+
+    pushError.value = '⏳ Lettura chiave VAPID...'
     const base = op.apiBase
     const cfgRes = await fetch(`${base}/api/push/config`)
-    if (!cfgRes.ok) throw new Error('Configurazione push non disponibile.')
+    if (!cfgRes.ok) throw new Error(`Config VAPID fallita: HTTP ${cfgRes.status}`)
     const { vapidPublicKey } = await cfgRes.json()
+
+    pushError.value = '⏳ Creazione subscription...'
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly:      true,
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
     })
+
+    pushError.value = '⏳ Salvataggio subscription...'
     const json    = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } }
     const saveRes = await fetch(`${base}/api/push/subscribe`, {
       method:  'POST',
@@ -293,10 +300,12 @@ async function requestPush() {
         topicNews:     true,
       }),
     })
-    if (!saveRes.ok) throw new Error('Errore registrazione subscription sul server.')
+    if (!saveRes.ok) throw new Error(`Salvataggio fallito: HTTP ${saveRes.status}`)
+
     pushEnabled.value = true
+    pushError.value = `✅ Attive. Endpoint: ...${json.endpoint.slice(-30)}`
   } catch (e: any) {
-    pushError.value = e?.message ?? 'Errore durante la registrazione.'
+    pushError.value = `ERRORE: ${e?.message ?? 'sconosciuto'}`
   }
 }
 

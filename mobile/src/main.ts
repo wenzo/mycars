@@ -29,8 +29,11 @@ router.isReady().then(() => {
   opStore.load()
   app.mount('#app')
   opStore.refreshProfile()
-  // Mantiene il Service Worker registrato e attivo (necessario per ricevere push)
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {})
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'sw-push')
+        console.warn('[APP] Push ricevuto dal SW:', e.data.title)
+    })
   }
 })

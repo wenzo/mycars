@@ -1,26 +1,37 @@
 /* EasyCars — Service Worker */
 'use strict';
 
+// Forza attivazione immediata senza aspettare la chiusura delle tab
+self.addEventListener('install',  () => self.skipWaiting());
+self.addEventListener('activate', e  => e.waitUntil(self.clients.claim()));
+
 self.addEventListener('push', event => {
-  let data = { title: 'EasyCars', body: '' };
+  console.log('[SW] push ricevuto');
+
+  let data = { title: 'EasyCars', body: 'Nuova notifica' };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch {
     if (event.data) data.body = event.data.text();
   }
 
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body:               data.body,
-      icon:               data.icon  || '/favicon.png',
-      badge:              data.badge || '/favicon.png',
-      data:               { url: data.url || '/' },
-      tag:                'easycars-' + (data.tag || 'msg'),
-      renotify:           true,
-      requireInteraction: false,
-      vibrate:            [200, 100, 200],
-    })
-  );
+  // Avvisa la pagina aperta che il push è arrivato (visibile in console normale)
+  const notifyClients = clients.matchAll({ type: 'window', includeUncontrolled: true })
+    .then(cs => cs.forEach(c => c.postMessage({ type: 'sw-push', title: data.title })));
+
+  const showNotif = self.registration.showNotification(data.title, {
+    body:               data.body,
+    icon:               data.icon  || '/favicon.png',
+    badge:              data.badge || '/favicon.png',
+    data:               { url: data.url || '/' },
+    tag:                'easycars-msg',
+    renotify:           true,
+    requireInteraction: false,
+  })
+  .then(() => console.log('[SW] showNotification OK'))
+  .catch(err => console.error('[SW] showNotification ERRORE:', err));
+
+  event.waitUntil(Promise.all([notifyClients, showNotif]));
 });
 
 self.addEventListener('notificationclick', event => {
