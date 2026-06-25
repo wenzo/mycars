@@ -68,7 +68,7 @@
           :vehicle="v"
           :layout="layout"
           :rental-mode="true"
-          @click="$router.push(`/veicolo/${v.id}?from=noleggio`)"
+          @click="$router.push(`/tabs/veicolo/${v.id}?from=noleggio`)"
         />
       </div>
 

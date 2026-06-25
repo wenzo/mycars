@@ -15,8 +15,12 @@
             <ion-icon :icon="arrowBackOutline" />
           </button>
           <div style="display:flex;gap:8px">
-            <button class="action-btn"><ion-icon :icon="heartOutline" /></button>
-            <button class="action-btn"><ion-icon :icon="shareOutline" /></button>
+            <button class="action-btn" :class="{ 'action-btn--fav': isFav }" @click="toggleFav">
+              <ion-icon :icon="isFav ? heart : heartOutline" />
+            </button>
+            <button class="action-btn" @click="shareVehicle">
+              <ion-icon :icon="shareOutline" />
+            </button>
           </div>
         </div>
 
@@ -44,7 +48,7 @@
       </div>
 
       <!-- Contenuto scrollabile -->
-      <ion-content style="--padding-bottom:100px">
+      <ion-content style="--padding-bottom: calc(100px + var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
 
         <!-- Card info principale -->
         <div class="info-card">
@@ -260,7 +264,7 @@
         <div
           v-if="!fromRental && store.detail.forRental"
           class="cross-promo"
-          @click="$router.replace({ path: `/veicolo/${store.detail.id}`, query: { from: 'noleggio' } })"
+          @click="$router.replace({ path: `/tabs/veicolo/${store.detail.id}`, query: { from: 'noleggio' } })"
         >
           <span>🔑 Sei interessato al noleggio?</span>
           <span class="cross-promo-link">Scopri le condizioni →</span>
@@ -270,7 +274,7 @@
         <div
           v-if="fromRental && store.detail.forSale"
           class="cross-promo"
-          @click="$router.replace({ path: `/veicolo/${store.detail.id}` })"
+          @click="$router.replace({ path: `/tabs/veicolo/${store.detail.id}` })"
         >
           <span>🚗 Saresti interessato all'acquisto?</span>
           <span class="cross-promo-link">Vedi la scheda vendita →</span>
@@ -318,21 +322,26 @@ import { ref, computed, watch, watchEffect, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonPage, IonContent, IonIcon, IonSpinner, createGesture } from '@ionic/vue'
 import {
-  arrowBackOutline, heartOutline, shareOutline,
+  arrowBackOutline, heart, heartOutline, shareOutline,
   carOutline, flashOutline, speedometerOutline, calendarOutline,
   gitNetworkOutline, thermometerOutline, colorPaletteOutline,
   locationOutline, documentTextOutline, callOutline, keyOutline,
   checkmarkCircleOutline, addCircleOutline, informationCircleOutline,
   cardOutline, personOutline, checkmarkOutline,
 } from 'ionicons/icons'
+import { Share } from '@capacitor/share'
+import { Filesystem, Directory } from '@capacitor/filesystem'
+import { CapacitorHttp } from '@capacitor/core'
 import { useVehicleStore } from '@/stores/vehicles'
 import { useOperatorStore } from '@/stores/operator'
+import { useFavoritesStore } from '@/stores/favorites'
 import LeadModal from '@/components/LeadModal.vue'
 import RentalRequestModal from '@/components/RentalRequestModal.vue'
 
 const route    = useRoute()
 const store    = useVehicleStore()
 const op       = useOperatorStore()
+const favs     = useFavoritesStore()
 const imgIndex = ref(0)
 const heroEl   = ref<HTMLElement | null>(null)
 
@@ -532,6 +541,63 @@ function openLead(type: 'info' | 'test_drive' | 'price_update') {
   showLead.value = true
 }
 
+// ── Preferiti ─────────────────────────────────────────────────────────────────
+const isFav = computed(() => !!store.detail && favs.isFavorite(store.detail.id))
+
+function toggleFav() {
+  if (!store.detail) return
+  const v = store.detail
+  favs.toggle({
+    id:            v.id,
+    brandName:     v.brandName,
+    model:         v.model,
+    version:       v.version ?? undefined,
+    coverImageUrl: store.images[0]?.url ?? undefined,
+  })
+}
+
+// ── Condivisione ──────────────────────────────────────────────────────────────
+async function shareVehicle() {
+  const v = store.detail
+  if (!v) return
+  const title = `${v.brandName} ${v.model}${v.version ? ' ' + v.version : ''}`
+  const parts: string[] = [title]
+  if (v.price)             parts.push(`€ ${fmtPrice(v.price)}`)
+  if (v.fuel)              parts.push(v.fuel)
+  if (v.registrationYear)  parts.push(String(v.registrationYear))
+  if (v.mileageKm != null) parts.push(`${fmtKm(v.mileageKm)} km`)
+
+  const options: Parameters<typeof Share.share>[0] = {
+    title,
+    text:        parts.join(' · '),
+    dialogTitle: 'Condividi veicolo',
+  }
+
+  // Scarica l'immagine via HTTP nativo (bypassa il CORS della WebView)
+  const imgUrl = currentImg.value
+  if (imgUrl) {
+    try {
+      const res  = await CapacitorHttp.get({ url: imgUrl, responseType: 'blob' })
+      // Su native, CapacitorHttp restituisce i dati binari già in base64
+      const data: string = typeof res.data === 'string'
+        ? res.data
+        : btoa(String.fromCharCode(...new Uint8Array(res.data)))
+      const ct  = (res.headers['content-type'] ?? res.headers['Content-Type'] ?? '') as string
+      const ext = ct.includes('png') ? 'png' : 'jpg'
+      const { uri } = await Filesystem.writeFile({
+        path:      `share_vehicle.${ext}`,
+        data,
+        directory: Directory.Cache,
+      })
+      options.files = [uri]
+    } catch {
+      // Fallback: condivide senza immagine
+    }
+  }
+
+  await Share.share(options)
+}
+
 onMounted(() => store.fetchDetail(route.params.id as string))
 </script>
 
@@ -558,8 +624,10 @@ onMounted(() => store.fetchDetail(route.params.id as string))
   background: rgba(0,0,0,.52);
   border: 1px solid rgba(255,255,255,.15); border-radius: 50%; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s;
 }
 .action-btn ion-icon { color: #fff; font-size: 18px; }
+.action-btn--fav { background: rgba(214,40,40,.75); border-color: rgba(214,40,40,.5); }
 .hero-badges {
   position: absolute; bottom: 14px; left: 14px; right: 14px; z-index: 15;
   display: flex; justify-content: space-between; align-items: center;

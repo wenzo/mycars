@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-content v-if="store.detail" :fullscreen="true">
+    <ion-content v-if="store.detail" :fullscreen="true" style="--padding-bottom: calc(var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
       <!-- Hero -->
       <div class="news-hero" :style="heroStyle">
         <div class="hero-overlay" />
@@ -66,7 +66,10 @@ const bodyHtml = computed(() => {
   if (!body) return ''
   const base = op.apiBase
   if (!base) return body
-  return body.replace(/src="(\/.+?)"/g, `src="${base}$1"`)
+  // Normalize relative src URLs — handles both double and single quotes
+  return body
+    .replace(/src="(\/[^"]+)"/g, `src="${base}$1"`)
+    .replace(/src='(\/[^']+)'/g, `src='${base}$1'`)
 })
 
 const newsGradients: Record<string, string> = {
@@ -125,4 +128,5 @@ onMounted(() => store.fetchDetail(route.params.id as string))
 .news-body { font-size: 14px; color: var(--mc-text-mid); line-height: 1.7; }
 .news-body p { margin-bottom: 12px; }
 .news-body h2, .news-body h3 { font-family: var(--mc-font-heading); color: var(--mc-text); margin: 16px 0 8px; }
+.news-body :deep(img) { max-width: 100%; height: auto; display: block; margin: 8px 0; border-radius: 6px; }
 </style>

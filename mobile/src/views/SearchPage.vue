@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <ion-content>
+    <ion-content style="--padding-bottom: calc(var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
       <div style="padding:14px 16px 0;display:flex;flex-direction:column;gap:6px">
 
         <!-- Condizione -->

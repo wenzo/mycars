@@ -11,17 +11,17 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/TabsPage.vue'),
     children: [
       { path: '', redirect: '/tabs/vetrina' },
-      { path: 'vetrina',      component: () => import('@/views/VetrinaPage.vue') },
-      { path: 'news',         component: () => import('@/views/NewsPage.vue') },
-      { path: 'contatti',     component: () => import('@/views/ContattiPage.vue') },
-      { path: 'impostazioni', component: () => import('@/views/ImpostazioniPage.vue') },
-      { path: 'noleggio', component: () => import('@/views/NoleggioHubPage.vue') },
+      { path: 'vetrina',        component: () => import('@/views/VetrinaPage.vue') },
+      { path: 'news',           component: () => import('@/views/NewsPage.vue') },
+      { path: 'contatti',       component: () => import('@/views/ContattiPage.vue') },
+      { path: 'impostazioni',   component: () => import('@/views/ImpostazioniPage.vue') },
+      { path: 'noleggio',       component: () => import('@/views/NoleggioHubPage.vue') },
+      { path: 'veicolo/:id',    component: () => import('@/views/VehicleDetailPage.vue') },
+      { path: 'news/:id',       component: () => import('@/views/NewsDetailPage.vue') },
+      { path: 'ricerca',        component: () => import('@/views/SearchPage.vue') },
     ],
   },
 
-  { path: '/veicolo/:id',   component: () => import('@/views/VehicleDetailPage.vue') },
-  { path: '/ricerca',       component: () => import('@/views/SearchPage.vue') },
-  { path: '/news/:id',      component: () => import('@/views/NewsDetailPage.vue') },
   { path: '/noleggio/:id',  component: () => import('@/views/NoleggioDetailPage.vue') },
 ]
 

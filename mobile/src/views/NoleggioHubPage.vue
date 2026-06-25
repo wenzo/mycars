@@ -1,74 +1,48 @@
 <template>
   <ion-page>
 
-    <!-- ── Intestazione dealer + tab bar ─────────────────────────────────── -->
-    <div class="nol-header">
+    <!-- ── Intestazione dealer (identica a VetrinaPage, colore secondario) ─ -->
+    <div class="dealer-header nol-header">
       <div class="dealer-bar">
         <div class="dealer-logo-wrap">
           <div class="dealer-logo-icon">
             <img v-if="op.profile?.logoUrl" :src="op.resolveUrl(op.profile.logoUrl) ?? undefined" alt="logo" />
-            <ion-icon v-else :icon="keyOutline" style="color:#fff;font-size:18px" />
+            <ion-icon v-else :icon="keyOutline" style="color:#fff;font-size:20px" />
           </div>
           <div>
             <div class="dealer-name">{{ op.profile?.businessName ?? 'MyCars' }}</div>
             <div class="dealer-sub">Noleggio veicoli</div>
           </div>
         </div>
-        <div class="dealer-badge" v-if="badgeCount > 0">{{ badgeCount }}</div>
+        <div style="display:flex;gap:8px">
+          <button v-if="activeTab !== 'profilo'" class="header-icon-btn" @click="activeTab = 'profilo'">
+            <ion-icon :icon="personCircleOutline" />
+          </button>
+        </div>
       </div>
 
-      <!-- Tab bar orizzontale -->
-      <div class="tab-bar">
+      <!-- Tipo veicolo switcher -->
+      <div class="tipo-switcher">
         <button
-          v-for="t in tabs"
-          :key="t.id"
-          class="tab-btn"
-          :class="{ active: activeTab === t.id }"
-          @click="activeTab = t.id"
-        >
-          <div class="tab-icon-wrap">
-            <ion-icon :icon="t.icon" />
-            <span v-if="t.badge > 0" class="tab-badge">{{ t.badge }}</span>
-          </div>
-          <span class="tab-label">{{ t.label }}</span>
-        </button>
+          v-for="t in tipi"
+          :key="t.value"
+          class="tipo-btn"
+          :class="activeType === t.value ? 'active' : 'inactive'"
+          @click="selectType(t.value)"
+        >{{ t.label }}</button>
       </div>
 
-      <!-- Esplora: tipo switcher + ricerca -->
-      <template v-if="activeTab === 'esplora'">
-        <div class="tipo-switcher">
-          <button
-            v-for="t in tipi"
-            :key="t.value"
-            class="tipo-btn"
-            :class="activeType === t.value ? 'active' : 'inactive'"
-            @click="selectType(t.value)"
-          >{{ t.label }}</button>
+      <!-- Searchbar -->
+      <div class="search-row">
+        <div class="search-box">
+          <ion-icon :icon="searchOutline" />
+          <input v-model="searchText" placeholder="Cerca marca, modello…" @focus="activeTab = 'esplora'" />
         </div>
-        <div class="search-row">
-          <div class="search-box">
-            <ion-icon :icon="searchOutline" />
-            <input v-model="searchText" placeholder="Cerca marca, modello…" />
-          </div>
-        </div>
-      </template>
-
-      <!-- Comunicazioni: filtro tipo -->
-      <template v-else-if="activeTab === 'comunicazioni'">
-        <div class="tipo-switcher">
-          <button
-            v-for="t in tipiComm"
-            :key="t.value"
-            class="tipo-btn"
-            :class="filtroComm === t.value ? 'active' : 'inactive'"
-            @click="filtroComm = t.value"
-          >{{ t.label }}</button>
-        </div>
-      </template>
+      </div>
     </div>
 
     <!-- ── Contenu to scrollabile ────────────────────────────────────────── -->
-    <ion-content>
+    <ion-content style="--padding-bottom: calc(var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
 
       <!-- ═══ ESPLORA ═══════════════════════════════════════════════════════ -->
       <template v-if="activeTab === 'esplora'">
@@ -105,7 +79,7 @@
             :vehicle="v"
             :layout="layout"
             :rental-mode="true"
-            @click="$router.push(`/veicolo/${v.id}?from=noleggio`)"
+            @click="$router.push(`/tabs/veicolo/${v.id}?from=noleggio`)"
           />
         </div>
 
@@ -208,7 +182,7 @@
             v-for="item in filteredComm"
             :key="item.id"
             class="comm-card"
-            @click="$router.push(`/news/${item.id}`)"
+            @click="$router.push(`/tabs/news/${item.id}`)"
           >
             <div class="comm-icon-wrap" :class="commIconClass(item.newsType)">
               <ion-icon :icon="commIcon(item.newsType)" />
@@ -239,6 +213,34 @@
             <div class="avatar-info">
               <div class="avatar-name">{{ clientStore.profile.fullName || 'Ospite' }}</div>
               <div class="avatar-sub">{{ clientStore.profile.email || 'Nessuna email' }}</div>
+            </div>
+          </div>
+
+          <!-- Veicoli preferiti -->
+          <div class="profilo-section-label">Veicoli preferiti</div>
+          <div class="profilo-card" style="padding:14px 16px">
+            <div v-if="favs.items.length === 0" class="empty-mini">
+              Nessun veicolo nei preferiti.
+            </div>
+            <div v-else>
+              <div
+                v-for="fav in favs.items"
+                :key="fav.id"
+                class="fav-row"
+                @click="$router.push(`/tabs/veicolo/${fav.id}`)"
+              >
+                <div class="fav-thumb">
+                  <img v-if="fav.coverImageUrl" :src="op.resolveUrl(fav.coverImageUrl)" alt="" />
+                  <ion-icon v-else :icon="keyOutline" style="font-size:18px;color:var(--dealer-secondary)" />
+                </div>
+                <div class="fav-info">
+                  <div class="fav-name">{{ fav.brandName }} {{ fav.model }}</div>
+                  <div v-if="fav.version" class="fav-version">{{ fav.version }}</div>
+                </div>
+                <button class="fav-remove" @click.stop="favs.remove(fav.id)" aria-label="Rimuovi preferito">
+                  <ion-icon :icon="closeOutlineIcon" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -415,35 +417,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   IonPage, IonContent, IonIcon, IonSpinner, IonButton, IonButtons,
   IonRefresher, IonRefresherContent, IonModal, IonHeader, IonToolbar, IonTitle,
+  onIonViewWillEnter,
 } from '@ionic/vue'
 import {
   keyOutline, searchOutline, gridOutline, listOutline, notificationsOutline,
   chevronForwardOutline, informationCircleOutline, calendarOutline, timeOutline,
   cardOutline, checkmarkCircleOutline, callOutline, mailOutline, locationOutline,
   businessOutline, logoWhatsapp, megaphoneOutline, newspaperOutline,
+  personCircleOutline, closeOutline as closeOutlineIcon,
 } from 'ionicons/icons'
 import { useOperatorStore } from '@/stores/operator'
 import { useRentalClientStore, type LocalRentalRequest } from '@/stores/rentalClient'
+import { useFavoritesStore } from '@/stores/favorites'
 import VehicleCard from '@/components/VehicleCard.vue'
 
+const route       = useRoute()
 const op          = useOperatorStore()
 const clientStore = useRentalClientStore()
+const favs        = useFavoritesStore()
 
 // ── Tab navigation ────────────────────────────────────────────────────────────
 type TabId = 'esplora' | 'noleggi' | 'comunicazioni' | 'profilo'
 const activeTab = ref<TabId>('esplora')
 
+
 const pendingCount = computed(() => clientStore.requests.length)
 
 const tabs = computed(() => [
-  { id: 'esplora'       as TabId, label: 'Esplora', icon: searchOutline,        badge: 0 },
   { id: 'noleggi'       as TabId, label: 'Noleggi', icon: keyOutline,           badge: pendingCount.value },
   { id: 'comunicazioni' as TabId, label: 'News',    icon: notificationsOutline, badge: unreadComm.value },
-  { id: 'profilo'       as TabId, label: 'Profilo', icon: businessOutline,      badge: 0 },
 ])
 
 const badgeCount = computed(() => pendingCount.value + unreadComm.value)
@@ -493,6 +500,7 @@ async function loadEsplora() {
 }
 
 function selectType(type: string) {
+  activeTab.value  = 'esplora'
   activeType.value = type
   searchText.value = ''
   loadEsplora()
@@ -653,93 +661,43 @@ onMounted(async () => {
   await Promise.all([loadEsplora(), loadComm()])
   loadLiveStatuses()
 })
+
+onIonViewWillEnter(() => {
+  if (route.query.tab === 'profilo') activeTab.value = 'profilo'
+})
+
+watch(() => route.query.tab, (tab) => {
+  if (tab === 'profilo') activeTab.value = 'profilo'
+})
 </script>
 
 <style scoped>
-/* ── Header ──────────────────────────────────────────────────────────────── */
-.nol-header {
-  background: linear-gradient(150deg, var(--dealer-secondary) 0%, color-mix(in srgb, var(--dealer-secondary) 75%, #000) 100%);
-  padding: 12px 16px 0;
-  flex-shrink: 0;
-}
+/* ── Override colore header (dealer-secondary invece di dealer-primary) ──── */
+.nol-header { background: var(--dealer-secondary); }
 
-.dealer-bar {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
-}
-.dealer-logo-wrap {
-  display: flex; align-items: center; gap: 10px;
-}
-.dealer-logo-icon {
-  width: 36px; height: 36px; border-radius: 10px;
-  background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
-  display: flex; align-items: center; justify-content: center; overflow: hidden;
-}
-.dealer-logo-icon img { width: 100%; height: 100%; object-fit: cover; }
-.dealer-name { font-family: var(--mc-font-heading); font-size: 14px; font-weight: 700; color: #fff; }
-.dealer-sub  { font-size: 10.5px; color: rgba(255,255,255,.65); }
-.dealer-badge {
-  background: #f59e0b; color: #fff; font-size: 10px; font-weight: 700;
-  width: 20px; height: 20px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-}
-
-/* ── Tab bar ─────────────────────────────────────────────────────────────── */
-.tab-bar {
-  display: flex; gap: 0; margin: 0 -16px;
-  border-top: 1px solid rgba(255,255,255,.1);
-}
-.tab-btn {
-  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 8px 4px 10px;
-  background: transparent; border: none; cursor: pointer;
-  position: relative; border-bottom: 2px solid transparent;
-  transition: border-color .15s;
-}
-.tab-btn.active { border-bottom-color: rgba(255,255,255,.9); }
-.tab-icon-wrap { position: relative; }
-.tab-icon-wrap ion-icon {
-  font-size: 19px;
-  color: rgba(255,255,255,.55);
-  transition: color .15s;
-}
-.tab-btn.active .tab-icon-wrap ion-icon { color: #fff; }
-.tab-badge {
-  position: absolute; top: -5px; right: -7px;
-  background: #f59e0b; color: #fff; font-size: 8px; font-weight: 700;
-  min-width: 14px; height: 14px; border-radius: 7px; padding: 0 3px;
-  display: flex; align-items: center; justify-content: center;
-}
-.tab-label {
-  font-size: 9px; font-weight: 600; letter-spacing: .02em;
-  color: rgba(255,255,255,.55); transition: color .15s;
-}
-.tab-btn.active .tab-label { color: #fff; }
-
-/* ── Tipo switcher + search ──────────────────────────────────────────────── */
-.tipo-switcher {
-  display: flex; gap: 6px; margin: 10px 0 8px;
-}
+/* ── Tipo switcher + search (identici a VetrinaPage) ────────────────────── */
+.tipo-switcher { display: flex; gap: 7px; margin-bottom: 14px; }
 .tipo-btn {
-  flex: 1; height: 34px; border: none; cursor: pointer;
+  flex: 1; height: 38px; border: none; cursor: pointer;
   border-radius: var(--mc-r-sm);
-  font-family: var(--mc-font-heading); font-size: 10px; font-weight: 600;
+  font-family: var(--mc-font-heading); font-size: 10.5px; font-weight: 600;
 }
 .tipo-btn.active   { background: rgba(255,255,255,.92); color: var(--dealer-secondary); font-weight: 700; }
-.tipo-btn.inactive { background: rgba(255,255,255,.12); color: rgba(255,255,255,.7); }
-.search-row { margin-bottom: 10px; }
+.tipo-btn.inactive { background: rgba(255,255,255,.12); color: rgba(255,255,255,.65); }
+.search-row { display: flex; gap: 8px; align-items: center; }
 .search-box {
-  height: 40px;
-  background: rgba(255,255,255,.14); border: 1.5px solid rgba(255,255,255,.2);
+  flex: 1; height: 42px;
+  background: rgba(255,255,255,.14); border: 1.5px solid rgba(255,255,255,.18);
   border-radius: var(--mc-r-sm);
   display: flex; align-items: center; gap: 8px; padding: 0 12px;
 }
-.search-box ion-icon { color: rgba(255,255,255,.6); font-size: 15px; flex-shrink: 0; }
+.search-box ion-icon { color: rgba(255,255,255,.6); font-size: 16px; flex-shrink: 0; }
 .search-box input {
   flex: 1; background: transparent; border: none; outline: none;
-  color: #fff; font-size: 13px;
+  color: #fff; font-size: 13.5px;
 }
 .search-box input::placeholder { color: rgba(255,255,255,.5); }
+.header-icon-btn.active { background: rgba(255,255,255,.28); }
 
 /* ── Stats bar ───────────────────────────────────────────────────────────── */
 .stats-bar {
@@ -922,6 +880,26 @@ onMounted(async () => {
 .mini-req:last-child { border-bottom: none; }
 .mini-req-name { color: var(--mc-text); font-weight: 600; }
 .mini-req-date { color: var(--mc-text-light); }
+
+/* ── Preferiti ───────────────────────────────────────────────────────────── */
+.fav-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--mc-surface); cursor: pointer;
+}
+.fav-row:last-child { border-bottom: none; }
+.fav-thumb {
+  width: 40px; height: 40px; border-radius: 8px; overflow: hidden; flex-shrink: 0;
+  background: var(--mc-surface2); display: flex; align-items: center; justify-content: center;
+}
+.fav-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.fav-info { flex: 1; min-width: 0; }
+.fav-name    { font-size: 13px; font-weight: 700; color: var(--mc-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fav-version { font-size: 11px; color: var(--mc-text-light); }
+.fav-remove {
+  width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--mc-surface); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.fav-remove ion-icon { font-size: 14px; color: var(--mc-text-light); }
 
 /* ── Modal dettaglio richiesta ───────────────────────────────────────────── */
 .req-detail-wrap { padding: 16px; }

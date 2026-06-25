@@ -13,8 +13,8 @@
           </div>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="header-icon-btn" @click="$router.push('/tabs/impostazioni')">
-            <ion-icon :icon="notificationsOutline" />
+          <button class="header-icon-btn" @click="goToProfilo">
+            <ion-icon :icon="personCircleOutline" />
           </button>
         </div>
       </div>
@@ -41,7 +41,7 @@
             @keyup.enter="doSearch"
           />
         </div>
-        <button class="search-adv-btn" @click="$router.push('/ricerca')">
+        <button class="search-adv-btn" @click="$router.push('/tabs/ricerca')">
           <ion-icon :icon="funnelOutline" />
           Filtra
         </button>
@@ -63,7 +63,7 @@
       </div>
     </div>
 
-    <ion-content>
+    <ion-content style="--padding-bottom: calc(var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
       <div
         class="veicoli-scroll"
         :class="layout === 'grid' ? 'grid-2col' : 'list-col'"
@@ -73,7 +73,7 @@
           :key="v.id"
           :vehicle="v"
           :layout="layout"
-          @click="$router.push(`/veicolo/${v.id}`)"
+          @click="$router.push(`/tabs/veicolo/${v.id}`)"
         />
 
         <div v-if="store.loading" class="loading-row">
@@ -90,20 +90,26 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   IonPage, IonContent, IonIcon, IonSpinner,
   IonInfiniteScroll, IonInfiniteScrollContent,
 } from '@ionic/vue'
 import {
-  carOutline, notificationsOutline, searchOutline,
-  funnelOutline, gridOutline, listOutline,
+  carOutline, searchOutline, funnelOutline,
+  gridOutline, listOutline, personCircleOutline,
 } from 'ionicons/icons'
 import { useOperatorStore } from '@/stores/operator'
 import { useVehicleStore } from '@/stores/vehicles'
 import VehicleCard from '@/components/VehicleCard.vue'
 
-const op    = useOperatorStore()
-const store = useVehicleStore()
+const router = useRouter()
+const op     = useOperatorStore()
+const store  = useVehicleStore()
+
+function goToProfilo() {
+  router.push('/tabs/noleggio?tab=profilo')
+}
 
 const searchText = ref('')
 const layout     = ref<'grid' | 'list'>('grid')
@@ -126,9 +132,7 @@ const filteredItems = computed(() => {
   )
 })
 
-const displayCount = computed(() =>
-  searchText.value.trim() ? filteredItems.value.length : store.totalCount
-)
+const displayCount = computed(() => filteredItems.value.length || store.items.length)
 
 function selectType(type: string) {
   activeType.value = type

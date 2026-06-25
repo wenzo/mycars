@@ -25,13 +25,13 @@
       </div>
     </div>
 
-    <ion-content>
+    <ion-content style="--padding-bottom: calc(var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
       <div class="news-scroll">
         <div
           v-for="item in store.items"
           :key="item.id"
           class="ncard ncard-list"
-          @click="$router.push(`/news/${item.id}`)"
+          @click="$router.push(`/tabs/news/${item.id}`)"
         >
           <div class="ncard-img" :style="newsImgStyle(item.newsType)">
             <img v-if="item.coverImageUrl" :src="op.resolveUrl(item.coverImageUrl)" :alt="item.title" />
@@ -142,7 +142,7 @@ onMounted(() => { if (store.items.length === 0) store.fetchNews(true) })
 .nfbtn.active   { background: #fff; color: var(--dealer-primary); }
 .nfbtn.inactive { background: rgba(255,255,255,.14); color: rgba(255,255,255,.7); }
 
-.news-scroll { padding: 14px 16px 80px; display: flex; flex-direction: column; gap: 12px; }
+.news-scroll { padding: 14px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
 
 /* ── card base ── */
 .ncard {
