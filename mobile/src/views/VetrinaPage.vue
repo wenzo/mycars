@@ -108,7 +108,7 @@ const op     = useOperatorStore()
 const store  = useVehicleStore()
 
 function goToProfilo() {
-  router.push('/tabs/noleggio?tab=profilo')
+  router.push('/tabs/profilo')
 }
 
 const searchText = ref('')

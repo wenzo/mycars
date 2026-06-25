@@ -16,6 +16,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'contatti',       component: () => import('@/views/ContattiPage.vue') },
       { path: 'impostazioni',   component: () => import('@/views/ImpostazioniPage.vue') },
       { path: 'noleggio',       component: () => import('@/views/NoleggioHubPage.vue') },
+      { path: 'profilo',         component: () => import('@/views/ProfiloPage.vue') },
       { path: 'veicolo/:id',    component: () => import('@/views/VehicleDetailPage.vue') },
       { path: 'news/:id',       component: () => import('@/views/NewsDetailPage.vue') },
       { path: 'ricerca',        component: () => import('@/views/SearchPage.vue') },
