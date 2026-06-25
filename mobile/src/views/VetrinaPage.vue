@@ -35,11 +35,7 @@
       <div class="search-row">
         <div class="search-box">
           <ion-icon :icon="searchOutline" />
-          <input
-            v-model="searchText"
-            placeholder="Cerca marca, modello..."
-            @keyup.enter="doSearch"
-          />
+          <input v-model="searchText" placeholder="Cerca marca, modello..." />
         </div>
         <button class="search-adv-btn" @click="$router.push('/tabs/ricerca')">
           <ion-icon :icon="funnelOutline" />
@@ -89,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   IonPage, IonContent, IonIcon, IonSpinner,
@@ -140,7 +136,13 @@ function selectType(type: string) {
   store.applyFilters({ ...store.filters, vehicleType: type })
 }
 
-function doSearch() { /* filtro reattivo via computed */ }
+let searchTimer: ReturnType<typeof setTimeout>
+watch(searchText, (q) => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    store.applyFilters({ vehicleType: activeType.value, search: q.trim() || undefined })
+  }, 300)
+})
 
 async function onInfinite(ev: CustomEvent) {
   await store.fetchNextPage()

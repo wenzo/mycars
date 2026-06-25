@@ -311,7 +311,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   IonPage, IonContent, IonIcon, IonSpinner, IonButton, IonButtons,
@@ -373,7 +373,7 @@ const filteredItems = computed(() => {
   )
 })
 
-async function loadEsplora() {
+async function loadEsplora(search?: string) {
   if (!op.slug) return
   loadingEsplora.value = true
   try {
@@ -382,6 +382,7 @@ async function loadEsplora() {
       vehicleType: activeType.value,
       pageSize:    '50',
     })
+    if (search) params.set('search', search)
     const res = await fetch(`${op.apiBase}/api/public/${op.slug}/vehicles?${params}`)
     if (!res.ok) throw new Error()
     const data = await res.json()
@@ -392,6 +393,12 @@ async function loadEsplora() {
     loadingEsplora.value = false
   }
 }
+
+let searchTimer: ReturnType<typeof setTimeout>
+watch(searchText, (q) => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => loadEsplora(q.trim() || undefined), 300)
+})
 
 function selectType(type: string) {
   activeTab.value  = 'esplora'
