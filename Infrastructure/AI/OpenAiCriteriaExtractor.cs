@@ -42,14 +42,7 @@ public sealed class OpenAiCriteriaExtractor : ICriteriaExtractor
             },
             messages = new object[]
             {
-                new { role = "system", content =
-                    $"Sei un assistente per la ricerca di veicoli in un'app per concessionarie italiane. " +
-                    $"Analizza la richiesta dell'utente ed estrai i criteri strutturati chiamando lo strumento fornito. " +
-                    $"Anno corrente: {DateTime.UtcNow.Year}. " +
-                    $"Usalo per calcolare gli anni di immatricolazione: " +
-                    $"'non più vecchia di 2 anni' → MinYear {DateTime.UtcNow.Year - 2}, " +
-                    $"'recente' → MinYear {DateTime.UtcNow.Year - 3}. " +
-                    $"Per i campi opzionali non menzionati usa null, NON array vuoti né zero." },
+                new { role = "system", content = CriteriaToolSchema.BuildSystemPrompt() },
                 new { role = "user", content = userQuery }
             }
         };

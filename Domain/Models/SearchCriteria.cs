@@ -21,6 +21,9 @@ public sealed class SearchCriteria
     // marca del veicolo (es. BMW, Volkswagen, Fiat) — null se non menzionata
     public string?  Brand        { get; set; }
 
+    // modello specifico (es. Golf, Panda, Serie 3, Yaris) — null se non menzionato
+    public string?  Model        { get; set; }
+
     // potenza in CV — per traino roulotte, prestazioni, consumi
     public int?     MinHorsepowerCv { get; set; }
     public int?     MaxHorsepowerCv { get; set; }

@@ -53,8 +53,9 @@
         <!-- Card info principale -->
         <div class="info-card">
           <div class="info-brand">{{ store.detail.brandName }}</div>
-          <div class="info-model">{{ store.detail.model }}</div>
-          <div v-if="store.detail.version" class="info-version">{{ store.detail.version }}</div>
+          <div class="info-model">
+            {{ store.detail.model }}<span v-if="store.detail.version" class="info-version"> {{ store.detail.version }}</span>
+          </div>
           <div class="price-row">
             <div v-if="store.detail.forSale || !store.detail.forRental" class="price-main">
               € {{ fmtPrice(store.detail.price) }}

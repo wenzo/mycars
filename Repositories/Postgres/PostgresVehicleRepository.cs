@@ -565,6 +565,10 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
             { parts.Add("description ILIKE @descKeyword"); p.Add("descKeyword", $"%{f.DescriptionKeyword}%"); }
         if (f.Damaged.HasValue)
             { parts.Add("damaged = @damaged"); p.Add("damaged", f.Damaged.Value); }
+        if (!string.IsNullOrEmpty(f.Brand))
+            { parts.Add("brand_name ILIKE @brand"); p.Add("brand", $"%{f.Brand}%"); }
+        if (!string.IsNullOrEmpty(f.Model))
+            { parts.Add("model ILIKE @model"); p.Add("model", $"%{f.Model}%"); }
 
         return (string.Join(" AND ", parts), p);
     }

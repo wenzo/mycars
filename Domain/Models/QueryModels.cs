@@ -37,5 +37,7 @@ public sealed record VehicleFilter(
     string? Color                      = null,   // color ILIKE %color%
     string? EmissionClass              = null,   // emission_class ILIKE %class%
     string? DescriptionKeyword         = null,   // description ILIKE %keyword%
-    bool?   Damaged                    = null    // damaged = true/false
+    bool?   Damaged                    = null,   // damaged = true/false
+    string? Brand                      = null,   // brand_name ILIKE %brand% (solo marca)
+    string? Model                      = null    // model ILIKE %model% (solo modello)
 );

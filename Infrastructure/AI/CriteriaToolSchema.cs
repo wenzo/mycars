@@ -27,7 +27,7 @@ internal static class CriteriaToolSchema
                 },
                 { "type": "null" }
               ],
-              "description": "Tipo di carrozzeria. Valori esatti: berlina (3 o 5 porte), suv, station wagon, city car, monovolume, coupe, cabrio, fuoristrada. Per famiglie con bambini usa suv, station wagon o monovolume. Null se non menzionato."
+              "description": "Tipo di carrozzeria SOLO se esplicitamente menzionato. Valori: berlina, suv, station wagon, city car, monovolume, coupe, cabrio, fuoristrada. Null se non menzionato (NON inferire da 'famiglia' o 'spazio')."
             },
             "FuelType": {
               "oneOf": [
@@ -42,11 +42,15 @@ internal static class CriteriaToolSchema
             },
             "Brand": {
               "oneOf": [{ "type": "string" }, { "type": "null" }],
-              "description": "Marca/costruttore del veicolo (es. BMW, Volkswagen, Fiat, Toyota, Ford). Null se non menzionata. NON includere il modello, solo la marca."
+              "description": "SOLO la casa costruttrice (BMW, Volkswagen, Fiat, Toyota, Ford, Renault...). NON includere il modello. Null se non menzionata."
+            },
+            "Model": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "SOLO il modello specifico (Golf, Panda, Yaris, Serie 3, Duster...). Separato da Brand. Null se non menzionato."
             },
             "MinHorsepowerCv": {
               "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
-              "description": "Potenza minima in CV. Guide: 'adeguata al traino di roulotte/caravan' → 130, 'potente' → 150, 'sportiva' o 'molto potente' → 200. Null se non menzionato."
+              "description": "Potenza minima in CV. Usa SOLO se esplicitamente richiesta o implicata da traino pesante. Esempi: 'traino roulotte' → 130, 'potente/sportiva' → 180. Null altrimenti."
             },
             "MaxHorsepowerCv": {
               "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
@@ -54,11 +58,11 @@ internal static class CriteriaToolSchema
             },
             "MinEngineCc": {
               "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
-              "description": "Cilindrata minima in cc. Guide: 'media cilindrata' → 1400, 'grande cilindrata' o 'motore importante' → 2000. Null se non menzionato."
+              "description": "Cilindrata minima in cc SOLO se menzionata. 'media cilindrata' → 1400, 'grande cilindrata' → 2000. Null altrimenti."
             },
             "MaxEngineCc": {
               "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
-              "description": "Cilindrata massima in cc. Guide: 'piccola cilindrata' → 1200, 'media cilindrata' → 2000. Null se non menzionato."
+              "description": "Cilindrata massima in cc SOLO se menzionata. 'piccola cilindrata' → 1200. Null altrimenti."
             },
             "MinYear": {
               "oneOf": [{ "type": "integer" }, { "type": "null" }],
@@ -89,7 +93,7 @@ internal static class CriteriaToolSchema
             },
             "MaxMileageKm": {
               "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }],
-              "description": "Chilometraggio massimo in km. Guide: 'pochi km' → 30000, 'basso chilometraggio' → 50000, 'meno di X km' → X. Null se non menzionato."
+              "description": "Chilometraggio massimo in km SOLO se menzionato. 'pochi km' → 30000, 'basso chilometraggio' → 50000. Null altrimenti."
             },
             "VatDeductible": {
               "oneOf": [{ "type": "boolean" }, { "type": "null" }],
@@ -117,7 +121,7 @@ internal static class CriteriaToolSchema
             },
             "MinSeats": {
               "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
-              "description": "Numero minimo di posti. 'Famiglia con due bambini' implica almeno 5. Null se non menzionato."
+              "description": "Numero minimo di posti SOLO se menzionato esplicitamente ('7 posti', 'tre file di sedili'). Null altrimenti."
             },
             "Transmission": {
               "oneOf": [
@@ -142,6 +146,33 @@ internal static class CriteriaToolSchema
         """);
 
     private static JsonElement ParametersSchema => _schemaDoc.RootElement;
+
+    // System prompt condiviso (tutti e tre gli extractor lo usano identico).
+    internal static string BuildSystemPrompt()
+    {
+        int y = DateTime.UtcNow.Year;
+        return
+            $"Sei un estrattore di criteri per la ricerca di veicoli in concessionarie italiane. " +
+            $"Analizza la frase dell'utente e chiama lo strumento '{ToolName}' con i campi compilati.\n\n" +
+            $"REGOLA FONDAMENTALE: estrai SOLO ciò che l'utente dice ESPLICITAMENTE. " +
+            $"Non inferire criteri: 'comoda' NON implica MinSeats, 'per famiglia' NON implica BodyType. " +
+            $"Meno criteri usi → più risultati trova → utente più soddisfatto. Pochi campi precisi battono molti campi vaghi.\n\n" +
+            $"Brand = SOLO la casa costruttrice (BMW, Fiat, Volkswagen...). " +
+            $"Model = SOLO il modello (Golf, Panda, Serie 3...). " +
+            $"Se l'utente dice 'Volkswagen Golf': Brand='Volkswagen', Model='Golf'.\n\n" +
+            $"Anno corrente: {y}. " +
+            $"'Non più vecchia di 2 anni' → MinYear={y - 2}. " +
+            $"'Recente/quasi nuova' → MinYear={y - 3}.\n\n" +
+            $"ESEMPI (segui esattamente questo stile):\n" +
+            $"• 'SUV diesel automatico' → FuelType:[\"diesel\"], BodyType:[\"suv\"], Transmission:\"automatico\"\n" +
+            $"• 'Volkswagen Golf usata sotto 15000 euro' → Brand:\"Volkswagen\", Model:\"Golf\", Condition:\"usato\", PriceMax:15000\n" +
+            $"• 'voglio noleggiare una berlina ibrida' → Intent:\"noleggio\", BodyType:[\"berlina\"], FuelType:[\"ibrida\"]\n" +
+            $"• 'auto non più vecchia di 3 anni con pochi km' → MinYear:{y - 3}, MaxMileageKm:50000\n" +
+            $"• 'revisione effettuata, tagliando recente' → DescriptionKeyword:\"revisione effettuata\"\n" +
+            $"• 'per azienda IVA detraibile' → VatDeductible:true\n" +
+            $"• 'auto rossa' → Color:\"rosso\"\n\n" +
+            $"Per ogni campo non menzionato usa null. NON usare array vuoti né zero.";
+    }
 
     // Tool in formato Anthropic (input_schema)
     internal static object AnthropicTool() => new

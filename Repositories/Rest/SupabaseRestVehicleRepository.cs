@@ -416,6 +416,10 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         if (f.HandicapAccessible.HasValue) parts.Add($"handicap_accessible=eq.{f.HandicapAccessible.Value.ToString().ToLower()}");
         if (f.Imported.HasValue)           parts.Add($"imported=eq.{f.Imported.Value.ToString().ToLower()}");
         if (f.Damaged.HasValue)            parts.Add($"damaged=eq.{f.Damaged.Value.ToString().ToLower()}");
+        if (!string.IsNullOrEmpty(f.Brand))
+            parts.Add($"brand_name=ilike.*{Uri.EscapeDataString(f.Brand.Trim())}*");
+        if (!string.IsNullOrEmpty(f.Model))
+            parts.Add($"model=ilike.*{Uri.EscapeDataString(f.Model.Trim())}*");
         if (f.ForSale.HasValue)            parts.Add($"for_sale=eq.{f.ForSale.Value.ToString().ToLower()}");
         if (f.ForRental.HasValue)          parts.Add($"for_rental=eq.{f.ForRental.Value.ToString().ToLower()}");
         if (f.MinPrice.HasValue)           parts.Add($"price=gte.{f.MinPrice}");

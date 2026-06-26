@@ -278,7 +278,8 @@ public sealed class PublicController : ControllerBase
         HandicapAccessible: c.HandicapAccessible,
         Imported:           c.Imported,
         Damaged:            c.Damaged,
-        Search:             string.IsNullOrEmpty(c.Brand) ? null : c.Brand.Trim());
+        Brand:              string.IsNullOrEmpty(c.Brand)  ? null : c.Brand.Trim(),
+        Model:              string.IsNullOrEmpty(c.Model)  ? null : c.Model.Trim());
 
     /// <summary>Scheda veicolo con galleria immagini.</summary>
     [HttpGet("vehicles/{id:guid}")]

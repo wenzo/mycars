@@ -34,13 +34,7 @@ public sealed class AnthropicCriteriaExtractor : ICriteriaExtractor
         {
             model      = _opts.Model,
             max_tokens = _opts.MaxTokens,
-            system     = $"Sei un assistente per la ricerca di veicoli in un'app per concessionarie italiane. " +
-                         $"Analizza la richiesta dell'utente ed estrai i criteri strutturati chiamando lo strumento fornito. " +
-                         $"Anno corrente: {DateTime.UtcNow.Year}. " +
-                         $"Usalo per calcolare gli anni di immatricolazione: " +
-                         $"'non più vecchia di 2 anni' → MinYear {DateTime.UtcNow.Year - 2}, " +
-                         $"'recente' → MinYear {DateTime.UtcNow.Year - 3}. " +
-                         $"Per i campi opzionali non menzionati usa null, NON zero né array vuoti.",
+            system     = CriteriaToolSchema.BuildSystemPrompt(),
             tools      = new[] { CriteriaToolSchema.AnthropicTool() },
             tool_choice = new { type = "tool", name = CriteriaToolSchema.ToolName },
             messages   = new[]
