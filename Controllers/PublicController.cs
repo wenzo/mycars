@@ -193,33 +193,36 @@ public sealed class PublicController : ControllerBase
 
         VehicleFilter filter;
 
-        if (!string.IsNullOrWhiteSpace(q) && _embeddings.IsConfigured)
+        if (!string.IsNullOrWhiteSpace(q))
         {
-            // ── Percorso RAG: ricerca semantica tramite pgvector ──────────────
-            var queryVec = await _embeddings.EmbedAsync(q.Trim(), HttpContext.RequestAborted);
-            if (queryVec is not null)
+            if (_embeddings.IsConfigured)
             {
-                var pageReq = new PageRequest(page, Math.Clamp(pageSize, 1, 50));
-                var limit   = pageReq.PageSize * 3; // sovracampiona per coprire più pagine
-                var ids     = await _embeddingRepo.SearchSimilarAsync(
-                    op.Id, queryVec, vehicleType, limit, HttpContext.RequestAborted);
+                // ── Percorso RAG: ricerca semantica tramite pgvector ──────────────
+                var queryVec = await _embeddings.EmbedAsync(q.Trim(), HttpContext.RequestAborted);
+                if (queryVec is not null)
+                {
+                    var pageReq = new PageRequest(page, Math.Clamp(pageSize, 1, 50));
+                    var limit   = pageReq.PageSize * 3;
+                    var ids     = await _embeddingRepo.SearchSimilarAsync(
+                        op.Id, queryVec, vehicleType, limit, HttpContext.RequestAborted);
 
-                _logger.LogInformation("pgvector search '{Query}': {Count} candidati trovati", q, ids.Count);
+                    _logger.LogInformation("pgvector search '{Query}': {Count} candidati trovati", q, ids.Count);
 
-                var cards = await _vehicles.GetCardsByIdsAsync(op.Id, ids, HttpContext.RequestAborted);
-                var paged = cards
-                    .Skip(pageReq.Page * pageReq.PageSize)
-                    .Take(pageReq.PageSize)
-                    .ToList();
-                return Ok(new PagedResult<VehicleCard>(paged, cards.Count));
+                    var cards = await _vehicles.GetCardsByIdsAsync(op.Id, ids, HttpContext.RequestAborted);
+                    var paged = cards
+                        .Skip(pageReq.Page * pageReq.PageSize)
+                        .Take(pageReq.PageSize)
+                        .ToList();
+                    return Ok(new PagedResult<VehicleCard>(paged, cards.Count));
+                }
             }
 
-            // Fallback se embedding non disponibile: ricerca testuale classica
+            // Fallback testuale: embedding non configurato o chiamata fallita
             filter = new VehicleFilter(VehicleType: vehicleType, Search: q.Trim());
         }
         else
         {
-            // ── Percorso classico: filtri strutturati (comportamento invariato) ─
+            // ── Percorso classico: filtri strutturati ─────────────────────────
             filter = new VehicleFilter(
                 vehicleType, condition, fuel,
                 prontaConsegna, isNuovoArrivo,
