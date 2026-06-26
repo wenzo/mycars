@@ -12,11 +12,9 @@
             <div class="dealer-sub">Vetrina veicoli</div>
           </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="header-icon-btn" @click="goToProfilo">
-            <ion-icon :icon="personCircleOutline" />
-          </button>
-        </div>
+        <button class="header-icon-btn" @click="goToProfilo">
+          <ion-icon :icon="personCircleOutline" />
+        </button>
       </div>
 
       <!-- Tipo veicolo switcher -->
@@ -31,51 +29,29 @@
         </button>
       </div>
 
-      <!-- Barra ricerca conversazionale AI -->
+      <!-- Trigger ricerca: tocca per aprire il modal -->
       <div class="search-row">
-        <div class="search-ai-box" :class="{ 'is-recording': isRecording }">
-
-          <!-- Icona sinistra: spinner se caricamento, altrimenti sparkle AI -->
-          <div class="search-left-icon">
-            <ion-spinner v-if="store.loading && searchText.trim()" name="crescent" class="search-spinner" />
-            <span v-else class="ai-spark">✦</span>
-          </div>
-
-          <input
-            ref="inputEl"
-            v-model="searchText"
-            :placeholder="isRecording ? 'In ascolto…' : 'Cerca in linguaggio naturale…'"
-            @keydown.enter="submitSearch"
-            class="search-input"
+        <button class="search-trigger" :class="{ 'has-query': searchText }" @click="openModal">
+          <ion-spinner v-if="store.loading && searchText" name="crescent" class="s-spinner" />
+          <span v-else class="ai-spark">✦</span>
+          <span class="trigger-label" :class="{ 'query-active': searchText }">
+            {{ searchText || 'Cerca in linguaggio naturale…' }}
+          </span>
+          <ion-icon
+            v-if="searchText"
+            :icon="closeOutline"
+            class="trigger-clear"
+            @click.stop="clearSearch"
           />
-
-          <!-- Pulsante clear (se c'è testo) -->
-          <button v-if="searchText && !isRecording" class="search-icon-btn" @click="clearSearch">
-            <ion-icon :icon="closeOutline" />
-          </button>
-
-          <!-- Pulsante microfono -->
-          <button
-            v-if="speechSupported"
-            class="search-icon-btn mic-btn"
-            :class="{ recording: isRecording }"
-            @click="toggleRecording"
-            :aria-label="isRecording ? 'Interrompi dettatura' : 'Cerca con la voce'"
-          >
-            <ion-icon :icon="isRecording ? stopCircleOutline : micOutline" />
-            <span v-if="isRecording" class="mic-pulse" />
-          </button>
-        </div>
-
+        </button>
         <button class="search-adv-btn" @click="$router.push('/tabs/ricerca')">
           <ion-icon :icon="funnelOutline" />
           Filtra
         </button>
       </div>
 
-      <!-- Etichetta AI (solo quando campo vuoto) -->
-      <div v-if="!searchText && !isRecording" class="ai-hint">
-        <span>Powered by AI · prova: "SUV diesel sotto 15.000€ per famiglia"</span>
+      <div v-if="!searchText" class="ai-hint">
+        Powered by AI · tocca la barra per cercare in linguaggio naturale
       </div>
     </div>
 
@@ -95,10 +71,7 @@
     </div>
 
     <ion-content style="--padding-bottom: calc(var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
-      <div
-        class="veicoli-scroll"
-        :class="layout === 'grid' ? 'grid-2col' : 'list-col'"
-      >
+      <div class="veicoli-scroll" :class="layout === 'grid' ? 'grid-2col' : 'list-col'">
         <VehicleCard
           v-for="v in store.items"
           :key="v.id"
@@ -106,30 +79,114 @@
           :layout="layout"
           @click="$router.push(`/tabs/veicolo/${v.id}`)"
         />
-
         <div v-if="store.loading" class="loading-row">
           <ion-spinner name="crescent" />
         </div>
-
         <ion-infinite-scroll @ionInfinite="onInfinite">
           <ion-infinite-scroll-content />
         </ion-infinite-scroll>
       </div>
     </ion-content>
+
+    <!-- ── Modal di ricerca AI ──────────────────────────────────────── -->
+    <ion-modal
+      :is-open="modalOpen"
+      :breakpoints="[0, 0.88]"
+      :initial-breakpoint="0.88"
+      handle-behavior="cycle"
+      @did-dismiss="onModalDismiss"
+      @did-present="focusTextarea"
+    >
+      <ion-header>
+        <ion-toolbar class="modal-toolbar">
+          <ion-title>
+            <span class="modal-title-text"><span class="ai-spark-md">✦</span> Ricerca AI</span>
+          </ion-title>
+          <ion-buttons slot="end">
+            <ion-button @click="closeModal">
+              <ion-icon :icon="closeOutline" />
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="modal-content-scroll">
+        <div class="modal-inner">
+          <!-- Textarea principale -->
+          <ion-textarea
+            ref="textareaEl"
+            v-model="modalText"
+            :placeholder="examplesPlaceholder"
+            :rows="5"
+            auto-grow
+            class="ai-textarea"
+          />
+
+          <!-- Esempi cliccabili -->
+          <p class="examples-label">Esempi di ricerca:</p>
+          <div class="examples-chips">
+            <button
+              v-for="ex in examples"
+              :key="ex"
+              class="example-chip"
+              @click="modalText = ex"
+            >
+              {{ ex }}
+            </button>
+          </div>
+
+          <!-- Errore mic -->
+          <div v-if="micError" class="mic-error-msg">
+            <ion-icon :icon="warningOutline" /> {{ micError }}
+          </div>
+        </div>
+      </ion-content>
+
+      <!-- Footer con mic + pulsante Cerca -->
+      <div class="modal-footer">
+        <button
+          v-if="speechSupported"
+          class="mic-fab"
+          :class="{ recording: isRecording }"
+          @click="toggleRecording"
+          :aria-label="isRecording ? 'Interrompi dettatura' : 'Cerca con la voce'"
+        >
+          <ion-icon :icon="isRecording ? stopCircleOutline : micOutline" />
+          <span>{{ isRecording ? 'Stop' : 'Voce' }}</span>
+          <span v-if="isRecording" class="mic-ring" />
+        </button>
+        <div v-else class="mic-unavailable">
+          <ion-icon :icon="micOffOutline" />
+          <span>Voce non disponibile</span>
+        </div>
+
+        <button
+          class="submit-btn"
+          :disabled="!modalText.trim()"
+          @click="submitFromModal"
+        >
+          <ion-icon :icon="searchOutline" />
+          Cerca
+        </button>
+      </div>
+    </ion-modal>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   IonPage, IonContent, IonIcon, IonSpinner,
   IonInfiniteScroll, IonInfiniteScrollContent,
+  IonModal, IonHeader, IonToolbar, IonTitle,
+  IonButtons, IonButton, IonTextarea,
 } from '@ionic/vue'
 import {
-  carOutline, funnelOutline,
-  gridOutline, listOutline, personCircleOutline,
-  closeOutline, micOutline, stopCircleOutline,
+  carOutline, funnelOutline, gridOutline, listOutline,
+  personCircleOutline, closeOutline,
+  micOutline, micOffOutline, stopCircleOutline,
+  searchOutline, warningOutline,
 } from 'ionicons/icons'
 import { useOperatorStore } from '@/stores/operator'
 import { useVehicleStore } from '@/stores/vehicles'
@@ -144,7 +201,6 @@ function goToProfilo() { router.push('/tabs/profilo') }
 const searchText  = ref('')
 const layout      = ref<'grid' | 'list'>('grid')
 const activeType  = ref('autovettura')
-const inputEl     = ref<HTMLInputElement | null>(null)
 
 const tipi = [
   { value: 'autovettura', label: 'Auto' },
@@ -162,27 +218,10 @@ function selectType(type: string) {
   store.applyFilters({ vehicleType: type })
 }
 
-function submitSearch() {
-  const q = searchText.value.trim()
-  if (q) store.applyFilters({ vehicleType: activeType.value, q })
-  else   store.applyFilters({ vehicleType: activeType.value })
-}
-
 function clearSearch() {
   searchText.value = ''
   store.applyFilters({ vehicleType: activeType.value })
 }
-
-// Debounce su digitazione manuale
-let searchTimer: ReturnType<typeof setTimeout>
-watch(searchText, (val) => {
-  clearTimeout(searchTimer)
-  const q = val.trim()
-  searchTimer = setTimeout(() => {
-    if (q) store.applyFilters({ vehicleType: activeType.value, q })
-    else   store.applyFilters({ vehicleType: activeType.value })
-  }, 500)
-})
 
 async function onInfinite(ev: CustomEvent) {
   await store.fetchNextPage()
@@ -194,52 +233,105 @@ onMounted(() => {
   initSpeech()
 })
 
-// ── Dettatura vocale ─────────────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────────────────────
 
-type SpeechRecognitionType = typeof window extends { SpeechRecognition: infer T } ? T : any
+const modalOpen  = ref(false)
+const modalText  = ref('')
+const textareaEl = ref<InstanceType<typeof IonTextarea> | null>(null)
+
+const examples = [
+  'SUV diesel automatico per famiglia, massimo 25.000€',
+  'Auto non più vecchia di 2 anni, pochi km, Euro 6',
+  'Berlina adatta al traino di roulotte, almeno 130 CV',
+  'Auto piccola per città, IVA detraibile',
+  'Ibrida o elettrica con tetto apribile',
+]
+
+const examplesPlaceholder =
+  'Descrivi il veicolo che cerchi…\nes. "SUV diesel automatico per famiglia con 3 figli, sotto 25.000€, non più vecchia di 3 anni"'
+
+function openModal() {
+  modalText.value = searchText.value
+  micError.value  = ''
+  modalOpen.value = true
+}
+
+function closeModal() {
+  modalOpen.value = false
+}
+
+function onModalDismiss() {
+  modalOpen.value  = false
+  stopRecording()
+}
+
+async function focusTextarea() {
+  await nextTick()
+  const el = textareaEl.value?.$el?.querySelector('textarea')
+  el?.focus()
+}
+
+function submitFromModal() {
+  const q = modalText.value.trim()
+  searchText.value = q
+  closeModal()
+  if (q) store.applyFilters({ vehicleType: activeType.value, q })
+  else   store.applyFilters({ vehicleType: activeType.value })
+}
+
+// ── Dettatura vocale ──────────────────────────────────────────────────────────
 
 const speechSupported = ref(false)
 const isRecording     = ref(false)
-let recognition: SpeechRecognitionType | null = null
+const micError        = ref('')
+let recognition: any  = null
 
 function initSpeech() {
   const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition
   if (!SR) return
   speechSupported.value = true
-
   recognition = new SR()
-  recognition.lang           = 'it-IT'
-  recognition.continuous     = false
-  recognition.interimResults = false
+  recognition.lang            = 'it-IT'
+  recognition.continuous      = false
+  recognition.interimResults  = false
   recognition.maxAlternatives = 1
-
-  recognition.onresult = (event: any) => {
-    const transcript = event.results[0]?.[0]?.transcript ?? ''
-    if (transcript) {
-      searchText.value = transcript
-      submitSearch()
-    }
-    isRecording.value = false
-  }
-
-  recognition.onerror = () => { isRecording.value = false }
-  recognition.onend   = () => { isRecording.value = false }
 }
 
 function toggleRecording() {
-  if (!recognition) return
-  if (isRecording.value) {
-    stopRecording()
-  } else {
-    startRecording()
-  }
+  if (isRecording.value) { stopRecording(); return }
+  startRecording()
 }
 
 function startRecording() {
   if (!recognition) return
-  searchText.value  = ''
-  isRecording.value = true
-  try { recognition.start() } catch { isRecording.value = false }
+  micError.value    = ''
+  modalText.value   = ''
+
+  recognition.onresult = (event: any) => {
+    const transcript = event.results[0]?.[0]?.transcript ?? ''
+    if (transcript) modalText.value = transcript
+    isRecording.value = false
+  }
+  recognition.onerror = (event: any) => {
+    isRecording.value = false
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed')
+      micError.value = 'Permesso microfono negato. Controlla le impostazioni.'
+    else if (event.error === 'network')
+      micError.value = 'La dettatura richiede connessione HTTPS.'
+    else if (event.error === 'no-speech')
+      micError.value = 'Nessun audio rilevato. Riprova.'
+    else
+      micError.value = `Dettatura non disponibile (${event.error ?? 'errore'}).`
+  }
+  recognition.onend = () => { isRecording.value = false }
+
+  try {
+    recognition.start()
+    isRecording.value = true
+  } catch {
+    micError.value    = 'Impossibile avviare la dettatura.'
+    isRecording.value = false
+  }
 }
 
 function stopRecording() {
@@ -252,6 +344,7 @@ onUnmounted(() => stopRecording())
 </script>
 
 <style scoped>
+/* ── Header ──────────────────────────────────────────────────────────────── */
 .tipo-switcher {
   display: flex; gap: 7px; margin-bottom: 12px;
 }
@@ -264,82 +357,48 @@ onUnmounted(() => stopRecording())
 .tipo-btn.active   { background: rgba(255,255,255,.92); color: var(--dealer-primary); font-weight: 700; }
 .tipo-btn.inactive { background: rgba(255,255,255,.12); color: rgba(255,255,255,.65); }
 
-/* ── Barra ricerca AI ───────────────────────────────────────────────────── */
+/* ── Search trigger ──────────────────────────────────────────────────────── */
 .search-row { display: flex; gap: 8px; align-items: center; }
 
-.search-ai-box {
-  flex: 1; height: 44px;
-  display: flex; align-items: center; gap: 6px; padding: 0 10px 0 12px;
+.search-trigger {
+  flex: 1; height: 44px; min-width: 0;
+  display: flex; align-items: center; gap: 8px; padding: 0 10px 0 12px;
   border-radius: var(--mc-r-sm);
   background: rgba(255,255,255,.13);
-  /* Bordo con sfumatura per richiamare il tema AI */
   border: 1.5px solid rgba(255,255,255,.22);
-  transition: border-color .25s, box-shadow .25s;
-  position: relative;
+  cursor: pointer; text-align: left;
+  transition: border-color .2s, box-shadow .2s;
 }
-/* Glow leggero quando l'utente interagisce (focus-within) */
-.search-ai-box:focus-within {
+.search-trigger:active,
+.search-trigger:focus-within {
   border-color: rgba(255,255,255,.55);
   box-shadow: 0 0 0 3px rgba(255,255,255,.08);
 }
-/* Stato di registrazione: bordo pulsante colorato */
-.search-ai-box.is-recording {
-  border-color: rgba(255, 90, 90, .8);
-  box-shadow: 0 0 0 3px rgba(255, 80, 80, .18);
+.search-trigger.has-query {
+  border-color: rgba(255,255,255,.4);
 }
 
-/* Icona sinistra */
-.search-left-icon {
-  display: flex; align-items: center; flex-shrink: 0; width: 18px; justify-content: center;
-}
 .ai-spark {
-  font-size: 14px; color: rgba(255,255,255,.75); line-height: 1;
-  /* Piccola animazione shimmer per indicare AI */
+  font-size: 14px; color: rgba(255,255,255,.75); flex-shrink: 0;
   animation: spark-fade 3s ease-in-out infinite;
 }
 @keyframes spark-fade {
   0%, 100% { opacity: .6; }
   50%       { opacity: 1; }
 }
-.search-spinner { width: 16px; height: 16px; color: rgba(255,255,255,.7); }
+.s-spinner { width: 16px; height: 16px; color: rgba(255,255,255,.7); flex-shrink: 0; }
 
-/* Input */
-.search-input {
-  flex: 1; background: transparent; border: none; outline: none;
-  color: #fff; font-size: 13.5px; min-width: 0;
+.trigger-label {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 13.5px; color: rgba(255,255,255,.48);
 }
-.search-input::placeholder { color: rgba(255,255,255,.48); }
+.trigger-label.query-active { color: #fff; }
 
-/* Pulsanti icona (clear / mic) */
-.search-icon-btn {
-  background: transparent; border: none; padding: 0; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; flex-shrink: 0;
-  color: rgba(255,255,255,.55); font-size: 17px;
-  border-radius: 50%;
-  transition: color .15s, background .15s;
-  position: relative;
-}
-.search-icon-btn:active { color: #fff; background: rgba(255,255,255,.12); }
-
-/* Microfono attivo */
-.mic-btn.recording {
-  color: #ff6b6b;
-}
-/* Alone pulsante attorno al microfono durante registrazione */
-.mic-pulse {
-  position: absolute; inset: -4px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 90, 90, .6);
-  animation: mic-ring 1s ease-out infinite;
-  pointer-events: none;
-}
-@keyframes mic-ring {
-  0%   { transform: scale(1);   opacity: .8; }
-  100% { transform: scale(1.6); opacity: 0; }
+.trigger-clear {
+  flex-shrink: 0; color: rgba(255,255,255,.55); font-size: 17px;
+  padding: 4px;
 }
 
-/* Pulsante Filtra */
 .search-adv-btn {
   height: 44px; padding: 0 14px;
   background: var(--dealer-secondary); border: none;
@@ -348,7 +407,6 @@ onUnmounted(() => stopRecording())
   color: #fff; display: flex; align-items: center; gap: 5px; flex-shrink: 0;
 }
 
-/* Hint AI sotto la barra */
 .ai-hint {
   margin-top: 7px;
   font-size: 10.5px; color: rgba(255,255,255,.38);
@@ -359,7 +417,7 @@ onUnmounted(() => stopRecording())
 /* ── Stats bar ───────────────────────────────────────────────────────────── */
 .stats-bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 18px 10px; background: var(--mc-surface);
+  padding: 10px 18px; background: var(--mc-surface);
 }
 .stats-count { font-family: var(--mc-font-heading); font-size: 13px; font-weight: 600; color: var(--mc-text-mid); }
 .stats-count span { color: var(--dealer-primary); font-weight: 700; }
@@ -378,4 +436,124 @@ onUnmounted(() => stopRecording())
 .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .list-col   { display: flex; flex-direction: column; gap: 10px; }
 .loading-row { display: flex; justify-content: center; padding: 20px; }
+
+/* ── Modal ───────────────────────────────────────────────────────────────── */
+.modal-toolbar {
+  --background: var(--mc-surface);
+  --border-color: var(--mc-border);
+}
+.modal-title-text {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mc-font-heading); font-weight: 700; font-size: 16px;
+}
+.ai-spark-md {
+  font-size: 16px; color: var(--dealer-primary);
+  animation: spark-fade 3s ease-in-out infinite;
+}
+
+.modal-content-scroll {
+  --background: var(--mc-surface);
+}
+.modal-inner {
+  padding: 16px 16px 8px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.ai-textarea {
+  --background: var(--mc-surface-alt, #f5f5f5);
+  --border-radius: 12px;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  font-size: 15px;
+  border: 1.5px solid var(--mc-border);
+  border-radius: 12px;
+  min-height: 120px;
+}
+
+.examples-label {
+  margin: 0 0 6px;
+  font-size: 11.5px; font-weight: 600; color: var(--mc-text-light);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.examples-chips {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.example-chip {
+  padding: 7px 12px;
+  background: var(--mc-surface-alt, #f0f0f0);
+  border: 1px solid var(--mc-border);
+  border-radius: 20px; cursor: pointer;
+  font-size: 12.5px; color: var(--mc-text-mid);
+  text-align: left; transition: background .15s, border-color .15s;
+}
+.example-chip:active {
+  background: var(--dealer-primary);
+  border-color: var(--dealer-primary);
+  color: #fff;
+}
+
+.mic-error-msg {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px; border-radius: 10px;
+  background: #fff3cd; border: 1px solid #ffc107;
+  color: #856404; font-size: 13px;
+}
+
+/* ── Modal footer ────────────────────────────────────────────────────────── */
+.modal-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px calc(12px + var(--ion-safe-area-bottom, 0px));
+  background: var(--mc-surface);
+  border-top: 1px solid var(--mc-border);
+  gap: 12px;
+}
+
+.mic-fab {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 8px 14px;
+  background: var(--mc-surface-alt, #f0f0f0);
+  border: 1.5px solid var(--mc-border);
+  border-radius: 12px; cursor: pointer;
+  font-size: 11px; color: var(--mc-text-mid);
+  position: relative; transition: background .2s, border-color .2s;
+  min-width: 64px;
+}
+.mic-fab ion-icon { font-size: 22px; }
+.mic-fab.recording {
+  background: #fff0f0;
+  border-color: #ff4444;
+  color: #cc0000;
+}
+/* Alone pulsante */
+.mic-ring {
+  position: absolute; inset: -6px;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 60, 60, .5);
+  animation: mic-ring-anim 1.1s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes mic-ring-anim {
+  0%   { transform: scale(1);   opacity: .7; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+.mic-unavailable {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 11px; color: var(--mc-text-light);
+  min-width: 64px; opacity: .5;
+}
+.mic-unavailable ion-icon { font-size: 20px; }
+
+.submit-btn {
+  flex: 1; height: 50px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--dealer-primary); color: #fff; border: none;
+  border-radius: 12px; cursor: pointer;
+  font-family: var(--mc-font-heading); font-size: 15px; font-weight: 700;
+  transition: opacity .15s;
+}
+.submit-btn:disabled { opacity: .4; cursor: default; }
+.submit-btn ion-icon { font-size: 18px; }
 </style>
