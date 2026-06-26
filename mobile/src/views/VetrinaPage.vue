@@ -119,12 +119,26 @@
     >
       <ion-header>
         <ion-toolbar class="modal-toolbar">
+          <!-- Chiudi (sinistra) -->
+          <ion-buttons slot="start">
+            <ion-button @click="closeModal">
+              <ion-icon :icon="closeOutline" />
+            </ion-button>
+          </ion-buttons>
+
           <ion-title>
             <span class="modal-title-text"><span class="ai-spark-md">✦</span> Ricerca AI</span>
           </ion-title>
+
+          <!-- CERCA (destra) — sempre visibile anche con tastiera aperta -->
           <ion-buttons slot="end">
-            <ion-button @click="closeModal">
-              <ion-icon :icon="closeOutline" />
+            <ion-button
+              :disabled="!modalText.trim()"
+              strong
+              class="cerca-btn"
+              @click="submitFromModal"
+            >
+              Cerca
             </ion-button>
           </ion-buttons>
         </ion-toolbar>
@@ -141,6 +155,30 @@
             class="ai-textarea"
           />
 
+          <!-- Microfono — nel body così resta raggiungibile con scroll -->
+          <div class="mic-row">
+            <button
+              class="mic-fab"
+              :class="{ recording: isRecording, unsupported: !speechSupported }"
+              :disabled="!speechSupported"
+              @click="toggleRecording"
+              :aria-label="isRecording ? 'Interrompi dettatura' : 'Cerca con la voce'"
+            >
+              <ion-icon :icon="isRecording ? stopCircleOutline : micOutline" />
+              <span>{{ isRecording ? 'Stop' : 'Voce' }}</span>
+              <span v-if="isRecording" class="mic-ring" />
+            </button>
+            <span v-if="!speechSupported" class="mic-note">
+              Dettatura non disponibile in questo ambiente
+            </span>
+            <span v-else-if="micError" class="mic-note error">
+              <ion-icon :icon="warningOutline" /> {{ micError }}
+            </span>
+            <span v-else class="mic-note">
+              Tocca per dettare la ricerca in italiano
+            </span>
+          </div>
+
           <!-- Esempi cliccabili -->
           <p class="examples-label">Esempi di ricerca:</p>
           <div class="examples-chips">
@@ -153,41 +191,8 @@
               {{ ex }}
             </button>
           </div>
-
-          <!-- Errore mic -->
-          <div v-if="micError" class="mic-error-msg">
-            <ion-icon :icon="warningOutline" /> {{ micError }}
-          </div>
         </div>
       </ion-content>
-
-      <!-- Footer con mic + pulsante Cerca -->
-      <div class="modal-footer">
-        <button
-          v-if="speechSupported"
-          class="mic-fab"
-          :class="{ recording: isRecording }"
-          @click="toggleRecording"
-          :aria-label="isRecording ? 'Interrompi dettatura' : 'Cerca con la voce'"
-        >
-          <ion-icon :icon="isRecording ? stopCircleOutline : micOutline" />
-          <span>{{ isRecording ? 'Stop' : 'Voce' }}</span>
-          <span v-if="isRecording" class="mic-ring" />
-        </button>
-        <div v-else class="mic-unavailable">
-          <ion-icon :icon="micOffOutline" />
-          <span>Voce non disponibile</span>
-        </div>
-
-        <button
-          class="submit-btn"
-          :disabled="!modalText.trim()"
-          @click="submitFromModal"
-        >
-          <ion-icon :icon="searchOutline" />
-          Cerca
-        </button>
-      </div>
     </ion-modal>
   </ion-page>
 </template>
@@ -547,59 +552,54 @@ onUnmounted(() => stopRecording())
   color: #856404; font-size: 13px;
 }
 
-/* ── Modal footer ────────────────────────────────────────────────────────── */
-.modal-footer {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 16px calc(12px + var(--ion-safe-area-bottom, 0px));
-  background: var(--mc-surface);
-  border-top: 1px solid var(--mc-border);
-  gap: 12px;
+/* ── Pulsante Cerca nella toolbar ────────────────────────────────────────── */
+.cerca-btn {
+  --color: var(--dealer-primary);
+  font-weight: 700;
+  font-size: 15px;
 }
 
+/* ── Microfono nel body ──────────────────────────────────────────────────── */
+.mic-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 4px 0;
+}
 .mic-fab {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 2px; padding: 8px 14px;
+  gap: 3px; padding: 10px 16px;
   background: var(--mc-surface-alt, #f0f0f0);
-  border: 1.5px solid var(--mc-border);
-  border-radius: 12px; cursor: pointer;
+  border: 1.5px solid var(--mc-border, #ddd);
+  border-radius: 14px; cursor: pointer;
   font-size: 11px; color: var(--mc-text-mid);
   position: relative; transition: background .2s, border-color .2s;
-  min-width: 64px;
+  flex-shrink: 0;
 }
-.mic-fab ion-icon { font-size: 22px; }
+.mic-fab ion-icon { font-size: 24px; }
 .mic-fab.recording {
   background: #fff0f0;
   border-color: #ff4444;
   color: #cc0000;
 }
-/* Alone pulsante */
+.mic-fab.unsupported { opacity: .4; cursor: default; }
+
 .mic-ring {
-  position: absolute; inset: -6px;
-  border-radius: 14px;
+  position: absolute; inset: -5px;
+  border-radius: 16px;
   border: 2px solid rgba(255, 60, 60, .5);
   animation: mic-ring-anim 1.1s ease-out infinite;
   pointer-events: none;
 }
 @keyframes mic-ring-anim {
   0%   { transform: scale(1);   opacity: .7; }
-  100% { transform: scale(1.15); opacity: 0; }
+  100% { transform: scale(1.12); opacity: 0; }
 }
 
-.mic-unavailable {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  font-size: 11px; color: var(--mc-text-light);
-  min-width: 64px; opacity: .5;
+.mic-note {
+  font-size: 12px; color: var(--mc-text-light);
+  flex: 1;
 }
-.mic-unavailable ion-icon { font-size: 20px; }
-
-.submit-btn {
-  flex: 1; height: 50px;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  background: var(--dealer-primary); color: #fff; border: none;
-  border-radius: 12px; cursor: pointer;
-  font-family: var(--mc-font-heading); font-size: 15px; font-weight: 700;
-  transition: opacity .15s;
+.mic-note.error {
+  color: #c0392b;
+  display: flex; align-items: center; gap: 4px;
 }
-.submit-btn:disabled { opacity: .4; cursor: default; }
-.submit-btn ion-icon { font-size: 18px; }
 </style>
