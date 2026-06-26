@@ -29,14 +29,7 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         Guid operatorId, PageRequest page, VehicleFilter? filter = null)
     {
         var f     = BuildVehicleFilter(operatorId, filter);
-        var order = filter?.Sort switch
-        {
-            "prezzo_asc"  => "price.asc",
-            "prezzo_desc" => "price.desc",
-            "anno_desc"   => "registration_year.desc",
-            "km_asc"      => "mileage_km.asc",
-            _             => "created_at.desc"
-        };
+        var order = "created_at.desc";
         var (items, total) = await _db.SelectWithCountAsync<VehicleCard>(
             "public_vehicle_cards", f,
             order:  order,
@@ -415,11 +408,6 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         if (f.VatDeductible.HasValue)      parts.Add($"vat_deductible=eq.{f.VatDeductible.Value.ToString().ToLower()}");
         if (f.HandicapAccessible.HasValue) parts.Add($"handicap_accessible=eq.{f.HandicapAccessible.Value.ToString().ToLower()}");
         if (f.Imported.HasValue)           parts.Add($"imported=eq.{f.Imported.Value.ToString().ToLower()}");
-        if (f.Damaged.HasValue)            parts.Add($"damaged=eq.{f.Damaged.Value.ToString().ToLower()}");
-        if (!string.IsNullOrEmpty(f.Brand))
-            parts.Add($"brand_name=ilike.*{Uri.EscapeDataString(f.Brand.Trim())}*");
-        if (!string.IsNullOrEmpty(f.Model))
-            parts.Add($"model=ilike.*{Uri.EscapeDataString(f.Model.Trim())}*");
         if (f.ForSale.HasValue)            parts.Add($"for_sale=eq.{f.ForSale.Value.ToString().ToLower()}");
         if (f.ForRental.HasValue)          parts.Add($"for_rental=eq.{f.ForRental.Value.ToString().ToLower()}");
         if (f.MinPrice.HasValue)           parts.Add($"price=gte.{f.MinPrice}");
@@ -430,53 +418,27 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         if (f.MinMonth.HasValue)           parts.Add($"registration_month=gte.{f.MinMonth}");
         if (f.MaxMonth.HasValue)           parts.Add($"registration_month=lte.{f.MaxMonth}");
         if (f.BranchId.HasValue)           parts.Add($"branch_id=eq.{f.BranchId}");
-        // Fuel: multi-valore AI (ha precedenza sul singolo)
-        if (f.FuelTypes is { Count: > 0 })
-            parts.Add($"fuel=in.({string.Join(",", f.FuelTypes)})");
-        if (f.MinSeats.HasValue)          parts.Add($"seats=gte.{f.MinSeats}");
-        if (f.MinHorsepowerCv.HasValue)   parts.Add($"horsepower_cv=gte.{f.MinHorsepowerCv}");
-        if (f.MaxHorsepowerCv.HasValue)   parts.Add($"horsepower_cv=lte.{f.MaxHorsepowerCv}");
-        if (f.MinEngineCc.HasValue)       parts.Add($"engine_capacity_cc=gte.{f.MinEngineCc}");
-        if (f.MaxEngineCc.HasValue)       parts.Add($"engine_capacity_cc=lte.{f.MaxEngineCc}");
-        // Filtri testo semplici (AND diretto con ILIKE PostgREST)
-        if (!string.IsNullOrEmpty(f.Color))
-            parts.Add($"color=ilike.*{Uri.EscapeDataString(f.Color.Trim())}*");
-        if (!string.IsNullOrEmpty(f.EmissionClass))
-            parts.Add($"emission_class=ilike.*{Uri.EscapeDataString(f.EmissionClass.Trim())}*");
-        if (!string.IsNullOrEmpty(f.DescriptionKeyword))
-            parts.Add($"description=ilike.*{Uri.EscapeDataString(f.DescriptionKeyword.Trim())}*");
-
-        // Blocchi OR separati — ognuno viene ANDato con gli altri filtri.
-        // Search (brand) e BodyTypes usano ILIKE e vengono consolidati in un unico
-        // parametro per evitare due or= in conflitto nella stessa query string.
-        var orBlocks = new List<List<string>>();
 
         if (!string.IsNullOrWhiteSpace(f.Search))
         {
             var t = f.Search.Trim().Replace("*", "").Replace("(", "").Replace(")", "");
-            orBlocks.Add([$"model.ilike.*{t}*", $"brand_name.ilike.*{t}*"]);
-        }
-
-        if (f.BodyTypes is { Count: > 0 })
-        {
-            // "suv" → *suv*, "station wagon" → *station wagon* (corrisponde a "Station wagon" nel DB)
-            var conditions = f.BodyTypes
-                .Select(bt => $"body_type_name.ilike.*{bt}*")
-                .ToList();
-            orBlocks.Add(conditions);
-        }
-
-        if (orBlocks.Count == 1)
-        {
-            parts.Add($"or=({string.Join(",", orBlocks[0])})");
-        }
-        else if (orBlocks.Count > 1)
-        {
-            // and=(or(cond1,cond2),or(cond3,cond4)) — ogni blocco è AND, dentro OR
-            var nested = string.Join(",", orBlocks.Select(b => $"or({string.Join(",", b)})"));
-            parts.Add($"and=({nested})");
+            parts.Add($"or=(model.ilike.*{t}*,brand_name.ilike.*{t}*)");
         }
 
         return string.Join("&", parts);
+    }
+
+    public async Task<IReadOnlyList<VehicleCard>> GetCardsByIdsAsync(
+        Guid operatorId, IReadOnlyList<Guid> ids, CancellationToken ct = default)
+    {
+        if (ids.Count == 0) return [];
+        var idList  = string.Join(",", ids);
+        var items   = await _db.SelectAsync<VehicleCard>(
+            "public_vehicle_cards",
+            $"operator_id=eq.{operatorId}&id=in.({idList})",
+            limit: ids.Count);
+        // Riordina per corrispondenza con l'ordinamento di rilevanza della ricerca vettoriale
+        var order = ids.Select((id, i) => (id, i)).ToDictionary(x => x.id, x => x.i);
+        return items.OrderBy(v => order.TryGetValue(v.Id, out var i) ? i : 999).ToList();
     }
 }

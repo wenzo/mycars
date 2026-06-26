@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Mail;
-using Microsoft.Extensions.Caching.Memory;
 using MyCars.Domain.Interfaces;
 using MyCars.Domain.Models;
+using MyCars.Domain.Repositories;
 
 namespace MyCars.Controllers;
 
@@ -22,34 +22,34 @@ public sealed class PublicController : ControllerBase
     private readonly ILeadRepository        _leads;
     private readonly IEmailService          _email;
     private readonly SmtpOptions            _globalSmtp;
-    private readonly ILogger<PublicController> _logger;
-    private readonly ICriteriaExtractor     _extractor;
-    private readonly IMemoryCache           _cache;
+    private readonly ILogger<PublicController>    _logger;
+    private readonly IEmbeddingService            _embeddings;
+    private readonly IVehicleEmbeddingRepository  _embeddingRepo;
 
     public PublicController(
-        IOperatorRepository       operators,
-        IVehicleRepository        vehicles,
-        INewsRepository           news,
-        IBranchRepository         branches,
-        IDepartmentRepository     departments,
-        ILeadRepository           leads,
-        IEmailService             email,
-        IOptions<SmtpOptions>     smtpOptions,
-        ILogger<PublicController> logger,
-        ICriteriaExtractor        extractor,
-        IMemoryCache              cache)
+        IOperatorRepository          operators,
+        IVehicleRepository           vehicles,
+        INewsRepository              news,
+        IBranchRepository            branches,
+        IDepartmentRepository        departments,
+        ILeadRepository              leads,
+        IEmailService                email,
+        IOptions<SmtpOptions>        smtpOptions,
+        ILogger<PublicController>    logger,
+        IEmbeddingService            embeddings,
+        IVehicleEmbeddingRepository  embeddingRepo)
     {
-        _operators   = operators;
-        _vehicles    = vehicles;
-        _news        = news;
-        _branches    = branches;
-        _departments = departments;
-        _leads       = leads;
-        _email       = email;
-        _globalSmtp  = smtpOptions.Value;
-        _logger      = logger;
-        _extractor   = extractor;
-        _cache       = cache;
+        _operators     = operators;
+        _vehicles      = vehicles;
+        _news          = news;
+        _branches      = branches;
+        _departments   = departments;
+        _leads         = leads;
+        _email         = email;
+        _globalSmtp    = smtpOptions.Value;
+        _logger        = logger;
+        _embeddings    = embeddings;
+        _embeddingRepo = embeddingRepo;
     }
 
     private static string GenerateTrackingCode()
@@ -193,35 +193,29 @@ public sealed class PublicController : ControllerBase
 
         VehicleFilter filter;
 
-        if (!string.IsNullOrWhiteSpace(q))
+        if (!string.IsNullOrWhiteSpace(q) && _embeddings.IsConfigured)
         {
-            // ── Percorso AI: estrazione criteri da testo libero ───────────────
-            var cacheKey = $"ai_criteria:{q.Trim().ToLowerInvariant()}";
-
-            if (!_cache.TryGetValue(cacheKey, out SearchCriteria? criteria))
+            // ── Percorso RAG: ricerca semantica tramite pgvector ──────────────
+            var queryVec = await _embeddings.EmbedAsync(q.Trim(), HttpContext.RequestAborted);
+            if (queryVec is not null)
             {
-                try
-                {
-                    criteria = await _extractor.ExtractAsync(q.Trim(), HttpContext.RequestAborted);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Estrazione criteri AI fallita per query '{Query}'", q);
-                    criteria = null;
-                }
+                var pageReq = new PageRequest(page, Math.Clamp(pageSize, 1, 50));
+                var limit   = pageReq.PageSize * 3; // sovracampiona per coprire più pagine
+                var ids     = await _embeddingRepo.SearchSimilarAsync(
+                    op.Id, queryVec, vehicleType, limit, HttpContext.RequestAborted);
 
-                if (criteria is not null)
-                    _cache.Set(cacheKey, criteria, TimeSpan.FromMinutes(10));
+                _logger.LogInformation("pgvector search '{Query}': {Count} candidati trovati", q, ids.Count);
+
+                var cards = await _vehicles.GetCardsByIdsAsync(op.Id, ids, HttpContext.RequestAborted);
+                var paged = cards
+                    .Skip(pageReq.Page * pageReq.PageSize)
+                    .Take(pageReq.PageSize)
+                    .ToList();
+                return Ok(new PagedResult<VehicleCard>(paged, cards.Count));
             }
 
-            var baseFilter = criteria is not null
-                ? CriteriaToFilter(criteria)
-                : new VehicleFilter(Search: q.Trim()); // fallback: ricerca per parole chiave
-
-            // Preserva sempre il tipo veicolo dal tab attivo (es. autovettura/motoveicolo)
-            filter = !string.IsNullOrEmpty(vehicleType)
-                ? baseFilter with { VehicleType = vehicleType }
-                : baseFilter;
+            // Fallback se embedding non disponibile: ricerca testuale classica
+            filter = new VehicleFilter(VehicleType: vehicleType, Search: q.Trim());
         }
         else
         {
@@ -250,36 +244,6 @@ public sealed class PublicController : ControllerBase
 
         return Ok(result);
     }
-
-    /// <summary>Converte SearchCriteria (output LLM) in VehicleFilter per il repository.</summary>
-    private static VehicleFilter CriteriaToFilter(SearchCriteria c) => new(
-        BodyTypes:    c.BodyType  is { Count: > 0 } ? c.BodyType  : null,
-        FuelTypes:    c.FuelType  is { Count: > 0 } ? c.FuelType  : null,
-        // Sanitizza valori zero/negativi: il modello può restituire 0 per campi non menzionati
-        MinPrice:     c.PriceMin  is > 0 ? c.PriceMin  : null,
-        MaxPrice:     c.PriceMax  is > 0 ? c.PriceMax  : null,
-        Transmission: string.IsNullOrEmpty(c.Transmission) ? null : c.Transmission,
-        ForSale:      c.Intent == "acquisto" ? true : null,
-        ForRental:    c.Intent == "noleggio" ? true : null,
-        Sort:         c.Sort == "rilevanza"  ? null : c.Sort,
-        MinSeats:        c.MinSeats        is > 0 ? c.MinSeats        : null,
-        MinHorsepowerCv: c.MinHorsepowerCv is > 0 ? c.MinHorsepowerCv : null,
-        MaxHorsepowerCv: c.MaxHorsepowerCv is > 0 ? c.MaxHorsepowerCv : null,
-        MinEngineCc:     c.MinEngineCc     is > 0 ? c.MinEngineCc     : null,
-        MaxEngineCc:     c.MaxEngineCc     is > 0 ? c.MaxEngineCc     : null,
-        MinYear:         c.MinYear         is > 0 ? c.MinYear         : null,
-        MaxYear:         c.MaxYear         is > 0 ? c.MaxYear         : null,
-        Color:              string.IsNullOrEmpty(c.Color)             ? null : c.Color.Trim(),
-        EmissionClass:      string.IsNullOrEmpty(c.EmissionClass)     ? null : c.EmissionClass.Trim(),
-        DescriptionKeyword: string.IsNullOrEmpty(c.DescriptionKeyword) ? null : c.DescriptionKeyword.Trim(),
-        Condition:          string.IsNullOrEmpty(c.Condition)          ? null : c.Condition.Trim(),
-        MaxMileageKm:       c.MaxMileageKm     is > 0 ? c.MaxMileageKm     : null,
-        VatDeductible:      c.VatDeductible,
-        HandicapAccessible: c.HandicapAccessible,
-        Imported:           c.Imported,
-        Damaged:            c.Damaged,
-        Brand:              string.IsNullOrEmpty(c.Brand)  ? null : c.Brand.Trim(),
-        Model:              string.IsNullOrEmpty(c.Model)  ? null : c.Model.Trim());
 
     /// <summary>Scheda veicolo con galleria immagini.</summary>
     [HttpGet("vehicles/{id:guid}")]

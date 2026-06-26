@@ -2,8 +2,9 @@ namespace MyCars.Domain.Repositories;
 
 public interface IVehicleRepository
 {
-    Task<PagedResult<VehicleCard>> GetPublicCardsAsync(Guid operatorId, PageRequest page, VehicleFilter? filter = null);
-    Task<VehicleCard?>             GetCardByIdAsync(Guid id, Guid operatorId);
+    Task<PagedResult<VehicleCard>>   GetPublicCardsAsync(Guid operatorId, PageRequest page, VehicleFilter? filter = null);
+    Task<VehicleCard?>               GetCardByIdAsync(Guid id, Guid operatorId);
+    Task<IReadOnlyList<VehicleCard>> GetCardsByIdsAsync(Guid operatorId, IReadOnlyList<Guid> ids, CancellationToken ct = default);
 
     // Admin
     Task<PagedResult<Vehicle>>     GetByOperatorAsync(Guid operatorId, PageRequest page);

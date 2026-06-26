@@ -7,6 +7,7 @@ using MyCars.Infrastructure.Database;
 using MyCars.Infrastructure.Push;
 using MyCars.Infrastructure.Http;
 using MyCars.Infrastructure.AI;
+using MyCars.Infrastructure.Repositories;
 using MyCars.Domain.Repositories;
 using MyCars.Domain.Interfaces;
 using MyCars.Repositories.Rest;
@@ -143,21 +144,14 @@ else
         $"Database:Provider non valido: '{dbProvider}'. Valori attesi: Rest | Npgsql");
 }
 
-// ── Ricerca conversazionale AI ────────────────────────────────────────────────
+// ── Ricerca semantica pgvector (RAG) ─────────────────────────────────────────
+// IDbConnectionFactory per pgvector: disponibile anche in modalità REST
+if (dbProvider.Equals("Rest", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddSingleton<IDbConnectionFactory, PostgresConnectionFactory>();
+
+builder.Services.AddScoped<IVehicleEmbeddingRepository, VehicleEmbeddingRepository>();
+builder.Services.AddHttpClient<IEmbeddingService, OpenAiEmbeddingService>();
 builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<AnthropicCriteriaExtractor>();
-builder.Services.AddSingleton<GroqCriteriaExtractor>();
-builder.Services.AddSingleton<OpenAiCriteriaExtractor>();
-builder.Services.AddSingleton<ICriteriaExtractor>(sp =>
-{
-    var provider = builder.Configuration["Ai:Provider"] ?? "Groq";
-    return provider switch
-    {
-        "Anthropic" => (ICriteriaExtractor)sp.GetRequiredService<AnthropicCriteriaExtractor>(),
-        "OpenAI"    => sp.GetRequiredService<OpenAiCriteriaExtractor>(),
-        _           => sp.GetRequiredService<GroqCriteriaExtractor>()
-    };
-});
 
 // ── Scheduled push ────────────────────────────────────────────────────────────
 builder.Services.AddHostedService<PushSchedulerService>();

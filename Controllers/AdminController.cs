@@ -1,4 +1,6 @@
 using System.Text.Json;
+using MyCars.Domain.Interfaces;
+using MyCars.Domain.Repositories;
 using MyCars.Infrastructure.Push;
 using MyCars.Repositories.Postgres;
 using MyCars.Repositories.Rest;
@@ -25,6 +27,8 @@ public sealed class AdminController : ControllerBase
     private readonly SmtpOptions                 _smtp;
     private readonly VapidOptions                _vapid;
     private readonly SupabaseOptions             _supabase;
+    private readonly IEmbeddingService           _embeddings;
+    private readonly IVehicleEmbeddingRepository _embeddingRepo;
 
     public AdminController(
         IOperatorUserRepository      users,
@@ -42,7 +46,9 @@ public sealed class AdminController : ControllerBase
         IScheduledPushRepository     scheduledPush,
         IOptions<SmtpOptions>        smtpOpts,
         IOptions<VapidOptions>       vapidOpts,
-        IOptions<SupabaseOptions>    supabaseOpts)
+        IOptions<SupabaseOptions>    supabaseOpts,
+        IEmbeddingService            embeddings,
+        IVehicleEmbeddingRepository  embeddingRepo)
     {
         _users         = users;
         _operators     = operators;
@@ -60,6 +66,8 @@ public sealed class AdminController : ControllerBase
         _smtp          = smtpOpts.Value;
         _vapid         = vapidOpts.Value;
         _supabase      = supabaseOpts.Value;
+        _embeddings    = embeddings;
+        _embeddingRepo = embeddingRepo;
     }
 
     private Guid GetOperatorId() =>
@@ -532,6 +540,7 @@ public sealed class AdminController : ControllerBase
 
         var vehicle = BuildVehicle(req, GetOperatorId());
         var created = await _vehicles.CreateAsync(vehicle, req.BrandName.Trim());
+        _ = UpdateEmbeddingAsync(created.Id, created.OperatorId);
         return Ok(created);
     }
 
@@ -584,6 +593,7 @@ public sealed class AdminController : ControllerBase
 
         var updated = await _vehicles.UpdateAsync(existing, req.BrandName.Trim());
         if (updated is null) return NotFound();
+        _ = UpdateEmbeddingAsync(updated.Id, updated.OperatorId);
         return Ok(updated);
     }
 
@@ -591,8 +601,10 @@ public sealed class AdminController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteVehicle(Guid id)
     {
-        var ok = await _vehicles.DeleteAsync(id, GetOperatorId());
+        var opId = GetOperatorId();
+        var ok   = await _vehicles.DeleteAsync(id, opId);
         if (!ok) return NotFound();
+        _ = _embeddingRepo.DeleteAsync(id);
         return Ok(new { deleted = true });
     }
 
@@ -691,6 +703,47 @@ public sealed class AdminController : ControllerBase
         _storage.Delete(img.Url);
         await _vehicles.DeleteImageAsync(imageId, id, opId);
         return Ok(new { deleted = true });
+    }
+
+    private async Task UpdateEmbeddingAsync(Guid vehicleId, Guid operatorId)
+    {
+        if (!_embeddings.IsConfigured) return;
+        try
+        {
+            var card = await _vehicles.GetCardByIdAsync(vehicleId, operatorId);
+            if (card is null) return;
+            var text = BuildEmbeddingText(card);
+            var vec  = await _embeddings.EmbedAsync(text);
+            if (vec is not null)
+                await _embeddingRepo.UpsertAsync(vehicleId, operatorId, vec);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Errore aggiornamento embedding per veicolo {VehicleId}", vehicleId);
+        }
+    }
+
+    private static string BuildEmbeddingText(VehicleCard v)
+    {
+        var parts = new List<string>();
+        parts.Add($"{v.BrandName} {v.Model}" + (string.IsNullOrEmpty(v.Version) ? "" : $" {v.Version}"));
+        if (v.RegistrationYear.HasValue) parts.Add($"Anno {v.RegistrationYear}");
+        if (!string.IsNullOrEmpty(v.Fuel))         parts.Add($"Alimentazione {v.Fuel}");
+        if (!string.IsNullOrEmpty(v.BodyTypeName))  parts.Add($"Carrozzeria {v.BodyTypeName}");
+        if (!string.IsNullOrEmpty(v.Condition))     parts.Add($"Condizione {v.Condition}");
+        if (!string.IsNullOrEmpty(v.Transmission))  parts.Add($"Cambio {v.Transmission}");
+        if (v.Seats.HasValue)           parts.Add($"{v.Seats} posti");
+        if (v.HorsepowerCv.HasValue)    parts.Add($"{v.HorsepowerCv} CV");
+        if (v.EngineCapacityCc.HasValue) parts.Add($"{v.EngineCapacityCc} cc");
+        if (v.MileageKm > 0)            parts.Add($"{v.MileageKm} km");
+        if (v.Price.HasValue)           parts.Add($"Prezzo {v.Price} {v.Currency ?? "EUR"}");
+        if (!string.IsNullOrEmpty(v.Color)) parts.Add($"Colore {v.Color}");
+        if (!string.IsNullOrEmpty(v.EmissionClass)) parts.Add($"Euro {v.EmissionClass}");
+        if (v.VatDeductible)    parts.Add("IVA detraibile");
+        if (v.HandicapAccessible) parts.Add("accessibile disabili");
+        if (v.Imported)         parts.Add("importata");
+        if (!string.IsNullOrEmpty(v.Description)) parts.Add(v.Description);
+        return string.Join(". ", parts);
     }
 
     private static Vehicle BuildVehicle(VehicleUpsertRequest req, Guid operatorId) => new()

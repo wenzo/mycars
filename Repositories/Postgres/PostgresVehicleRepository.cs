@@ -501,10 +501,7 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
             { parts.Add("vehicle_type = @vehicleType::public.vehicle_type"); p.Add("vehicleType", f.VehicleType); }
         if (!string.IsNullOrEmpty(f.Condition))
             { parts.Add("condition = @condition::public.vehicle_condition"); p.Add("condition", f.Condition); }
-        // Fuel: filtro singolo (classico) o multi-valore (AI)
-        if (f.FuelTypes is { Count: > 0 })
-            { parts.Add("fuel::text = ANY(@fuelTypes)"); p.Add("fuelTypes", f.FuelTypes.ToArray()); }
-        else if (!string.IsNullOrEmpty(f.Fuel))
+        if (!string.IsNullOrEmpty(f.Fuel))
             { parts.Add("fuel = @fuel::public.fuel_type"); p.Add("fuel", f.Fuel); }
         if (f.ProntaConsegna.HasValue)
             { parts.Add("pronta_consegna = @pc"); p.Add("pc", f.ProntaConsegna.Value); }
@@ -540,46 +537,42 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
             { parts.Add("for_rental = @forRental"); p.Add("forRental", f.ForRental.Value); }
         if (!string.IsNullOrWhiteSpace(f.Search))
             { parts.Add("(brand_name ILIKE @search OR model ILIKE @search)"); p.Add("search", $"%{f.Search.Trim()}%"); }
-        if (f.BodyTypes is { Count: > 0 })
-        {
-            // ILIKE case-insensitive: "suv" batte "SUV", "berlina" batte "Berlina 3 porte" e "Berlina 5 porte"
-            var patterns = f.BodyTypes.Select(bt => $"%{bt}%").ToArray();
-            parts.Add("body_type_name ILIKE ANY(@bodyTypes)");
-            p.Add("bodyTypes", patterns);
-        }
-        if (f.MinSeats.HasValue)
-            { parts.Add("seats >= @minSeats"); p.Add("minSeats", f.MinSeats.Value); }
-        if (f.MinHorsepowerCv.HasValue)
-            { parts.Add("horsepower_cv >= @minHp"); p.Add("minHp", f.MinHorsepowerCv.Value); }
-        if (f.MaxHorsepowerCv.HasValue)
-            { parts.Add("horsepower_cv <= @maxHp"); p.Add("maxHp", f.MaxHorsepowerCv.Value); }
-        if (f.MinEngineCc.HasValue)
-            { parts.Add("engine_capacity_cc >= @minCc"); p.Add("minCc", f.MinEngineCc.Value); }
-        if (f.MaxEngineCc.HasValue)
-            { parts.Add("engine_capacity_cc <= @maxCc"); p.Add("maxCc", f.MaxEngineCc.Value); }
-        if (!string.IsNullOrEmpty(f.Color))
-            { parts.Add("color ILIKE @color"); p.Add("color", $"%{f.Color}%"); }
-        if (!string.IsNullOrEmpty(f.EmissionClass))
-            { parts.Add("emission_class ILIKE @emissionClass"); p.Add("emissionClass", $"%{f.EmissionClass}%"); }
-        if (!string.IsNullOrEmpty(f.DescriptionKeyword))
-            { parts.Add("description ILIKE @descKeyword"); p.Add("descKeyword", $"%{f.DescriptionKeyword}%"); }
-        if (f.Damaged.HasValue)
-            { parts.Add("damaged = @damaged"); p.Add("damaged", f.Damaged.Value); }
-        if (!string.IsNullOrEmpty(f.Brand))
-            { parts.Add("brand_name ILIKE @brand"); p.Add("brand", $"%{f.Brand}%"); }
-        if (!string.IsNullOrEmpty(f.Model))
-            { parts.Add("model ILIKE @model"); p.Add("model", $"%{f.Model}%"); }
 
         return (string.Join(" AND ", parts), p);
     }
 
-    // ORDER BY da whitelist — nessun valore proveniente dall'utente viene concatenato direttamente.
-    private static string BuildOrderBy(VehicleFilter? f) => f?.Sort switch
+    private static string BuildOrderBy(VehicleFilter? _) => "created_at DESC";
+
+    public async Task<IReadOnlyList<VehicleCard>> GetCardsByIdsAsync(
+        Guid operatorId, IReadOnlyList<Guid> ids, CancellationToken ct = default)
     {
-        "prezzo_asc"  => "price ASC NULLS LAST",
-        "prezzo_desc" => "price DESC NULLS LAST",
-        "anno_desc"   => "registration_year DESC NULLS LAST",
-        "km_asc"      => "mileage_km ASC",
-        _             => "created_at DESC"
-    };
+        if (ids.Count == 0) return [];
+        const string sql = """
+            SELECT pvc.id, pvc.operator_id, pvc.operator_slug, pvc.operator_code,
+                   pvc.branch_id, pvc.internal_code,
+                   pvc.vehicle_type::text AS vehicle_type,
+                   pvc.brand_name, pvc.brand_slug, pvc.model, pvc.version, pvc.body_type_name,
+                   pvc.condition::text AS condition,
+                   pvc.usage_type::text AS usage_type,
+                   pvc.fuel::text AS fuel,
+                   pvc.transmission::text AS transmission,
+                   pvc.horsepower_cv, pvc.power_kw, pvc.engine_capacity_cc,
+                   pvc.registration_month, pvc.registration_year, pvc.mileage_km, pvc.doors, pvc.seats,
+                   pvc.color, pvc.emission_class, pvc.damaged,
+                   pvc.price, pvc.previous_price, pvc.currency,
+                   pvc.vat_deductible, pvc.imported, pvc.handicap_accessible,
+                   pvc.for_sale, pvc.for_rental, pvc.rental_only,
+                   pvc.rental_price, pvc.rental_weekly_price, pvc.rental_weekend_price,
+                   pvc.is_sold, pvc.show_as_sold, pvc.pronta_consegna, pvc.is_nuovo_arrivo, pvc.nuovo_arrivo_until,
+                   pvc.description, pvc.cover_image_url, pvc.cover_bucket, pvc.cover_storage_path,
+                   pvc.branch_name, pvc.city, pvc.province, pvc.created_at, pvc.updated_at
+            FROM public.public_vehicle_cards pvc
+            JOIN unnest(@ids::uuid[]) WITH ORDINALITY AS t(id, ord) ON t.id = pvc.id
+            WHERE pvc.operator_id = @operatorId
+            ORDER BY t.ord
+            """;
+        using var conn = _factory.CreateConnection();
+        var cards = await conn.QueryAsync<VehicleCard>(sql, new { ids = ids.ToArray(), operatorId });
+        return cards.ToList();
+    }
 }
