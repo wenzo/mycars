@@ -20,13 +20,13 @@ public sealed class OpenAiEmbeddingService : IEmbeddingService
     public bool IsConfigured => !string.IsNullOrEmpty(_apiKey);
 
     public OpenAiEmbeddingService(
-        IHttpClientFactory factory,
+        HttpClient http,
         IOptions<AiOptions> aiOpts,
         ILogger<OpenAiEmbeddingService> logger)
     {
         _logger = logger;
         _apiKey = aiOpts.Value.Providers.GetValueOrDefault("OpenAI")?.ApiKey;
-        _http   = factory.CreateClient();
+        _http   = http;
         _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 
