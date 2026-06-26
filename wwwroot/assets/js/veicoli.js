@@ -243,6 +243,7 @@ async function openDrawer(vehicleId = null) {
             set('vBrand',       v.brandName);
             set('vModel',       v.model);
             set('vVersion',     v.version);
+            set('vRegMonth',    v.registrationMonth ?? '');
             set('vRegYear',     v.registrationYear);
             set('vFuel',        v.fuel);
             set('vTransmission',v.transmission);
@@ -433,7 +434,8 @@ async function saveVehicle(e) {
         transmission:    document.getElementById('vTransmission')?.value || null,
         horsepowerCv:    getNum('vHp'),
         powerKw:         getNum('vKw'),
-        registrationYear: getNum('vRegYear'),
+        registrationMonth: getNum('vRegMonth'),
+        registrationYear:  getNum('vRegYear'),
         mileageKm:       getNum('vMileage') ?? 0,
         color:           getVal('vColor'),
         price:           getNum('vPrice'),

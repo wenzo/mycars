@@ -20,14 +20,14 @@ internal static class CriteriaToolSchema
           "properties": {
             "BodyType": {
               "oneOf": [
-                { "type": "string", "enum": ["berlina","suv","station_wagon","city_car","monovolume","coupe","cabrio","pickup"] },
+                { "type": "string", "enum": ["berlina","suv","station wagon","city car","monovolume","coupe","cabrio","fuoristrada"] },
                 {
                   "type": "array",
-                  "items": { "type": "string", "enum": ["berlina","suv","station_wagon","city_car","monovolume","coupe","cabrio","pickup"] }
+                  "items": { "type": "string", "enum": ["berlina","suv","station wagon","city car","monovolume","coupe","cabrio","fuoristrada"] }
                 },
                 { "type": "null" }
               ],
-              "description": "Tipo di carrozzeria. Per famiglie con bambini usa suv, station_wagon o monovolume. Null se non menzionato. Può essere una stringa singola o un array."
+              "description": "Tipo di carrozzeria. Valori esatti: berlina (3 o 5 porte), suv, station wagon, city car, monovolume, coupe, cabrio, fuoristrada. Per famiglie con bambini usa suv, station wagon o monovolume. Null se non menzionato."
             },
             "FuelType": {
               "oneOf": [
@@ -39,6 +39,73 @@ internal static class CriteriaToolSchema
                 { "type": "null" }
               ],
               "description": "Tipo di alimentazione. Null se non menzionato. Può essere una stringa singola o un array."
+            },
+            "Brand": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Marca/costruttore del veicolo (es. BMW, Volkswagen, Fiat, Toyota, Ford). Null se non menzionata. NON includere il modello, solo la marca."
+            },
+            "MinHorsepowerCv": {
+              "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
+              "description": "Potenza minima in CV. Guide: 'adeguata al traino di roulotte/caravan' → 130, 'potente' → 150, 'sportiva' o 'molto potente' → 200. Null se non menzionato."
+            },
+            "MaxHorsepowerCv": {
+              "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
+              "description": "Potenza massima in CV. Utile per 'consumi contenuti' o 'piccola utilitaria'. Null se non menzionato."
+            },
+            "MinEngineCc": {
+              "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
+              "description": "Cilindrata minima in cc. Guide: 'media cilindrata' → 1400, 'grande cilindrata' o 'motore importante' → 2000. Null se non menzionato."
+            },
+            "MaxEngineCc": {
+              "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }],
+              "description": "Cilindrata massima in cc. Guide: 'piccola cilindrata' → 1200, 'media cilindrata' → 2000. Null se non menzionato."
+            },
+            "MinYear": {
+              "oneOf": [{ "type": "integer" }, { "type": "null" }],
+              "description": "Anno minimo di immatricolazione (incluso). Calcola sempre dall'anno corrente fornito nel contesto: 'non più vecchia di 2 anni' → annoCorrente-2, 'recente' → annoCorrente-3, 'nuova' → annoCorrente-1. Null se non menzionato."
+            },
+            "MaxYear": {
+              "oneOf": [{ "type": "integer" }, { "type": "null" }],
+              "description": "Anno massimo di immatricolazione (incluso). Es. 'di qualche anno fa' o 'non troppo recente'. Null se non menzionato."
+            },
+            "Color": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Colore del veicolo in italiano minuscolo (es. 'rosso', 'bianco', 'nero', 'grigio', 'blu', 'argento', 'verde', 'giallo', 'arancione'). Null se non menzionato."
+            },
+            "EmissionClass": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Classe di emissioni Euro (es. 'Euro 6', 'Euro 5', 'Euro 4'). Null se non menzionata."
+            },
+            "DescriptionKeyword": {
+              "oneOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Una singola parola o breve frase da cercare nel campo note/descrizione inserito dal rivenditore. Usa per caratteristiche particolari non strutturate: 'revisione effettuata', 'tagliando', 'tetto apribile', 'cerchi in lega', 'navigatore', 'telecamera posteriore', 'gancio traino'. Null se non menzionato."
+            },
+            "Condition": {
+              "oneOf": [
+                { "type": "string", "enum": ["nuovo","usato","km0"] },
+                { "type": "null" }
+              ],
+              "description": "Stato del veicolo: 'nuovo' (mai immatricolato), 'usato' (già immatricolato), 'km0' (immatricolato ma mai venduto, spesso come da showroom). Null se non specificato."
+            },
+            "MaxMileageKm": {
+              "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "null" }],
+              "description": "Chilometraggio massimo in km. Guide: 'pochi km' → 30000, 'basso chilometraggio' → 50000, 'meno di X km' → X. Null se non menzionato."
+            },
+            "VatDeductible": {
+              "oneOf": [{ "type": "boolean" }, { "type": "null" }],
+              "description": "IVA esposta/detraibile. true se l'utente dice 'IVA detraibile', 'per azienda', 'per partita IVA', 'IVA esposta'. Null se non menzionato."
+            },
+            "HandicapAccessible": {
+              "oneOf": [{ "type": "boolean" }, { "type": "null" }],
+              "description": "Veicolo accessibile/attrezzato per portatori di handicap o disabilità. true se menzionato. Null se non menzionato."
+            },
+            "Imported": {
+              "oneOf": [{ "type": "boolean" }, { "type": "null" }],
+              "description": "Veicolo di importazione (provenienza estera). true se l'utente dice 'importata', 'proveniente dall'estero'. Null se non menzionato."
+            },
+            "Damaged": {
+              "oneOf": [{ "type": "boolean" }, { "type": "null" }],
+              "description": "Veicolo incidentato. false se l'utente dice 'non incidentata', 'senza danni', 'mai incidentata' (caso più comune). true se cerca specificamente auto incidentate. Null se non menzionato."
             },
             "PriceMax": {
               "oneOf": [{ "type": "number", "exclusiveMinimum": 0 }, { "type": "null" }],

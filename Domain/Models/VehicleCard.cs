@@ -21,15 +21,21 @@ public sealed class VehicleCard
     public string? Transmission     { get; set; }
     public int?    HorsepowerCv     { get; set; }
     public int?    PowerKw          { get; set; }
+    public int?    EngineCapacityCc { get; set; }
     public short?  RegistrationMonth { get; set; }
     public short?  RegistrationYear  { get; set; }
     public int     MileageKm        { get; set; }
+    public short?  Doors            { get; set; }
+    public short?  Seats            { get; set; }
+    public string? Color            { get; set; }
+    public string? EmissionClass    { get; set; }
     public decimal? Price           { get; set; }
     public decimal? PreviousPrice   { get; set; }
     public string  Currency         { get; set; } = "EUR";
     public bool    VatDeductible    { get; set; }
     public bool    Imported         { get; set; }
     public bool    HandicapAccessible { get; set; }
+    public bool    Damaged          { get; set; }
     public bool    ForSale          { get; set; } = true;
     public bool    ForRental        { get; set; }
     public bool    RentalOnly       { get; set; }

@@ -214,9 +214,14 @@ public sealed class PublicController : ControllerBase
                     _cache.Set(cacheKey, criteria, TimeSpan.FromMinutes(10));
             }
 
-            filter = criteria is not null
+            var baseFilter = criteria is not null
                 ? CriteriaToFilter(criteria)
                 : new VehicleFilter(Search: q.Trim()); // fallback: ricerca per parole chiave
+
+            // Preserva sempre il tipo veicolo dal tab attivo (es. autovettura/motoveicolo)
+            filter = !string.IsNullOrEmpty(vehicleType)
+                ? baseFilter with { VehicleType = vehicleType }
+                : baseFilter;
         }
         else
         {
@@ -257,7 +262,23 @@ public sealed class PublicController : ControllerBase
         ForSale:      c.Intent == "acquisto" ? true : null,
         ForRental:    c.Intent == "noleggio" ? true : null,
         Sort:         c.Sort == "rilevanza"  ? null : c.Sort,
-        MinSeats:     c.MinSeats  is > 0 ? c.MinSeats  : null);
+        MinSeats:        c.MinSeats        is > 0 ? c.MinSeats        : null,
+        MinHorsepowerCv: c.MinHorsepowerCv is > 0 ? c.MinHorsepowerCv : null,
+        MaxHorsepowerCv: c.MaxHorsepowerCv is > 0 ? c.MaxHorsepowerCv : null,
+        MinEngineCc:     c.MinEngineCc     is > 0 ? c.MinEngineCc     : null,
+        MaxEngineCc:     c.MaxEngineCc     is > 0 ? c.MaxEngineCc     : null,
+        MinYear:         c.MinYear         is > 0 ? c.MinYear         : null,
+        MaxYear:         c.MaxYear         is > 0 ? c.MaxYear         : null,
+        Color:              string.IsNullOrEmpty(c.Color)             ? null : c.Color.Trim(),
+        EmissionClass:      string.IsNullOrEmpty(c.EmissionClass)     ? null : c.EmissionClass.Trim(),
+        DescriptionKeyword: string.IsNullOrEmpty(c.DescriptionKeyword) ? null : c.DescriptionKeyword.Trim(),
+        Condition:          string.IsNullOrEmpty(c.Condition)          ? null : c.Condition.Trim(),
+        MaxMileageKm:       c.MaxMileageKm     is > 0 ? c.MaxMileageKm     : null,
+        VatDeductible:      c.VatDeductible,
+        HandicapAccessible: c.HandicapAccessible,
+        Imported:           c.Imported,
+        Damaged:            c.Damaged,
+        Search:             string.IsNullOrEmpty(c.Brand) ? null : c.Brand.Trim());
 
     /// <summary>Scheda veicolo con galleria immagini.</summary>
     [HttpGet("vehicles/{id:guid}")]

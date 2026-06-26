@@ -18,6 +18,49 @@ public sealed class SearchCriteria
     // manuale | automatico
     public string?  Transmission { get; set; }
 
+    // marca del veicolo (es. BMW, Volkswagen, Fiat) — null se non menzionata
+    public string?  Brand        { get; set; }
+
+    // potenza in CV — per traino roulotte, prestazioni, consumi
+    public int?     MinHorsepowerCv { get; set; }
+    public int?     MaxHorsepowerCv { get; set; }
+
+    // cilindrata in cc — piccola (<1200), media (1400-2000), grande (>2000)
+    public int?     MinEngineCc  { get; set; }
+    public int?     MaxEngineCc  { get; set; }
+
+    // anno di immatricolazione — calcolato dall'AI in base all'anno corrente
+    public int?     MinYear      { get; set; }
+    public int?     MaxYear      { get; set; }
+
+    // colore (es. "rosso", "bianco", "nero", "grigio", "blu")
+    public string?  Color        { get; set; }
+
+    // classe di emissioni (es. "Euro 6", "Euro 5", "Euro 4")
+    public string?  EmissionClass { get; set; }
+
+    // parola chiave libera da cercare nel campo descrizione del dealer
+    // es. "revisione effettuata", "tagliando", "tetto apribile", "cerchi in lega"
+    public string?  DescriptionKeyword { get; set; }
+
+    // stato del veicolo: "nuovo" | "usato" | "km0" — null = qualsiasi
+    public string?  Condition    { get; set; }
+
+    // max chilometri percorsi — "pochi km", "meno di 50.000 km"
+    public int?     MaxMileageKm { get; set; }
+
+    // IVA esposta/detraibile — "per aziende", "IVA detraibile", "partita IVA"
+    public bool?    VatDeductible { get; set; }
+
+    // accessibile portatori di handicap
+    public bool?    HandicapAccessible { get; set; }
+
+    // veicolo di importazione — "importata", "provenienza estera"
+    public bool?    Imported     { get; set; }
+
+    // veicolo incidentato — "non incidentata" → false, "accidentata" → true
+    public bool?    Damaged      { get; set; }
+
     // acquisto | noleggio | qualsiasi  (required dal modello)
     public string   Intent       { get; set; } = "qualsiasi";
 

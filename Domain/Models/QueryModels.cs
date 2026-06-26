@@ -26,8 +26,16 @@ public sealed record VehicleFilter(
     bool?   ForSale            = null,
     bool?   ForRental          = null,
     // Campi aggiuntivi usati dalla ricerca conversazionale AI
-    IReadOnlyList<string>? BodyTypes  = null,   // body_type_name = ANY(...)
+    IReadOnlyList<string>? BodyTypes  = null,   // body_type_name ILIKE ANY(...)
     IReadOnlyList<string>? FuelTypes  = null,   // fuel = ANY(...) — multi-valore
     string? Sort                       = null,   // prezzo_asc|prezzo_desc|anno_desc|km_asc
-    int?    MinSeats                   = null    // seats >= MinSeats
+    int?    MinSeats                   = null,   // seats >= MinSeats
+    int?    MinHorsepowerCv            = null,   // horsepower_cv >= MinHorsepowerCv
+    int?    MaxHorsepowerCv            = null,   // horsepower_cv <= MaxHorsepowerCv
+    int?    MinEngineCc                = null,   // engine_capacity_cc >= MinEngineCc
+    int?    MaxEngineCc                = null,   // engine_capacity_cc <= MaxEngineCc
+    string? Color                      = null,   // color ILIKE %color%
+    string? EmissionClass              = null,   // emission_class ILIKE %class%
+    string? DescriptionKeyword         = null,   // description ILIKE %keyword%
+    bool?   Damaged                    = null    // damaged = true/false
 );

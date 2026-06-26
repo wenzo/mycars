@@ -559,9 +559,10 @@ public sealed class AdminController : ControllerBase
         existing.Condition       = req.Condition;
         existing.Fuel            = string.IsNullOrEmpty(req.Fuel) ? null : req.Fuel;
         existing.Transmission    = string.IsNullOrEmpty(req.Transmission) ? null : req.Transmission;
-        existing.HorsepowerCv    = req.HorsepowerCv;
-        existing.PowerKw         = req.PowerKw;
-        existing.RegistrationYear = req.RegistrationYear;
+        existing.HorsepowerCv     = req.HorsepowerCv;
+        existing.PowerKw          = req.PowerKw;
+        existing.RegistrationMonth = req.RegistrationMonth;
+        existing.RegistrationYear  = req.RegistrationYear;
         existing.MileageKm       = req.MileageKm;
         existing.Color              = req.Color;
         existing.Price              = req.Price;
@@ -704,9 +705,10 @@ public sealed class AdminController : ControllerBase
         Condition        = req.Condition,
         Fuel             = string.IsNullOrEmpty(req.Fuel) ? null : req.Fuel,
         Transmission     = string.IsNullOrEmpty(req.Transmission) ? null : req.Transmission,
-        HorsepowerCv     = req.HorsepowerCv,
-        PowerKw          = req.PowerKw,
-        RegistrationYear = req.RegistrationYear,
+        HorsepowerCv      = req.HorsepowerCv,
+        PowerKw           = req.PowerKw,
+        RegistrationMonth = req.RegistrationMonth,
+        RegistrationYear  = req.RegistrationYear,
         MileageKm        = req.MileageKm,
         Color              = req.Color,
         Price              = req.Price,
@@ -1385,6 +1387,7 @@ public sealed class VehicleUpsertRequest
     public string?  Transmission       { get; set; }
     public int?     HorsepowerCv       { get; set; }
     public int?     PowerKw            { get; set; }
+    public short?   RegistrationMonth  { get; set; }
     public short?   RegistrationYear   { get; set; }
     public int      MileageKm          { get; set; }
     public string?  Color              { get; set; }

@@ -23,8 +23,9 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
                    usage_type::text AS usage_type,
                    fuel::text AS fuel,
                    transmission::text AS transmission,
-                   horsepower_cv, power_kw,
-                   registration_month, registration_year, mileage_km, seats,
+                   horsepower_cv, power_kw, engine_capacity_cc,
+                   registration_month, registration_year, mileage_km, doors, seats,
+                   color, emission_class, damaged,
                    price, previous_price, currency,
                    is_sold, show_as_sold, pronta_consegna, is_nuovo_arrivo, nuovo_arrivo_until,
                    description, cover_image_url, cover_bucket, cover_storage_path,
@@ -540,9 +541,30 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
         if (!string.IsNullOrWhiteSpace(f.Search))
             { parts.Add("(brand_name ILIKE @search OR model ILIKE @search)"); p.Add("search", $"%{f.Search.Trim()}%"); }
         if (f.BodyTypes is { Count: > 0 })
-            { parts.Add("body_type_name = ANY(@bodyTypes)"); p.Add("bodyTypes", f.BodyTypes.ToArray()); }
+        {
+            // ILIKE case-insensitive: "suv" batte "SUV", "berlina" batte "Berlina 3 porte" e "Berlina 5 porte"
+            var patterns = f.BodyTypes.Select(bt => $"%{bt}%").ToArray();
+            parts.Add("body_type_name ILIKE ANY(@bodyTypes)");
+            p.Add("bodyTypes", patterns);
+        }
         if (f.MinSeats.HasValue)
             { parts.Add("seats >= @minSeats"); p.Add("minSeats", f.MinSeats.Value); }
+        if (f.MinHorsepowerCv.HasValue)
+            { parts.Add("horsepower_cv >= @minHp"); p.Add("minHp", f.MinHorsepowerCv.Value); }
+        if (f.MaxHorsepowerCv.HasValue)
+            { parts.Add("horsepower_cv <= @maxHp"); p.Add("maxHp", f.MaxHorsepowerCv.Value); }
+        if (f.MinEngineCc.HasValue)
+            { parts.Add("engine_capacity_cc >= @minCc"); p.Add("minCc", f.MinEngineCc.Value); }
+        if (f.MaxEngineCc.HasValue)
+            { parts.Add("engine_capacity_cc <= @maxCc"); p.Add("maxCc", f.MaxEngineCc.Value); }
+        if (!string.IsNullOrEmpty(f.Color))
+            { parts.Add("color ILIKE @color"); p.Add("color", $"%{f.Color}%"); }
+        if (!string.IsNullOrEmpty(f.EmissionClass))
+            { parts.Add("emission_class ILIKE @emissionClass"); p.Add("emissionClass", $"%{f.EmissionClass}%"); }
+        if (!string.IsNullOrEmpty(f.DescriptionKeyword))
+            { parts.Add("description ILIKE @descKeyword"); p.Add("descKeyword", $"%{f.DescriptionKeyword}%"); }
+        if (f.Damaged.HasValue)
+            { parts.Add("damaged = @damaged"); p.Add("damaged", f.Damaged.Value); }
 
         return (string.Join(" AND ", parts), p);
     }

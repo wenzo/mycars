@@ -12,15 +12,23 @@ export interface VehicleCard {
   condition: string
   fuel: string | null
   transmission: string | null
+  horsepowerCv: number | null
+  powerKw: number | null
+  engineCapacityCc: number | null
   registrationMonth: number | null
   registrationYear: number | null
   mileageKm: number
+  doors: number | null
+  seats: number | null
+  color: string | null
+  emissionClass: string | null
   price: number | null
   previousPrice: number | null
   currency: string
   vatDeductible: boolean
   imported: boolean
   handicapAccessible: boolean
+  damaged: boolean
   forSale: boolean
   forRental: boolean
   rentalPrice: number | null

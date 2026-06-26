@@ -176,11 +176,8 @@
             <div>
                 <div class="form-section-title">Dettagli tecnici</div>
                 <div style="display:flex;flex-direction:column;gap:12px">
+                    <!-- Riga 1: Alimentazione + Cambio -->
                     <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="vRegYear">Anno imm.</label>
-                            <input class="form-input" type="number" id="vRegYear" min="1900" max="2100" placeholder="es. 2022">
-                        </div>
                         <div class="form-group">
                             <label class="form-label" for="vFuel">Alimentazione</label>
                             <select class="form-select" id="vFuel">
@@ -195,8 +192,6 @@
                                 <option value="altro">Altro</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="vTransmission">Cambio</label>
                             <select class="form-select" id="vTransmission">
@@ -206,6 +201,34 @@
                                 <option value="semiautomatico">Semiautomatico</option>
                             </select>
                         </div>
+                    </div>
+                    <!-- Riga 2: Mese + Anno immatricolazione -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="vRegMonth">Mese imm.</label>
+                            <select class="form-select" id="vRegMonth">
+                                <option value="">—</option>
+                                <option value="1">Gennaio</option>
+                                <option value="2">Febbraio</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Aprile</option>
+                                <option value="5">Maggio</option>
+                                <option value="6">Giugno</option>
+                                <option value="7">Luglio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Settembre</option>
+                                <option value="10">Ottobre</option>
+                                <option value="11">Novembre</option>
+                                <option value="12">Dicembre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="vRegYear">Anno imm.</label>
+                            <input class="form-input" type="number" id="vRegYear" min="1900" max="2100" placeholder="es. 2022">
+                        </div>
+                    </div>
+                    <!-- Riga 3: CV + kW -->
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="vHp">Potenza (CV)</label>
                             <input class="form-input" type="number" id="vHp" min="0" placeholder="es. 150">
