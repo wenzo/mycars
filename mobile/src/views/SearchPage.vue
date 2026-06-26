@@ -66,6 +66,44 @@
           </div>
         </div>
 
+        <!-- Anno e mese di immatricolazione -->
+        <div class="filter-section">
+          <div class="frow-slider">
+            <div class="frow-top">
+              <div class="frow-icon"><ion-icon :icon="calendarOutline" /></div>
+              <span class="frow-label">Anno min</span>
+              <div class="slider-val">{{ local.minYear ?? 'Qualunque' }}</div>
+            </div>
+            <input type="range" min="1990" :max="currentYear" step="1" :value="local.minYear ?? 1990"
+              @input="(e) => local.minYear = +(e.target as HTMLInputElement).value === 1990 ? undefined : +(e.target as HTMLInputElement).value"
+              class="mc-range" />
+          </div>
+          <div class="frow-slider">
+            <div class="frow-top">
+              <div class="frow-icon"><ion-icon :icon="calendarOutline" /></div>
+              <span class="frow-label">Anno max</span>
+              <div class="slider-val">{{ local.maxYear ?? 'Qualunque' }}</div>
+            </div>
+            <input type="range" min="1990" :max="currentYear" step="1" :value="local.maxYear ?? currentYear"
+              @input="(e) => local.maxYear = +(e.target as HTMLInputElement).value === currentYear ? undefined : +(e.target as HTMLInputElement).value"
+              class="mc-range" />
+          </div>
+          <div class="frow" @click="openSheet('minMonth')">
+            <div class="frow-icon"><ion-icon :icon="calendarNumberOutline" /></div>
+            <span class="frow-label">Mese imm. da</span>
+            <div class="frow-value" :class="{ selected: local.minMonth }">
+              {{ local.minMonth ? monthName(local.minMonth) : 'Qualunque' }} <ion-icon :icon="chevronForwardOutline" />
+            </div>
+          </div>
+          <div class="frow" @click="openSheet('maxMonth')">
+            <div class="frow-icon"><ion-icon :icon="calendarNumberOutline" /></div>
+            <span class="frow-label">Mese imm. a</span>
+            <div class="frow-value" :class="{ selected: local.maxMonth }">
+              {{ local.maxMonth ? monthName(local.maxMonth) : 'Qualunque' }} <ion-icon :icon="chevronForwardOutline" />
+            </div>
+          </div>
+        </div>
+
         <!-- Toggle -->
         <div class="filter-section">
           <div class="frow">
@@ -146,6 +184,7 @@ import {
   cashOutline, speedometerOutline, arrowForwardOutline,
   searchOutline, chevronForwardOutline, receiptOutline,
   globeOutline, accessibilityOutline, keyOutline, cartOutline,
+  calendarOutline, calendarNumberOutline,
 } from 'ionicons/icons'
 import { useVehicleStore } from '@/stores/vehicles'
 import type { VehicleFilters } from '@/stores/vehicles'
@@ -157,10 +196,24 @@ const local = ref<VehicleFilters>({ ...store.filters })
 
 const sheetOpen    = ref(false)
 const currentField = ref<string>('')
+const currentYear = new Date().getFullYear()
+
+const MONTHS = [
+  { value: 1,  label: 'Gennaio' },  { value: 2,  label: 'Febbraio' },
+  { value: 3,  label: 'Marzo' },    { value: 4,  label: 'Aprile' },
+  { value: 5,  label: 'Maggio' },   { value: 6,  label: 'Giugno' },
+  { value: 7,  label: 'Luglio' },   { value: 8,  label: 'Agosto' },
+  { value: 9,  label: 'Settembre'},  { value: 10, label: 'Ottobre' },
+  { value: 11, label: 'Novembre' }, { value: 12, label: 'Dicembre' },
+]
+function monthName(m: number) { return MONTHS.find(x => x.value === m)?.label ?? '' }
+
 const sheetTitle   = computed(() => ({
   condition:    'Stato veicolo',
   fuel:         'Alimentazione',
   transmission: 'Cambio',
+  minMonth:     'Mese immatricolazione da',
+  maxMonth:     'Mese immatricolazione a',
 }[currentField.value] ?? ''))
 
 // value → display label

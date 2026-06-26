@@ -12,6 +12,7 @@ export interface VehicleCard {
   condition: string
   fuel: string | null
   transmission: string | null
+  registrationMonth: number | null
   registrationYear: number | null
   mileageKm: number
   price: number | null
@@ -88,8 +89,11 @@ export interface VehicleFilters {
   maxMileageKm?: number
   minYear?: number
   maxYear?: number
+  minMonth?: number   // 1–12
+  maxMonth?: number   // 1–12
   branchId?: string
   search?: string
+  q?: string   // ricerca conversazionale AI (se presente, ignora search)
 }
 
 export const useVehicleStore = defineStore('vehicles', () => {
@@ -125,8 +129,11 @@ export const useVehicleStore = defineStore('vehicles', () => {
     if (f.maxMileageKm)     q.set('maxMileageKm', String(f.maxMileageKm))
     if (f.minYear)          q.set('minYear',   String(f.minYear))
     if (f.maxYear)          q.set('maxYear',   String(f.maxYear))
+    if (f.minMonth)         q.set('minMonth',  String(f.minMonth))
+    if (f.maxMonth)         q.set('maxMonth',  String(f.maxMonth))
     if (f.branchId)         q.set('branchId',  f.branchId)
-    if (f.search)           q.set('search',    f.search)
+    if (f.q)                q.set('q',         f.q)       // ricerca AI (ha precedenza su search)
+    else if (f.search)      q.set('search',    f.search)
     return q.toString()
   }
 

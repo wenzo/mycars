@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Colore di sfondo della splash nativa (uguale al primary default del tema Vue) -->
+    <color name="splashBackground">#1E3A5F</color>
 </resources>

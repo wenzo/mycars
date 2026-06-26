@@ -1,5 +1,8 @@
 using System.Net;
 using System.Net.Mail;
+using Microsoft.Extensions.Caching.Memory;
+using MyCars.Domain.Interfaces;
+using MyCars.Domain.Models;
 
 namespace MyCars.Controllers;
 
@@ -20,6 +23,8 @@ public sealed class PublicController : ControllerBase
     private readonly IEmailService          _email;
     private readonly SmtpOptions            _globalSmtp;
     private readonly ILogger<PublicController> _logger;
+    private readonly ICriteriaExtractor     _extractor;
+    private readonly IMemoryCache           _cache;
 
     public PublicController(
         IOperatorRepository       operators,
@@ -30,17 +35,21 @@ public sealed class PublicController : ControllerBase
         ILeadRepository           leads,
         IEmailService             email,
         IOptions<SmtpOptions>     smtpOptions,
-        ILogger<PublicController> logger)
+        ILogger<PublicController> logger,
+        ICriteriaExtractor        extractor,
+        IMemoryCache              cache)
     {
-        _operators  = operators;
-        _vehicles   = vehicles;
-        _news       = news;
-        _branches   = branches;
+        _operators   = operators;
+        _vehicles    = vehicles;
+        _news        = news;
+        _branches    = branches;
         _departments = departments;
-        _leads      = leads;
-        _email      = email;
-        _globalSmtp = smtpOptions.Value;
-        _logger     = logger;
+        _leads       = leads;
+        _email       = email;
+        _globalSmtp  = smtpOptions.Value;
+        _logger      = logger;
+        _extractor   = extractor;
+        _cache       = cache;
     }
 
     private static string GenerateTrackingCode()
@@ -151,6 +160,7 @@ public sealed class PublicController : ControllerBase
     // ── Veicoli ───────────────────────────────────────────────────────────────
 
     /// <summary>Lista veicoli pubblica con filtri e paginazione.</summary>
+    /// <param name="q">Ricerca conversazionale in linguaggio naturale (opzionale, retrocompatibile).</param>
     [HttpGet("vehicles")]
     public async Task<IActionResult> GetVehicles(
         string slug,
@@ -166,6 +176,8 @@ public sealed class PublicController : ControllerBase
         [FromQuery] int?     maxMileageKm   = null,
         [FromQuery] int?     minYear        = null,
         [FromQuery] int?     maxYear        = null,
+        [FromQuery] int?     minMonth       = null,
+        [FromQuery] int?     maxMonth       = null,
         [FromQuery] Guid?    branchId           = null,
         [FromQuery] string?  search             = null,
         [FromQuery] string?  transmission       = null,
@@ -173,19 +185,58 @@ public sealed class PublicController : ControllerBase
         [FromQuery] bool?    handicapAccessible = null,
         [FromQuery] bool?    imported           = null,
         [FromQuery] bool?    forSale            = null,
-        [FromQuery] bool?    forRental          = null)
+        [FromQuery] bool?    forRental          = null,
+        [FromQuery] string?  q                  = null)
     {
         var op = await ResolveAsync(slug);
         if (op is null) return NotFound();
 
-        var filter = new VehicleFilter(
-            vehicleType, condition, fuel,
-            prontaConsegna, isNuovoArrivo,
-            minPrice, maxPrice, maxMileageKm,
-            minYear, maxYear, branchId,
-            string.IsNullOrWhiteSpace(search)       ? null : search.Trim(),
-            string.IsNullOrWhiteSpace(transmission) ? null : transmission.Trim(),
-            vatDeductible, handicapAccessible, imported, forSale, forRental);
+        VehicleFilter filter;
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            // ── Percorso AI: estrazione criteri da testo libero ───────────────
+            var cacheKey = $"ai_criteria:{q.Trim().ToLowerInvariant()}";
+
+            if (!_cache.TryGetValue(cacheKey, out SearchCriteria? criteria))
+            {
+                try
+                {
+                    criteria = await _extractor.ExtractAsync(q.Trim(), HttpContext.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Estrazione criteri AI fallita per query '{Query}'", q);
+                    criteria = null;
+                }
+
+                if (criteria is not null)
+                    _cache.Set(cacheKey, criteria, TimeSpan.FromMinutes(10));
+            }
+
+            filter = criteria is not null
+                ? CriteriaToFilter(criteria)
+                : new VehicleFilter(Search: q.Trim()); // fallback: ricerca per parole chiave
+        }
+        else
+        {
+            // ── Percorso classico: filtri strutturati (comportamento invariato) ─
+            filter = new VehicleFilter(
+                vehicleType, condition, fuel,
+                prontaConsegna, isNuovoArrivo,
+                minPrice, maxPrice, maxMileageKm,
+                minYear, maxYear,
+                MinMonth:           minMonth,
+                MaxMonth:           maxMonth,
+                BranchId:           branchId,
+                Search:             string.IsNullOrWhiteSpace(search)       ? null : search.Trim(),
+                Transmission:       string.IsNullOrWhiteSpace(transmission) ? null : transmission.Trim(),
+                VatDeductible:      vatDeductible,
+                HandicapAccessible: handicapAccessible,
+                Imported:           imported,
+                ForSale:            forSale,
+                ForRental:          forRental);
+        }
 
         var result = await _vehicles.GetPublicCardsAsync(
             op.Id,
@@ -194,6 +245,19 @@ public sealed class PublicController : ControllerBase
 
         return Ok(result);
     }
+
+    /// <summary>Converte SearchCriteria (output LLM) in VehicleFilter per il repository.</summary>
+    private static VehicleFilter CriteriaToFilter(SearchCriteria c) => new(
+        BodyTypes:    c.BodyType  is { Count: > 0 } ? c.BodyType  : null,
+        FuelTypes:    c.FuelType  is { Count: > 0 } ? c.FuelType  : null,
+        // Sanitizza valori zero/negativi: il modello può restituire 0 per campi non menzionati
+        MinPrice:     c.PriceMin  is > 0 ? c.PriceMin  : null,
+        MaxPrice:     c.PriceMax  is > 0 ? c.PriceMax  : null,
+        Transmission: string.IsNullOrEmpty(c.Transmission) ? null : c.Transmission,
+        ForSale:      c.Intent == "acquisto" ? true : null,
+        ForRental:    c.Intent == "noleggio" ? true : null,
+        Sort:         c.Sort == "rilevanza"  ? null : c.Sort,
+        MinSeats:     c.MinSeats  is > 0 ? c.MinSeats  : null);
 
     /// <summary>Scheda veicolo con galleria immagini.</summary>
     [HttpGet("vehicles/{id:guid}")]

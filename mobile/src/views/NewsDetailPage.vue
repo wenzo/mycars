@@ -1,29 +1,36 @@
 <template>
   <ion-page>
     <ion-content v-if="store.detail" :fullscreen="true" style="--padding-bottom: calc(var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
-      <!-- Hero -->
+
+      <!-- Hero — contiene topbar, badge, titolo e share -->
       <div class="news-hero" :style="heroStyle">
         <div class="hero-overlay" />
+
+        <!-- Topbar: back a sinistra, share a destra -->
         <div class="hero-topbar">
           <button class="action-btn" @click="$router.back()">
             <ion-icon :icon="arrowBackOutline" />
           </button>
+          <button class="action-btn" @click="shareNews">
+            <ion-icon :icon="shareOutline" />
+          </button>
         </div>
+
+        <!-- Badge + titolo al fondo dell'hero -->
         <div class="hero-bottom">
           <span class="ncard-type" :class="`ntype-${store.detail.newsType}`">
             {{ newsTypeLabel(store.detail.newsType) }}
           </span>
+          <h1 class="hero-title">{{ store.detail.title }}</h1>
         </div>
       </div>
 
-      <div style="padding:16px 16px 40px">
-        <h1 style="font-family:var(--mc-font-heading);font-size:22px;font-weight:800;color:var(--mc-text);line-height:1.2;margin-bottom:8px">
-          {{ store.detail.title }}
-        </h1>
-        <div v-if="store.detail.publishedAt" style="font-size:12px;color:var(--mc-text-light);margin-bottom:16px">
+      <!-- Corpo della news -->
+      <div style="padding:14px 16px 40px">
+        <div v-if="store.detail.publishedAt" style="font-size:12px;color:var(--mc-text-light);margin-bottom:12px">
           {{ fmtDate(store.detail.publishedAt) }}
         </div>
-        <div v-if="store.detail.excerpt" style="font-size:14px;color:var(--mc-text-mid);line-height:1.6;margin-bottom:16px;font-weight:500">
+        <div v-if="store.detail.excerpt" style="font-size:14px;color:var(--mc-text-mid);line-height:1.6;margin-bottom:14px;font-weight:500">
           {{ store.detail.excerpt }}
         </div>
         <div
@@ -53,7 +60,8 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/vue'
-import { arrowBackOutline } from 'ionicons/icons'
+import { arrowBackOutline, shareOutline } from 'ionicons/icons'
+import { Share } from '@capacitor/share'
 import { useNewsStore } from '@/stores/news'
 import { useOperatorStore } from '@/stores/operator'
 
@@ -66,7 +74,6 @@ const bodyHtml = computed(() => {
   if (!body) return ''
   const base = op.apiBase
   if (!base) return body
-  // Normalize relative src URLs — handles both double and single quotes
   return body
     .replace(/src="(\/[^"]+)"/g, `src="${base}$1"`)
     .replace(/src='(\/[^']+)'/g, `src='${base}$1'`)
@@ -101,30 +108,72 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+async function shareNews() {
+  const detail = store.detail
+  if (!detail) return
+  try {
+    await Share.share({
+      title:  detail.title,
+      text:   detail.excerpt ?? detail.title,
+      dialogTitle: 'Condividi questa news',
+    })
+  } catch {
+    // L'utente ha annullato o share non disponibile — nessuna azione
+  }
+}
+
 onMounted(() => store.fetchDetail(route.params.id as string))
 </script>
 
 <style scoped>
 .news-hero {
-  height: 220px; position: relative; flex-shrink: 0;
+  min-height: 260px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .hero-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,.35) 0%, transparent 40%, rgba(0,0,0,.3) 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,.45) 0%,
+    transparent 35%,
+    rgba(0,0,0,.45) 65%,
+    rgba(0,0,0,.75) 100%
+  );
 }
+
+/* Topbar: back sinistra, share destra */
 .hero-topbar {
-  position: absolute; top: 50px; left: 16px; z-index: 20;
+  position: relative; z-index: 20;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 50px 14px 0;
 }
 .action-btn {
   width: 36px; height: 36px;
   background: rgba(0,0,0,.38); backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,.15); border-radius: 50%; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .action-btn ion-icon { color: #fff; font-size: 18px; }
+
+/* Badge + titolo sul fondo dell'hero */
 .hero-bottom {
-  position: absolute; bottom: 14px; left: 14px; z-index: 20;
+  position: relative; z-index: 20;
+  padding: 0 16px 18px;
+  display: flex; flex-direction: column; gap: 8px;
 }
+.hero-title {
+  font-family: var(--mc-font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+  margin: 0;
+  text-shadow: 0 1px 6px rgba(0,0,0,.45);
+}
+
 .news-body { font-size: 14px; color: var(--mc-text-mid); line-height: 1.7; }
 .news-body p { margin-bottom: 12px; }
 .news-body h2, .news-body h3 { font-family: var(--mc-font-heading); color: var(--mc-text); margin: 16px 0 8px; }

@@ -28,10 +28,18 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
     public async Task<PagedResult<VehicleCard>> GetPublicCardsAsync(
         Guid operatorId, PageRequest page, VehicleFilter? filter = null)
     {
-        var f = BuildVehicleFilter(operatorId, filter);
+        var f     = BuildVehicleFilter(operatorId, filter);
+        var order = filter?.Sort switch
+        {
+            "prezzo_asc"  => "price.asc",
+            "prezzo_desc" => "price.desc",
+            "anno_desc"   => "registration_year.desc",
+            "km_asc"      => "mileage_km.asc",
+            _             => "created_at.desc"
+        };
         var (items, total) = await _db.SelectWithCountAsync<VehicleCard>(
             "public_vehicle_cards", f,
-            order:  "created_at.desc",
+            order:  order,
             limit:  page.PageSize,
             offset: page.Page * page.PageSize);
         return new PagedResult<VehicleCard>(items, total);
@@ -414,12 +422,23 @@ public sealed class SupabaseRestVehicleRepository : IVehicleRepository
         if (f.MaxMileageKm.HasValue)       parts.Add($"mileage_km=lte.{f.MaxMileageKm}");
         if (f.MinYear.HasValue)            parts.Add($"registration_year=gte.{f.MinYear}");
         if (f.MaxYear.HasValue)            parts.Add($"registration_year=lte.{f.MaxYear}");
+        if (f.MinMonth.HasValue)           parts.Add($"registration_month=gte.{f.MinMonth}");
+        if (f.MaxMonth.HasValue)           parts.Add($"registration_month=lte.{f.MaxMonth}");
         if (f.BranchId.HasValue)           parts.Add($"branch_id=eq.{f.BranchId}");
         if (!string.IsNullOrWhiteSpace(f.Search))
         {
-            var t = f.Search.Replace("*", "").Replace("(", "").Replace(")", "");
+            var t = f.Search.Trim().Replace("*", "").Replace("(", "").Replace(")", "");
             parts.Add($"or=(model.ilike.*{t}*,brand_name.ilike.*{t}*)");
         }
+        // Fuel: multi-valore AI (ha precedenza sul singolo)
+        if (f.FuelTypes is { Count: > 0 })
+            parts.Add($"fuel=in.({string.Join(",", f.FuelTypes)})");
+        // BodyType: multi-valore AI
+        if (f.BodyTypes is { Count: > 0 })
+            parts.Add($"body_type_name=in.({string.Join(",", f.BodyTypes)})");
+        if (f.MinSeats.HasValue)
+            parts.Add($"seats=gte.{f.MinSeats}");
+
         return string.Join("&", parts);
     }
 }

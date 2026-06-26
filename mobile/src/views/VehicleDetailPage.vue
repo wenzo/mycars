@@ -76,7 +76,7 @@
         <div class="specs-row">
           <div v-if="store.detail.fuel"             class="dspec"><ion-icon :icon="flashOutline"    /><span>{{ store.detail.fuel }}</span></div>
           <div v-if="store.detail.mileageKm != null" class="dspec"><ion-icon :icon="speedometerOutline" /><span>{{ fmtKm(store.detail.mileageKm) }} km</span></div>
-          <div v-if="store.detail.registrationYear"  class="dspec"><ion-icon :icon="calendarOutline" /><span>{{ store.detail.registrationYear }}</span></div>
+          <div v-if="store.detail.registrationYear"  class="dspec"><ion-icon :icon="calendarOutline" /><span>{{ fmtReg(store.detail.registrationMonth, store.detail.registrationYear) }}</span></div>
           <div v-if="store.detail.transmission"      class="dspec"><ion-icon :icon="gitNetworkOutline" /><span>{{ store.detail.transmission }}</span></div>
           <div v-if="store.detail.horsepowerCv"      class="dspec"><ion-icon :icon="thermometerOutline" /><span>{{ store.detail.horsepowerCv }} CV</span></div>
           <div v-if="store.detail.powerKw"           class="dspec"><ion-icon :icon="thermometerOutline" /><span>{{ store.detail.powerKw }} kW</span></div>
@@ -529,6 +529,11 @@ const discount = computed(() => {
 
 function fmtPrice(v: number | null) { return v ? new Intl.NumberFormat('it-IT').format(v) : '—' }
 function fmtKm(v: number)           { return new Intl.NumberFormat('it-IT').format(v) }
+function fmtReg(month: number | null | undefined, year: number | null | undefined) {
+  if (!year) return ''
+  if (!month) return String(year)
+  return `${String(month).padStart(2, '0')}/${year}`
+}
 function openLead(type: 'info' | 'test_drive' | 'price_update') {
   leadType.value = type
   if (type === 'info' && store.detail) {

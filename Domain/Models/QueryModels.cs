@@ -7,7 +7,7 @@ public sealed record PagedResult<T>(IReadOnlyList<T> Items, long TotalCount);
 public sealed record VehicleFilter(
     string? VehicleType        = null,
     string? Condition          = null,
-    string? Fuel               = null,
+    string? Fuel               = null,           // singolo fuel (filtri classici)
     bool?   ProntaConsegna     = null,
     bool?   IsNuovoArrivo      = null,
     decimal? MinPrice          = null,
@@ -15,6 +15,8 @@ public sealed record VehicleFilter(
     int?    MaxMileageKm       = null,
     int?    MinYear            = null,
     int?    MaxYear            = null,
+    int?    MinMonth           = null,   // 1–12
+    int?    MaxMonth           = null,   // 1–12
     Guid?   BranchId           = null,
     string? Search             = null,
     string? Transmission       = null,
@@ -22,5 +24,10 @@ public sealed record VehicleFilter(
     bool?   HandicapAccessible = null,
     bool?   Imported           = null,
     bool?   ForSale            = null,
-    bool?   ForRental          = null
+    bool?   ForRental          = null,
+    // Campi aggiuntivi usati dalla ricerca conversazionale AI
+    IReadOnlyList<string>? BodyTypes  = null,   // body_type_name = ANY(...)
+    IReadOnlyList<string>? FuelTypes  = null,   // fuel = ANY(...) — multi-valore
+    string? Sort                       = null,   // prezzo_asc|prezzo_desc|anno_desc|km_asc
+    int?    MinSeats                   = null    // seats >= MinSeats
 );

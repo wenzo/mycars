@@ -174,7 +174,8 @@ function initTinyMCE() {
             }
 
             const data = await res.json();
-            return data.location; // TinyMCE usa il valore restituito come src dell'img
+            // Return absolute URL so TinyMCE stores it as-is in the body HTML
+            return window.location.origin + data.location;
         },
     });
 }

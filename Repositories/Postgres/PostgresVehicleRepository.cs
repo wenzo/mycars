@@ -11,6 +11,7 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
         Guid operatorId, PageRequest page, VehicleFilter? f = null)
     {
         var (where, param) = BuildWherePublic(operatorId, f);
+        var orderBy = BuildOrderBy(f);
 
         var countSql = $"SELECT COUNT(*) FROM public.public_vehicle_cards WHERE {where}";
         var itemsSql = $"""
@@ -23,14 +24,14 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
                    fuel::text AS fuel,
                    transmission::text AS transmission,
                    horsepower_cv, power_kw,
-                   registration_month, registration_year, mileage_km,
+                   registration_month, registration_year, mileage_km, seats,
                    price, previous_price, currency,
                    is_sold, show_as_sold, pronta_consegna, is_nuovo_arrivo, nuovo_arrivo_until,
                    description, cover_image_url, cover_bucket, cover_storage_path,
                    branch_name, city, province, created_at, updated_at
             FROM public.public_vehicle_cards
             WHERE {where}
-            ORDER BY created_at DESC
+            ORDER BY {orderBy}
             LIMIT @pageSize OFFSET @offset
             """;
         param.Add("pageSize", page.PageSize);
@@ -499,7 +500,10 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
             { parts.Add("vehicle_type = @vehicleType::public.vehicle_type"); p.Add("vehicleType", f.VehicleType); }
         if (!string.IsNullOrEmpty(f.Condition))
             { parts.Add("condition = @condition::public.vehicle_condition"); p.Add("condition", f.Condition); }
-        if (!string.IsNullOrEmpty(f.Fuel))
+        // Fuel: filtro singolo (classico) o multi-valore (AI)
+        if (f.FuelTypes is { Count: > 0 })
+            { parts.Add("fuel::text = ANY(@fuelTypes)"); p.Add("fuelTypes", f.FuelTypes.ToArray()); }
+        else if (!string.IsNullOrEmpty(f.Fuel))
             { parts.Add("fuel = @fuel::public.fuel_type"); p.Add("fuel", f.Fuel); }
         if (f.ProntaConsegna.HasValue)
             { parts.Add("pronta_consegna = @pc"); p.Add("pc", f.ProntaConsegna.Value); }
@@ -515,9 +519,41 @@ public sealed class PostgresVehicleRepository : IVehicleRepository
             { parts.Add("registration_year >= @minYear"); p.Add("minYear", f.MinYear.Value); }
         if (f.MaxYear.HasValue)
             { parts.Add("registration_year <= @maxYear"); p.Add("maxYear", f.MaxYear.Value); }
+        if (f.MinMonth.HasValue)
+            { parts.Add("registration_month >= @minMonth"); p.Add("minMonth", f.MinMonth.Value); }
+        if (f.MaxMonth.HasValue)
+            { parts.Add("registration_month <= @maxMonth"); p.Add("maxMonth", f.MaxMonth.Value); }
         if (f.BranchId.HasValue)
             { parts.Add("branch_id = @branchId"); p.Add("branchId", f.BranchId.Value); }
+        if (!string.IsNullOrEmpty(f.Transmission))
+            { parts.Add("transmission::text = @transmission"); p.Add("transmission", f.Transmission); }
+        if (f.VatDeductible.HasValue)
+            { parts.Add("vat_deductible = @vatDed"); p.Add("vatDed", f.VatDeductible.Value); }
+        if (f.HandicapAccessible.HasValue)
+            { parts.Add("handicap_accessible = @handi"); p.Add("handi", f.HandicapAccessible.Value); }
+        if (f.Imported.HasValue)
+            { parts.Add("imported = @imported"); p.Add("imported", f.Imported.Value); }
+        if (f.ForSale.HasValue)
+            { parts.Add("for_sale = @forSale"); p.Add("forSale", f.ForSale.Value); }
+        if (f.ForRental.HasValue)
+            { parts.Add("for_rental = @forRental"); p.Add("forRental", f.ForRental.Value); }
+        if (!string.IsNullOrWhiteSpace(f.Search))
+            { parts.Add("(brand_name ILIKE @search OR model ILIKE @search)"); p.Add("search", $"%{f.Search.Trim()}%"); }
+        if (f.BodyTypes is { Count: > 0 })
+            { parts.Add("body_type_name = ANY(@bodyTypes)"); p.Add("bodyTypes", f.BodyTypes.ToArray()); }
+        if (f.MinSeats.HasValue)
+            { parts.Add("seats >= @minSeats"); p.Add("minSeats", f.MinSeats.Value); }
 
         return (string.Join(" AND ", parts), p);
     }
+
+    // ORDER BY da whitelist — nessun valore proveniente dall'utente viene concatenato direttamente.
+    private static string BuildOrderBy(VehicleFilter? f) => f?.Sort switch
+    {
+        "prezzo_asc"  => "price ASC NULLS LAST",
+        "prezzo_desc" => "price DESC NULLS LAST",
+        "anno_desc"   => "registration_year DESC NULLS LAST",
+        "km_asc"      => "mileage_km ASC",
+        _             => "created_at DESC"
+    };
 }

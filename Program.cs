@@ -6,7 +6,9 @@ using MyCars.Configuration;
 using MyCars.Infrastructure.Database;
 using MyCars.Infrastructure.Push;
 using MyCars.Infrastructure.Http;
+using MyCars.Infrastructure.AI;
 using MyCars.Domain.Repositories;
+using MyCars.Domain.Interfaces;
 using MyCars.Repositories.Rest;
 using MyCars.Repositories.Postgres;
 
@@ -31,6 +33,7 @@ DefaultTypeMap.MatchNamesWithUnderscores = true;
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Opzioni di configurazione ─────────────────────────────────────────────────
+builder.Services.Configure<AiOptions>         (builder.Configuration.GetSection("Ai"));
 builder.Services.Configure<DatabaseOptions>   (builder.Configuration.GetSection("Database"));
 builder.Services.Configure<SupabaseOptions>   (builder.Configuration.GetSection("Supabase"));
 builder.Services.Configure<AdminOptions>      (builder.Configuration.GetSection("Admin"));
@@ -139,6 +142,22 @@ else
     throw new InvalidOperationException(
         $"Database:Provider non valido: '{dbProvider}'. Valori attesi: Rest | Npgsql");
 }
+
+// ── Ricerca conversazionale AI ────────────────────────────────────────────────
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<AnthropicCriteriaExtractor>();
+builder.Services.AddSingleton<GroqCriteriaExtractor>();
+builder.Services.AddSingleton<OpenAiCriteriaExtractor>();
+builder.Services.AddSingleton<ICriteriaExtractor>(sp =>
+{
+    var provider = builder.Configuration["Ai:Provider"] ?? "Groq";
+    return provider switch
+    {
+        "Anthropic" => (ICriteriaExtractor)sp.GetRequiredService<AnthropicCriteriaExtractor>(),
+        "OpenAI"    => sp.GetRequiredService<OpenAiCriteriaExtractor>(),
+        _           => sp.GetRequiredService<GroqCriteriaExtractor>()
+    };
+});
 
 // ── Scheduled push ────────────────────────────────────────────────────────────
 builder.Services.AddHostedService<PushSchedulerService>();

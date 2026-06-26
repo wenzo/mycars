@@ -40,4 +40,6 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Permette al plugin FCM di ricevere notifiche con l'app chiusa -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Richiesta per la dettatura vocale nella ricerca conversazionale AI -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 </manifest>
