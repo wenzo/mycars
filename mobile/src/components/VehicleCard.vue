@@ -12,7 +12,7 @@
     </div>
     <div class="vcard-body">
       <div class="vcard-brand">{{ vehicle.brandName }}</div>
-      <div class="vcard-model">{{ vehicle.model }}<span v-if="vehicle.version"> {{ vehicle.version }}</span></div>
+      <div class="vcard-model">{{ vehicle.model + (vehicle.version ? ' ' + vehicle.version : '') }}</div>
       <div class="vcard-specs">
         <span v-if="vehicle.fuel"             class="vcard-spec">{{ vehicle.fuel }}</span>
         <span v-if="vehicle.mileageKm != null" class="vcard-spec">{{ fmtKm(vehicle.mileageKm) }} km</span>

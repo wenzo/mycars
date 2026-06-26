@@ -153,25 +153,23 @@ internal static class CriteriaToolSchema
         int y = DateTime.UtcNow.Year;
         return
             $"Sei un estrattore di criteri per la ricerca di veicoli in concessionarie italiane. " +
-            $"Analizza la frase dell'utente e chiama lo strumento '{ToolName}' con i campi compilati.\n\n" +
-            $"REGOLA FONDAMENTALE: estrai SOLO ciò che l'utente dice ESPLICITAMENTE. " +
-            $"Non inferire criteri: 'comoda' NON implica MinSeats, 'per famiglia' NON implica BodyType. " +
-            $"Meno criteri usi → più risultati trova → utente più soddisfatto. Pochi campi precisi battono molti campi vaghi.\n\n" +
+            $"Analizza la frase dell'utente e chiama lo strumento '{ToolName}' compilando TUTTI i campi che corrispondono a concetti menzionati.\n\n" +
+            $"REGOLA: compila un campo se e solo se il concetto è menzionato; non inventare criteri non detti. " +
+            $"Per tutto ciò che non viene menzionato usa null.\n\n" +
             $"Brand = SOLO la casa costruttrice (BMW, Fiat, Volkswagen...). " +
-            $"Model = SOLO il modello (Golf, Panda, Serie 3...). " +
-            $"Se l'utente dice 'Volkswagen Golf': Brand='Volkswagen', Model='Golf'.\n\n" +
+            $"Model = SOLO il modello specifico (Golf, Panda, Serie 3...). " +
+            $"'Volkswagen Golf' → Brand:\"Volkswagen\", Model:\"Golf\".\n\n" +
             $"Anno corrente: {y}. " +
             $"'Non più vecchia di 2 anni' → MinYear={y - 2}. " +
-            $"'Recente/quasi nuova' → MinYear={y - 3}.\n\n" +
-            $"ESEMPI (segui esattamente questo stile):\n" +
+            $"'Recente' → MinYear={y - 3}.\n\n" +
+            $"ESEMPI:\n" +
             $"• 'SUV diesel automatico' → FuelType:[\"diesel\"], BodyType:[\"suv\"], Transmission:\"automatico\"\n" +
             $"• 'Volkswagen Golf usata sotto 15000 euro' → Brand:\"Volkswagen\", Model:\"Golf\", Condition:\"usato\", PriceMax:15000\n" +
             $"• 'voglio noleggiare una berlina ibrida' → Intent:\"noleggio\", BodyType:[\"berlina\"], FuelType:[\"ibrida\"]\n" +
             $"• 'auto non più vecchia di 3 anni con pochi km' → MinYear:{y - 3}, MaxMileageKm:50000\n" +
-            $"• 'revisione effettuata, tagliando recente' → DescriptionKeyword:\"revisione effettuata\"\n" +
             $"• 'per azienda IVA detraibile' → VatDeductible:true\n" +
             $"• 'auto rossa' → Color:\"rosso\"\n\n" +
-            $"Per ogni campo non menzionato usa null. NON usare array vuoti né zero.";
+            $"Campi non menzionati → null. NON usare array vuoti né zero.";
     }
 
     // Tool in formato Anthropic (input_schema)
