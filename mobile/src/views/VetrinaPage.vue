@@ -72,16 +72,36 @@
 
     <ion-content style="--padding-bottom: calc(var(--ion-tab-bar-height, 56px) + var(--ion-safe-area-bottom, 0px))">
       <div class="veicoli-scroll" :class="layout === 'grid' ? 'grid-2col' : 'list-col'">
-        <VehicleCard
-          v-for="v in store.items"
-          :key="v.id"
-          :vehicle="v"
-          :layout="layout"
-          @click="$router.push(`/tabs/veicolo/${v.id}`)"
-        />
-        <div v-if="store.loading" class="loading-row">
+        <!-- Ricerca AI in corso -->
+        <div v-if="store.loading && searchText" class="ai-loading-row">
           <ion-spinner name="crescent" />
+          <span>Ricerca AI in corso…</span>
         </div>
+
+        <template v-else>
+          <VehicleCard
+            v-for="v in store.items"
+            :key="v.id"
+            :vehicle="v"
+            :layout="layout"
+            @click="$router.push(`/tabs/veicolo/${v.id}`)"
+          />
+
+          <!-- Nessun risultato -->
+          <div v-if="!store.loading && store.items.length === 0" class="empty-state">
+            <ion-icon :icon="searchOutline" class="empty-icon" />
+            <p v-if="searchText" class="empty-title">Nessun veicolo trovato</p>
+            <p v-if="searchText" class="empty-sub">per "{{ searchText }}"</p>
+            <p v-if="!searchText" class="empty-title">Nessun veicolo disponibile</p>
+            <button v-if="searchText" class="empty-reset-btn" @click="clearSearch">
+              Cancella ricerca
+            </button>
+          </div>
+
+          <div v-if="store.loading" class="loading-row">
+            <ion-spinner name="crescent" />
+          </div>
+        </template>
         <ion-infinite-scroll @ionInfinite="onInfinite">
           <ion-infinite-scroll-content />
         </ion-infinite-scroll>
@@ -112,13 +132,12 @@
 
       <ion-content class="modal-content-scroll">
         <div class="modal-inner">
-          <!-- Textarea principale -->
-          <ion-textarea
+          <!-- Textarea nativa: v-model sicuro su Android WebView -->
+          <textarea
             ref="textareaEl"
             v-model="modalText"
             :placeholder="examplesPlaceholder"
-            :rows="5"
-            auto-grow
+            rows="5"
             class="ai-textarea"
           />
 
@@ -180,7 +199,7 @@ import {
   IonPage, IonContent, IonIcon, IonSpinner,
   IonInfiniteScroll, IonInfiniteScrollContent,
   IonModal, IonHeader, IonToolbar, IonTitle,
-  IonButtons, IonButton, IonTextarea,
+  IonButtons, IonButton,
 } from '@ionic/vue'
 import {
   carOutline, funnelOutline, gridOutline, listOutline,
@@ -237,7 +256,7 @@ onMounted(() => {
 
 const modalOpen  = ref(false)
 const modalText  = ref('')
-const textareaEl = ref<InstanceType<typeof IonTextarea> | null>(null)
+const textareaEl = ref<HTMLTextAreaElement | null>(null)
 
 const examples = [
   'SUV diesel automatico per famiglia, massimo 25.000€',
@@ -267,8 +286,7 @@ function onModalDismiss() {
 
 async function focusTextarea() {
   await nextTick()
-  const el = textareaEl.value?.$el?.querySelector('textarea')
-  el?.focus()
+  textareaEl.value?.focus()
 }
 
 function submitFromModal() {
@@ -437,6 +455,26 @@ onUnmounted(() => stopRecording())
 .list-col   { display: flex; flex-direction: column; gap: 10px; }
 .loading-row { display: flex; justify-content: center; padding: 20px; }
 
+.ai-loading-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 40px 20px;
+  font-size: 14px; color: var(--mc-text-light);
+}
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 48px 24px; gap: 8px; text-align: center;
+}
+.empty-icon { font-size: 48px; color: var(--mc-text-light); opacity: .4; }
+.empty-title { margin: 0; font-size: 16px; font-weight: 600; color: var(--mc-text-mid); }
+.empty-sub   { margin: 0; font-size: 13px; color: var(--mc-text-light);
+               max-width: 260px; word-break: break-word; }
+.empty-reset-btn {
+  margin-top: 8px; padding: 10px 22px;
+  background: var(--dealer-primary); color: #fff; border: none;
+  border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
 /* ── Modal ───────────────────────────────────────────────────────────────── */
 .modal-toolbar {
   --background: var(--mc-surface);
@@ -460,17 +498,25 @@ onUnmounted(() => stopRecording())
 }
 
 .ai-textarea {
-  --background: var(--mc-surface-alt, #f5f5f5);
-  --border-radius: 12px;
-  --padding-start: 14px;
-  --padding-end: 14px;
-  --padding-top: 12px;
-  --padding-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
   font-size: 15px;
-  border: 1.5px solid var(--mc-border);
+  line-height: 1.5;
+  font-family: inherit;
+  color: var(--mc-text, #1a1a1a);
+  background: var(--mc-surface-alt, #f5f5f5);
+  border: 1.5px solid var(--mc-border, #ddd);
   border-radius: 12px;
   min-height: 120px;
+  resize: none;
+  outline: none;
+  transition: border-color .2s;
 }
+.ai-textarea:focus {
+  border-color: var(--dealer-primary);
+}
+.ai-textarea::placeholder { color: #aaa; }
 
 .examples-label {
   margin: 0 0 6px;
